@@ -1,0 +1,42 @@
+[PROMPT 1]
+From now on, record all my prompts and place it in recordedprompts.txt.
+
+Build the frontend UI for F.L.O.W.S. (Flood and Local Observatory Warning System), a mobile-first rainfall monitoring web app for Barangay Rizal. Use only hardcoded mock data and focus only on the frontend design.
+
+Use these colors: Background: #111827 Cards/Surfaces: #1F2937 Borders: #374151 Text: #F9FAFB Muted Text: #9CA3AF Blue Accent: #60A5FA Green Accent: #4ADE80 Yellow Accent: #F59E0B Orange Accent: #F97316 Red Accent: #EF4444 Purple Accent: #A78BFA
+
+The font family should be: Helvetica Neue, Arial, Helvetica, sans-serif;
+
+The resident dashboard should have a header with F.L.O.W.S. and a live status pill, a zone selector dropdown, and a bento-style grid layout. Include cards for current rainfall status, rainfall amount, duration, humidity, and a 24-hour rainfall trend using mini bars. Add an advisory card with a warning message. Include a bottom navigation bar with Weather, Zones, Alerts, and Emergency.
+
+The design should be simple but weather dashboard theme.
+
+---------------------------------------------------------
+
+[PROMPT 2]
+Apply numbers to the recorded prompts.txt in order of the prompts. Also change the tsx filenames according to its respective pages name.
+
+The emergency page should contain emergency hotlines with clickable tel links, evacuation reminders, and evacuation center information.
+
+The admin login page should contain username and password fields with a login button. Use mock credentials: Username: admin Password: admin123 Store login state in localStorage.
+
+The admin dashboard should show an online status badge, logout button, quick navigation cards, and summary cards for active zones, last fetch time, and records logged today.
+
+The zone management page should display a list or table of zones with edit and remove actions. Include a form or modal for adding and editing zones with validation for empty zone names.
+
+The rainfall history page should display a table with zone name, date and time, rainfall amount, and validation status. Include statuses like PASSED, FLAGGED, and CORRECTED. Add simple pagination.
+
+---------------------------------------------------------
+
+[PROMPT 3]
+I want it to be approachable to web also, currently when I ran it it shows a mobile layout which is good but as I said it should be responsive but must look good when its on mobile browser, still implement the web version also just make it responsive.
+
+To fix:
+
+1.) The navbar on bottom is floating but too buggy, especially when navigating to emergency page. 
+
+2.) Upon running, the users must see two options first, View Dashboard for Barangay Rizal and the other one log in as admin so it will be clean.  
+
+3.) Also in the time section, add the date and include that its from philippine time, add philippine flag if necessary.
+
+Ensure that it will smoothly be responsive from any screen sizes.
