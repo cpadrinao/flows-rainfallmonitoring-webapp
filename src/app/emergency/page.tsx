@@ -25,7 +25,6 @@ import {
 } from 'lucide-react';
 
 export default function EmergencyPage() {
-  const [sirenPlaying, setSirenPlaying] = useState(false);
   const [activeCenter, setActiveCenter] = useState('center-1');
   
   // Date & Time states in Philippine Time
@@ -57,10 +56,6 @@ export default function EmergencyPage() {
     return () => clearInterval(interval);
   }, []);
 
-  const toggleSiren = () => {
-    setSirenPlaying(!sirenPlaying);
-  };
-
   return (
     <div className="bg-[#0b0f19] min-h-screen w-full text-[#F9FAFB] font-sans flex flex-col justify-between relative overflow-x-hidden">
       
@@ -75,23 +70,20 @@ export default function EmergencyPage() {
           <div className="flex items-center gap-3">
             <Link 
               href="/?view=gateway" 
-              className="p-1.5 bg-[#1F2937] hover:bg-[#374151] border border-[#374151] rounded-xl text-[#9CA3AF] hover:text-white transition-colors"
-              title="Back to Gateway"
+              className="inline-flex items-center gap-2 px-3.5 py-2 bg-[#1F2937] hover:bg-[#253245] border border-[#374151] hover:border-[#60A5FA]/30 rounded-xl text-xs font-black text-[#F9FAFB] hover:text-white transition-all shadow-md group shrink-0"
+              title="Back to Landing Page"
             >
-              <ArrowLeft size={16} />
+              <ArrowLeft size={14} className="transform group-hover:-translate-x-0.5 transition-transform" />
+              <span>Back to Landing Page</span>
             </Link>
             <div>
-              <h1 className="text-lg font-black tracking-tight text-white flex items-center gap-1.5">
+              <h1 className="text-lg font-black tracking-tight text-white flex items-center gap-1.5 ml-1">
                 EMERGENCY HUB
                 <span className="w-1.5 h-1.5 bg-[#EF4444] rounded-full animate-ping"></span>
               </h1>
-              <p className="text-[10px] text-[#EF4444] font-bold tracking-wider uppercase">Barangay Rizal Portal</p>
+              <p className="text-[10px] text-[#EF4444] font-bold tracking-wider uppercase ml-1">Barangay Rizal Portal</p>
             </div>
           </div>
-
-          <Link href="/admin/login" className="text-[9px] font-black text-[#9CA3AF] hover:text-[#60A5FA] bg-[#1F2937] px-2.5 py-1.5 rounded-lg border border-[#374151] transition-colors md:hidden">
-            ADMIN PORTAL
-          </Link>
         </div>
 
         {/* DESKTOP INTEGRATED NAVIGATION TABS */}
@@ -133,10 +125,6 @@ export default function EmergencyPage() {
           </div>
         </div>
 
-        <Link href="/admin/login" className="hidden md:inline-flex text-xs font-black text-[#9CA3AF] hover:text-[#60A5FA] bg-[#1F2937] px-3 py-1.5 rounded-xl border border-[#374151] transition-colors">
-          Admin Portal
-        </Link>
-
       </header>
 
       {/* MAIN CONTAINER */}
@@ -149,235 +137,179 @@ export default function EmergencyPage() {
             Rizal Rescue & Disaster Services
           </h2>
           <p className="text-xs text-[#9CA3AF]">
-            Instant telemetric alarm overrides, official hotlines, emergency instructions, and active shelter details.
+            Official emergency hotlines, safety instructions, and active shelter details for residents.
           </p>
         </div>
 
-        {/* GRID LAYOUT: Web responsive double columns */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* GRID LAYOUT: Perfectly balanced 3-column setup on desktop */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fade-in">
           
-          {/* LEFT SECTION (Col Span 2 on Desktop): Sirens & Hotlines */}
-          <div className="md:col-span-2 space-y-6">
+          {/* COLUMN 1: Designated Evacuation Shelters */}
+          <div className="space-y-4">
+            <h3 className="text-xs font-black uppercase text-[#9CA3AF] tracking-wider ml-1">
+              Barangay Designated Shelters
+            </h3>
             
-            {/* Warning Siren Simulator (Wow Factor) */}
-            <div className={`p-5 rounded-2xl border transition-all duration-300 flex flex-col sm:flex-row items-center justify-between gap-4 ${
-              sirenPlaying 
-                ? 'bg-[#EF4444]/20 border-[#EF4444] weather-glow-red animate-pulse' 
-                : 'bg-[#1F2937] border-[#374151]'
-            }`}>
-              <div className="flex items-center gap-3.5 text-center sm:text-left">
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 mx-auto sm:mx-0 ${
-                  sirenPlaying ? 'bg-[#EF4444] text-white animate-spin' : 'bg-[#EF4444]/15 text-[#EF4444]'
-                }`}>
-                  <Volume2 size={24} />
+            {/* Center 1 */}
+            <div 
+              onClick={() => setActiveCenter('center-1')}
+              className={`bg-[#1F2937] border p-5 rounded-2xl cursor-pointer transition-all duration-300 ${
+                activeCenter === 'center-1' ? 'border-[#60A5FA] weather-glow-blue scale-[1.02]' : 'border-[#374151] hover:scale-[1.01]'
+              }`}
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex gap-2.5">
+                  <MapPin size={18} className="text-[#60A5FA] mt-0.5" />
+                  <div>
+                    <h4 className="text-xs font-black text-white">Barangay Rizal Multipurpose Gym</h4>
+                    <p className="text-[10px] text-[#9CA3AF] mt-0.5 leading-snug">High School Complex (Elevated Ground)</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-sm font-black text-white uppercase tracking-wide">
-                    Simulate Warning Siren
-                  </h3>
-                  <p className="text-xs text-[#9CA3AF] mt-0.5 leading-snug">
-                    {sirenPlaying ? 'Broadcasting active emergency beacon to all nodes.' : 'Trigger warning siren mock broadcast.'}
-                  </p>
-                </div>
+                <span className="text-[8px] font-black text-[#4ADE80] bg-[#4ADE80]/10 px-2 py-0.5 rounded-full shrink-0">ACTIVE</span>
               </div>
-              <button 
-                onClick={toggleSiren}
-                className={`w-full sm:w-auto px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wide transition-colors ${
-                  sirenPlaying ? 'bg-[#111827] text-[#EF4444]' : 'bg-[#EF4444] text-white hover:bg-[#EF4444]/80 shadow-lg shadow-red-900/20'
-                }`}
-              >
-                {sirenPlaying ? 'Silence Alarm' : 'Broadcast Siren'}
-              </button>
-            </div>
-
-            {/* Clickable Quick-Dial Hotlines */}
-            <div className="space-y-3">
-              <h3 className="text-xs font-black uppercase text-[#9CA3AF] tracking-wider ml-1">
-                Clickable Telephone Links
-              </h3>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                
-                {/* Hot Card 1 */}
-                <a 
-                  href="tel:5557492"
-                  className="bg-[#1F2937] hover:bg-[#253245] border border-[#374151] hover:border-[#60A5FA]/40 p-4 rounded-2xl flex items-center justify-between transition-all group"
-                  onClick={(e) => {
-                    // Simulated visual dialer trigger
-                    console.log("Dialing...");
-                  }}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-[#60A5FA]/10 flex items-center justify-center text-[#60A5FA] border border-[#374151]/50">
-                      <Users size={20} />
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-black text-white leading-tight">Barangay Rescue</h4>
-                      <span className="text-[10px] text-[#9CA3AF]">Command Headquarters</span>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-xs font-bold text-[#60A5FA] font-mono bg-[#60A5FA]/10 py-1 px-2.5 rounded-lg block">555-7492</span>
-                  </div>
-                </a>
-
-                {/* Hot Card 2 */}
-                <a 
-                  href="tel:0498291111"
-                  className="bg-[#1F2937] hover:bg-[#253245] border border-[#374151] hover:border-[#EF4444]/40 p-4 rounded-2xl flex items-center justify-between transition-all group"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-[#EF4444]/10 flex items-center justify-center text-[#EF4444] border border-[#374151]/50">
-                      <ShieldAlert size={20} />
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-black text-white leading-tight">MDRRMO HQ</h4>
-                      <span className="text-[10px] text-[#9CA3AF]">Disaster Response HQ</span>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-xs font-bold text-[#EF4444] font-mono bg-[#EF4444]/10 py-1 px-2.5 rounded-lg block">(049) 829-1111</span>
-                  </div>
-                </a>
-
-                {/* Hot Card 3 */}
-                <a 
-                  href="tel:5557654"
-                  className="bg-[#1F2937] hover:bg-[#253245] border border-[#374151] p-4 rounded-2xl flex items-center justify-between group"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-[#A78BFA]/10 flex items-center justify-center text-[#A78BFA] border border-[#374151]/50">
-                      <CheckCircle2 size={20} />
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-black text-white leading-tight">Rizal Police Desk</h4>
-                      <span className="text-[10px] text-[#9CA3AF]">Police Sub-station</span>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-xs font-bold text-[#A78BFA] font-mono bg-[#A78BFA]/10 py-1 px-2.5 rounded-lg block">555-7654</span>
-                  </div>
-                </a>
-
-                {/* Hot Card 4 */}
-                <a 
-                  href="tel:5553473"
-                  className="bg-[#1F2937] hover:bg-[#253245] border border-[#374151] p-4 rounded-2xl flex items-center justify-between group"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-[#F97316]/10 flex items-center justify-center text-[#F97316] border border-[#374151]/50">
-                      <Flame size={20} />
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-black text-white leading-tight">Rizal BFP Fire Desk</h4>
-                      <span className="text-[10px] text-[#9CA3AF]">Fire Emergencies</span>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-xs font-bold text-[#F97316] font-mono bg-[#F97316]/10 py-1 px-2.5 rounded-lg block">555-3473</span>
-                  </div>
-                </a>
-
+              <div className="mt-4 pt-3 border-t border-[#374151]/50 flex justify-between items-center text-[10px] text-[#9CA3AF]">
+                <span>Capacity Filled: <strong className="text-white">42% (210 / 500)</strong></span>
+                <div className="w-16 bg-[#111827] rounded-full h-1.5 overflow-hidden">
+                  <div className="bg-[#F59E0B] h-full" style={{ width: '42%' }} />
+                </div>
               </div>
             </div>
 
+            {/* Center 2 */}
+            <div 
+              onClick={() => setActiveCenter('center-2')}
+              className={`bg-[#1F2937] border p-5 rounded-2xl cursor-pointer transition-all duration-300 ${
+                activeCenter === 'center-2' ? 'border-[#60A5FA] weather-glow-blue scale-[1.02]' : 'border-[#374151] hover:scale-[1.01]'
+              }`}
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex gap-2.5">
+                  <MapPin size={18} className="text-[#A78BFA] mt-0.5" />
+                  <div>
+                    <h4 className="text-xs font-black text-white">Rizal Elementary School Annex</h4>
+                    <p className="text-[10px] text-[#9CA3AF] mt-0.5 leading-snug">Central Plaza Grounds (Elevated Annex)</p>
+                  </div>
+                </div>
+                <span className="text-[8px] font-black text-[#4ADE80] bg-[#4ADE80]/10 px-2 py-0.5 rounded-full shrink-0">ACTIVE</span>
+              </div>
+              <div className="mt-4 pt-3 border-t border-[#374151]/50 flex justify-between items-center text-[10px] text-[#9CA3AF]">
+                <span>Capacity Filled: <strong className="text-white">15% (45 / 300)</strong></span>
+                <div className="w-16 bg-[#111827] rounded-full h-1.5 overflow-hidden">
+                  <div className="bg-[#4ADE80] h-full" style={{ width: '15%' }} />
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* RIGHT SECTION (Col Span 1): Reminders & Centers */}
-          <div className="space-y-6">
+          {/* COLUMN 2: Clickable Quick-Dial Hotlines */}
+          <div className="space-y-4">
+            <h3 className="text-xs font-black uppercase text-[#9CA3AF] tracking-wider ml-1">
+              Clickable Telephone Links
+            </h3>
             
-            {/* Evacuation Reminders & Checklists */}
-            <div className="bg-[#1F2937] border border-[#374151] rounded-2xl p-5 space-y-4 shadow-xl">
-              <h3 className="text-xs font-black uppercase text-white tracking-wider pb-2 border-b border-[#374151] flex items-center gap-1.5">
-                <AlertTriangle size={15} className="text-[#F59E0B] animate-pulse" />
-                Evacuation Reminders
-              </h3>
-
-              <div className="space-y-3.5 text-xs leading-relaxed">
-                <div className="flex gap-3">
-                  <span className="w-5 h-5 rounded-full bg-[#EF4444]/15 flex items-center justify-center text-[#EF4444] font-bold text-[10px] shrink-0">1</span>
+            <div className="flex flex-col gap-3">
+              {/* Hot Card 1 */}
+              <a 
+                href="tel:5557492"
+                className="bg-[#1F2937] hover:bg-[#253245] border border-[#374151] hover:border-[#60A5FA]/40 p-4 rounded-2xl flex items-center justify-between transition-all duration-300 group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#60A5FA]/10 flex items-center justify-center text-[#60A5FA] border border-[#374151]/50 group-hover:scale-105 transition-transform">
+                    <Users size={20} />
+                  </div>
                   <div>
-                    <span className="font-extrabold text-white block">Go Bag Packing</span>
-                    <span className="text-[#9CA3AF]">Pack light: gather clean water (1L/person), canned foods, essential medicines, cash, and ID documents in zip bags.</span>
+                    <h4 className="text-xs font-black text-white leading-tight">Barangay Rescue</h4>
+                    <span className="text-[10px] text-[#9CA3AF]">Command Headquarters</span>
                   </div>
                 </div>
+                <span className="text-xs font-bold text-[#60A5FA] font-mono bg-[#60A5FA]/10 py-1 px-2.5 rounded-lg">555-7492</span>
+              </a>
 
-                <div className="flex gap-3">
-                  <span className="w-5 h-5 rounded-full bg-[#F59E0B]/15 flex items-center justify-center text-[#F59E0B] font-bold text-[10px] shrink-0">2</span>
+              {/* Hot Card 2 */}
+              <a 
+                href="tel:0498291111"
+                className="bg-[#1F2937] hover:bg-[#253245] border border-[#374151] hover:border-[#EF4444]/40 p-4 rounded-2xl flex items-center justify-between transition-all duration-300 group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#EF4444]/10 flex items-center justify-center text-[#EF4444] border border-[#374151]/50 group-hover:scale-105 transition-transform">
+                    <ShieldAlert size={20} />
+                  </div>
                   <div>
-                    <span className="font-extrabold text-white block">Circuit Breaker & LPG</span>
-                    <span className="text-[#9CA3AF]">Turn off the main electrical breaker switch and gas valves before leaving to protect against fires or live wiring.</span>
+                    <h4 className="text-xs font-black text-white leading-tight">MDRRMO HQ</h4>
+                    <span className="text-[10px] text-[#9CA3AF]">Disaster Response HQ</span>
                   </div>
                 </div>
+                <span className="text-xs font-bold text-[#EF4444] font-mono bg-[#EF4444]/10 py-1 px-2.5 rounded-lg">(049) 829-1111</span>
+              </a>
 
-                <div className="flex gap-3">
-                  <span className="w-5 h-5 rounded-full bg-[#4ADE80]/15 flex items-center justify-center text-[#4ADE80] font-bold text-[10px] shrink-0">3</span>
-                  <div>
-                    <span className="font-extrabold text-white block">Official Shelters Only</span>
-                    <span className="text-[#9CA3AF]">Proceed only to Barangay designated elevated evacuation centers. Avoid taking low-lying pathways.</span>
+              {/* Hot Card 3 */}
+              <a 
+                href="tel:5557654"
+                className="bg-[#1F2937] hover:bg-[#253245] border border-[#374151] hover:border-[#A78BFA]/40 p-4 rounded-2xl flex items-center justify-between transition-all duration-300 group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#A78BFA]/10 flex items-center justify-center text-[#A78BFA] border border-[#374151]/50 group-hover:scale-105 transition-transform">
+                    <Users size={20} />
                   </div>
+                  <div>
+                    <h4 className="text-xs font-black text-white leading-tight">Rizal Police Desk</h4>
+                    <span className="text-[10px] text-[#9CA3AF]">Police Sub-station</span>
+                  </div>
+                </div>
+                <span className="text-xs font-bold text-[#A78BFA] font-mono bg-[#A78BFA]/10 py-1 px-2.5 rounded-lg">555-7654</span>
+              </a>
+
+              {/* Hot Card 4 */}
+              <a 
+                href="tel:5553473"
+                className="bg-[#1F2937] hover:bg-[#253245] border border-[#374151] hover:border-[#F97316]/40 p-4 rounded-2xl flex items-center justify-between transition-all duration-300 group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#F97316]/10 flex items-center justify-center text-[#F97316] border border-[#374151]/50 group-hover:scale-105 transition-transform">
+                    <Flame size={20} />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-black text-white leading-tight">Rizal BFP Fire Desk</h4>
+                    <span className="text-[10px] text-[#9CA3AF]">Fire Emergencies</span>
+                  </div>
+                </div>
+                <span className="text-xs font-bold text-[#F97316] font-mono bg-[#F97316]/10 py-1 px-2.5 rounded-lg">555-3473</span>
+              </a>
+            </div>
+          </div>
+
+          {/* COLUMN 3: Evacuation Reminders and checklists */}
+          <div className="bg-[#1F2937] border border-[#374151] rounded-2xl p-5 space-y-4 shadow-xl h-fit">
+            <h3 className="text-xs font-black uppercase text-white tracking-wider pb-2 border-b border-[#374151] flex items-center gap-1.5">
+              <AlertTriangle size={15} className="text-[#F59E0B] animate-pulse" />
+              Evacuation Reminders
+            </h3>
+
+            <div className="space-y-4 text-xs leading-relaxed">
+              <div className="flex gap-3">
+                <span className="w-5 h-5 rounded-full bg-[#EF4444]/15 flex items-center justify-center text-[#EF4444] font-bold text-[10px] shrink-0">1</span>
+                <div>
+                  <span className="font-extrabold text-white block">Go Bag Packing</span>
+                  <span className="text-[#9CA3AF]">Pack light: gather clean water (1L/person), canned foods, essential medicines, cash, and ID documents in zip bags.</span>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <span className="w-5 h-5 rounded-full bg-[#F59E0B]/15 flex items-center justify-center text-[#F59E0B] font-bold text-[10px] shrink-0">2</span>
+                <div>
+                  <span className="font-extrabold text-white block">Circuit Breaker & LPG</span>
+                  <span className="text-[#9CA3AF]">Turn off the main electrical breaker switch and gas valves before leaving to protect against fires or live wiring.</span>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <span className="w-5 h-5 rounded-full bg-[#4ADE80]/15 flex items-center justify-center text-[#4ADE80] font-bold text-[10px] shrink-0">3</span>
+                <div>
+                  <span className="font-extrabold text-white block">Official Shelters Only</span>
+                  <span className="text-[#9CA3AF]">Proceed only to Barangay designated elevated evacuation centers. Avoid taking low-lying pathways.</span>
                 </div>
               </div>
             </div>
-
-            {/* Evacuation Centers Info */}
-            <div className="space-y-3">
-              <h3 className="text-xs font-black uppercase text-[#9CA3AF] tracking-wider ml-1">
-                Barangay Designated Shelters
-              </h3>
-
-              {/* Center 1 */}
-              <div 
-                onClick={() => setActiveCenter('center-1')}
-                className={`bg-[#1F2937] border p-4 rounded-2xl cursor-pointer transition-all ${
-                  activeCenter === 'center-1' ? 'border-[#60A5FA] weather-glow-blue' : 'border-[#374151]'
-                }`}
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex gap-2.5">
-                    <MapPin size={16} className="text-[#60A5FA] mt-0.5" />
-                    <div>
-                      <h4 className="text-xs font-black text-white">Barangay Rizal Multipurpose Gym</h4>
-                      <p className="text-[9px] text-[#9CA3AF] mt-0.5">High School Complex (Elevated Ground)</p>
-                    </div>
-                  </div>
-                  <span className="text-[8px] font-black text-[#4ADE80] bg-[#4ADE80]/10 px-2 py-0.5 rounded-full">ACTIVE</span>
-                </div>
-                <div className="mt-3 pt-3 border-t border-[#374151]/50 flex justify-between items-center text-[9px] text-[#9CA3AF]">
-                  <span>Capacity Filled: <strong className="text-white">42% (210 / 500)</strong></span>
-                  <div className="w-20 bg-[#111827] rounded-full h-1 overflow-hidden">
-                    <div className="bg-[#F59E0B] h-full" style={{ width: '42%' }} />
-                  </div>
-                </div>
-              </div>
-
-              {/* Center 2 */}
-              <div 
-                onClick={() => setActiveCenter('center-2')}
-                className={`bg-[#1F2937] border p-4 rounded-2xl cursor-pointer transition-all ${
-                  activeCenter === 'center-2' ? 'border-[#60A5FA] weather-glow-blue' : 'border-[#374151]'
-                }`}
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex gap-2.5">
-                    <MapPin size={16} className="text-[#A78BFA] mt-0.5" />
-                    <div>
-                      <h4 className="text-xs font-black text-white">Rizal Elementary School Annex</h4>
-                      <p className="text-[9px] text-[#9CA3AF] mt-0.5">Central Plaza Grounds (Elevated Annex)</p>
-                    </div>
-                  </div>
-                  <span className="text-[8px] font-black text-[#4ADE80] bg-[#4ADE80]/10 px-2 py-0.5 rounded-full">ACTIVE</span>
-                </div>
-                <div className="mt-3 pt-3 border-t border-[#374151]/50 flex justify-between items-center text-[9px] text-[#9CA3AF]">
-                  <span>Capacity Filled: <strong className="text-white">15% (45 / 300)</strong></span>
-                  <div className="w-20 bg-[#111827] rounded-full h-1 overflow-hidden">
-                    <div className="bg-[#4ADE80] h-full" style={{ width: '15%' }} />
-                  </div>
-                </div>
-              </div>
-
-            </div>
-
           </div>
 
         </div>

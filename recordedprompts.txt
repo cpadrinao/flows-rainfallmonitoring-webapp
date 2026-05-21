@@ -40,3 +40,19 @@ To fix:
 3.) Also in the time section, add the date and include that its from philippine time, add philippine flag if necessary.
 
 Ensure that it will smoothly be responsive from any screen sizes.
+
+---------------------------------------------------------
+
+[PROMPT 4]
+to fix:
+1.) Landing page isnt simple, too much text it must be simple view dashboard and login system buttons only.
+
+2.) In Emeregency Hub remove braodacst sire since residents are allowed to just view only not boradcast silence, fix the layout there and make sure that  its perfectly balanced and doesnt waste spaces.
+
+2a). remove the admin portal button there also. I can see the back button in there but replace that and add a button that says back to landing page or something, pick one thats suitable for that button name.
+
+3.) In zones overview, it should highlight which zone is picked, For exmaple I chose zone 2 in the dropdown it should highlith the cardbox that is zone 2 in there.
+
+4.) WHat's the purpose of alert warnings section? is it neceassry? If yes, remove the dropdwon in alert warnings if its just for guide of users on the guide of something something.
+
+6.) Add smooth animation when navigating to pages

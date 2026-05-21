@@ -273,96 +273,54 @@ export default function FLOWSApp() {
           GATEWAY SCREEN (Clean welcome page with two choices)
           ======================================================== */}
       {viewMode === 'gateway' && (
-        <div className="flex-1 w-full max-w-4xl mx-auto px-4 py-8 flex flex-col justify-center items-center z-10 space-y-8">
+        <div className="flex-1 w-full max-w-lg mx-auto px-4 py-8 flex flex-col justify-center items-center z-10 space-y-8 animate-fade-in">
           
           {/* Logo & Headline */}
-          <div className="text-center space-y-3">
+          <div className="text-center space-y-4">
             <div className="inline-flex items-center justify-center p-4 bg-[#60A5FA]/10 border border-[#60A5FA]/20 rounded-3xl text-[#60A5FA] mb-2 shadow-inner">
               <ShieldAlert size={48} className="animate-pulse" />
             </div>
-            <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight flex items-center justify-center gap-2">
+            <h1 className="text-4xl font-black text-white tracking-tight flex items-center justify-center gap-2">
               F.L.O.W.S.
-              <span className="relative flex h-3.5 w-3.5">
+              <span className="relative flex h-3 w-3">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#4ADE80] opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-[#4ADE80]"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-[#4ADE80]"></span>
               </span>
             </h1>
-            <h2 className="text-sm sm:text-base font-bold text-[#9CA3AF] max-w-xl mx-auto leading-relaxed">
-              Flood and Local Observatory Warning System for Barangay Rizal
-            </h2>
-          </div>
-
-          {/* Time & Philippine Standard Time Segment */}
-          <div className="w-full max-w-md bg-[#1F2937]/50 border border-[#374151] rounded-2xl p-4 text-center space-y-2 backdrop-blur shadow-lg">
-            <div className="flex items-center justify-center gap-2 text-xs font-black tracking-wider text-[#60A5FA]">
-              <span className="text-base">🇵🇭</span>
-              <span>PHILIPPINE STANDARD TIME (PST)</span>
-            </div>
-            <div className="text-3xl font-black font-mono tracking-tight text-white select-none">
-              {phTime || '10:27:00 PM'}
-            </div>
-            <div className="text-xs text-[#9CA3AF] font-bold flex items-center justify-center gap-1.5">
-              <Calendar size={13} className="text-[#9CA3AF]" />
-              <span>{phDate || 'Thursday, May 21, 2026'}</span>
-            </div>
+            <p className="text-xs font-bold text-[#9CA3AF] max-w-xs mx-auto leading-relaxed">
+              Barangay Rizal Flood and Rainfall Observatory
+            </p>
           </div>
 
           {/* Main Choices Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 w-full max-w-3xl">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
             
             {/* CHOICE 1: Resident Observatory Dashboard */}
             <button 
               onClick={enterDashboard}
-              className="bg-[#1F2937]/80 hover:bg-[#253245] border border-[#374151] hover:border-[#60A5FA]/40 rounded-2xl p-6 text-left transition-all duration-200 shadow-xl group text-white flex flex-col justify-between"
+              className="bg-[#1F2937]/80 hover:bg-[#253245] border border-[#374151] hover:border-[#60A5FA]/40 rounded-2xl p-6 text-center transition-all duration-300 shadow-xl group text-white flex flex-col items-center justify-center space-y-3 cursor-pointer"
             >
-              <div>
-                <div className="p-3 bg-[#60A5FA]/10 border border-[#60A5FA]/20 rounded-xl text-[#60A5FA] inline-flex mb-4 group-hover:scale-105 transition-transform">
-                  <CloudRain size={24} />
-                </div>
-                <h3 className="text-lg font-black text-white group-hover:text-[#60A5FA] transition-colors leading-tight">
-                  View Dashboard for Barangay Rizal
-                </h3>
-                <p className="text-xs text-[#9CA3AF] leading-relaxed mt-2">
-                  Access active Doppler precipitation totals, continuous duration stopwatches, hourly bar charts, and official local warning advisories.
-                </p>
+              <div className="p-3.5 bg-[#60A5FA]/10 border border-[#60A5FA]/20 rounded-xl text-[#60A5FA] group-hover:scale-110 transition-transform">
+                <CloudRain size={24} />
               </div>
-              <div className="mt-8 pt-4 border-t border-[#374151]/50 flex items-center justify-between text-xs text-[#60A5FA] font-black w-full">
-                <span>Enter Resident Observatory</span>
-                <ArrowRight size={16} className="transform group-hover:translate-x-1.5 transition-transform" />
-              </div>
+              <span className="text-base font-black text-white group-hover:text-[#60A5FA] transition-colors leading-tight">
+                View Dashboard
+              </span>
             </button>
 
             {/* CHOICE 2: Log in as Admin */}
             <Link 
               href="/admin/login"
-              className="bg-[#1F2937]/80 hover:bg-[#253245] border border-[#374151] hover:border-[#A78BFA]/40 rounded-2xl p-6 text-left transition-all duration-200 shadow-xl group text-white flex flex-col justify-between"
+              className="bg-[#1F2937]/80 hover:bg-[#253245] border border-[#374151] hover:border-[#A78BFA]/40 rounded-2xl p-6 text-center transition-all duration-300 shadow-xl group text-white flex flex-col items-center justify-center space-y-3 cursor-pointer"
             >
-              <div>
-                <div className="p-3 bg-[#A78BFA]/10 border border-[#A78BFA]/20 rounded-xl text-[#A78BFA] inline-flex mb-4 group-hover:scale-105 transition-transform">
-                  <Lock size={24} />
-                </div>
-                <h3 className="text-lg font-black text-white group-hover:text-[#A78BFA] transition-colors leading-tight">
-                  Log in as System Admin
-                </h3>
-                <p className="text-xs text-[#9CA3AF] leading-relaxed mt-2">
-                  Access the administrative control center to configure sensor nodes, calibrate zone boundaries, filter telemetry ledgers, and log manual verifications.
-                </p>
+              <div className="p-3.5 bg-[#A78BFA]/10 border border-[#A78BFA]/20 rounded-xl text-[#A78BFA] group-hover:scale-110 transition-transform">
+                <Lock size={24} />
               </div>
-              <div className="mt-8 pt-4 border-t border-[#374151]/50 flex items-center justify-between text-xs text-[#A78BFA] font-black w-full">
-                <span>Access Management Portal</span>
-                <ArrowRight size={16} className="transform group-hover:translate-x-1.5 transition-transform" />
-              </div>
+              <span className="text-base font-black text-white group-hover:text-[#A78BFA] transition-colors leading-tight">
+                Login System
+              </span>
             </Link>
 
-          </div>
-
-          {/* Quick Alert Reminders Callout */}
-          <div className="w-full max-w-3xl bg-[#EF4444]/5 border border-[#EF4444]/20 rounded-2xl p-4 flex items-start gap-3.5 text-xs text-[#9CA3AF] leading-relaxed">
-            <AlertTriangle size={18} className="text-[#EF4444] shrink-0 mt-0.5" />
-            <div>
-              <span className="font-extrabold text-white">Active Advisory: </span>
-              Barangay Rizal’s weather system uses ultrasonic automated rain sensors and Doppler data streams calibrated every 60 seconds to provide safe telemetry to local emergency responders. Always follow municipal instructions.
-            </div>
           </div>
 
         </div>
@@ -372,7 +330,7 @@ export default function FLOWSApp() {
           RESPONSIVE RESIDENT DASHBOARD & OBSERVED SECTORS
           ======================================================== */}
       {viewMode === 'dashboard' && (
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col animate-fade-in">
           
           {/* TOP NAVBAR (Gives smooth desktop integration and dynamic time/flag indicators) */}
           <header className="bg-[#111827]/95 border-b border-[#374151]/70 sticky top-0 z-30 px-4 sm:px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4 backdrop-blur-md shadow-lg">
@@ -464,59 +422,66 @@ export default function FLOWSApp() {
               </div>
 
               {/* Responsive Zone Selector Dropdown */}
-              <div className="relative w-full md:w-72">
-                <label className="block text-[9px] font-bold text-[#9CA3AF] uppercase tracking-wider mb-1">
-                  Active Monitoring Zone
-                </label>
-                <button 
-                  onClick={() => setShowDropdown(!showDropdown)}
-                  className="w-full flex items-center justify-between px-4 py-2.5 bg-[#1F2937] border border-[#374151] rounded-xl text-left shadow-lg focus:outline-none hover:bg-[#253245] transition-colors"
-                >
-                  <div className="flex items-center gap-2">
-                    <span 
-                      className="w-2.5 h-2.5 rounded-full animate-pulse-slow"
-                      style={{ backgroundColor: getAlertColor(activeZoneData.alertLevel) }}
-                    />
-                    <div>
-                      <div className="text-xs font-black text-white">{activeZoneData.name}</div>
-                      <div className="text-[10px] text-[#9CA3AF]">{activeZoneData.purok}</div>
-                    </div>
-                  </div>
-                  <ChevronDown size={16} className={`text-[#9CA3AF] transition-transform duration-300 ${showDropdown ? 'rotate-180' : ''}`} />
-                </button>
-
-                {/* Options panel */}
-                {showDropdown && (
-                  <>
-                    <div className="fixed inset-0 z-10" onClick={() => setShowDropdown(false)}></div>
-                    <div className="absolute right-0 left-0 mt-2 bg-[#1F2937] border border-[#374151] rounded-xl shadow-2xl overflow-hidden z-20">
-                      <div className="py-1 max-h-60 overflow-y-auto">
-                        {Object.values(ZONES_DATABASE).map((zone) => (
-                          <button
-                            key={zone.id}
-                            onClick={() => {
-                              setSelectedZone(zone.id);
-                              setShowDropdown(false);
-                            }}
-                            className={`w-full flex items-center justify-between px-4 py-2.5 hover:bg-[#374151]/50 text-left transition-colors ${
-                              selectedZone === zone.id ? 'bg-[#374151] text-white' : 'text-[#9CA3AF]'
-                            }`}
-                          >
-                            <div className="flex items-center gap-2">
-                              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: getAlertColor(zone.alertLevel) }} />
-                              <div>
-                                <div className="text-xs font-bold text-white">{zone.name}</div>
-                                <div className="text-[10px] text-[#9CA3AF]">{zone.purok}</div>
-                              </div>
-                            </div>
-                            <div className="text-right font-mono text-xs font-bold text-white">{zone.amount} mm</div>
-                          </button>
-                        ))}
+              {activeTab !== 'alerts' ? (
+                <div className="relative w-full md:w-72">
+                  <label className="block text-[9px] font-bold text-[#9CA3AF] uppercase tracking-wider mb-1">
+                    Active Monitoring Zone
+                  </label>
+                  <button 
+                    onClick={() => setShowDropdown(!showDropdown)}
+                    className="w-full flex items-center justify-between px-4 py-2.5 bg-[#1F2937] border border-[#374151] rounded-xl text-left shadow-lg focus:outline-none hover:bg-[#253245] transition-colors cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span 
+                        className="w-2.5 h-2.5 rounded-full animate-pulse-slow"
+                        style={{ backgroundColor: getAlertColor(activeZoneData.alertLevel) }}
+                      />
+                      <div>
+                        <div className="text-xs font-black text-white">{activeZoneData.name}</div>
+                        <div className="text-[10px] text-[#9CA3AF]">{activeZoneData.purok}</div>
                       </div>
                     </div>
-                  </>
-                )}
-              </div>
+                    <ChevronDown size={16} className={`text-[#9CA3AF] transition-transform duration-300 ${showDropdown ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {/* Options panel */}
+                  {showDropdown && (
+                    <>
+                      <div className="fixed inset-0 z-10" onClick={() => setShowDropdown(false)}></div>
+                      <div className="absolute right-0 left-0 mt-2 bg-[#1F2937] border border-[#374151] rounded-xl shadow-2xl overflow-hidden z-20">
+                        <div className="py-1 max-h-60 overflow-y-auto">
+                          {Object.values(ZONES_DATABASE).map((zone) => (
+                            <button
+                              key={zone.id}
+                              onClick={() => {
+                                setSelectedZone(zone.id);
+                                setShowDropdown(false);
+                              }}
+                              className={`w-full flex items-center justify-between px-4 py-2.5 hover:bg-[#374151]/50 text-left transition-colors cursor-pointer ${
+                                selectedZone === zone.id ? 'bg-[#374151] text-white' : 'text-[#9CA3AF]'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: getAlertColor(zone.alertLevel) }} />
+                                <div>
+                                  <div className="text-xs font-bold text-white">{zone.name}</div>
+                                  <div className="text-[10px] text-[#9CA3AF]">{zone.purok}</div>
+                                </div>
+                              </div>
+                              <div className="text-right font-mono text-xs font-bold text-white">{zone.amount} mm</div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+              ) : (
+                <div className="text-right text-[10px] text-[#60A5FA] font-black uppercase tracking-wider bg-[#60A5FA]/10 border border-[#60A5FA]/20 px-3.5 py-2.5 rounded-xl flex items-center gap-2 self-end h-[46px]">
+                  <span className="w-2 h-2 rounded-full bg-[#60A5FA] animate-pulse" />
+                  <span>System Reference Manual</span>
+                </div>
+              )}
             </div>
 
             {/* TAB VIEW MODE RESOLUTION */}
@@ -525,7 +490,7 @@ export default function FLOWSApp() {
                 TAB 1: WEATHER OBSERVED PANEL (Bento Grid)
                 ======================================================== */}
             {activeTab === 'weather' && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-fade-in">
                 
                 {/* Bento Card 1: Rain Status (Span 2) */}
                 <div className={`md:col-span-2 weather-glass rounded-2xl p-5 flex flex-col justify-between transition-all duration-500 ${getGlowClass(activeZoneData.alertLevel)}`}>
@@ -754,7 +719,7 @@ export default function FLOWSApp() {
                 TAB 2: ZONES OVERVIEW LIST
                 ======================================================== */}
             {activeTab === 'zones' && (
-              <div className="space-y-4">
+              <div className="space-y-4 animate-fade-in">
                 <div>
                   <h3 className="text-lg font-black text-white tracking-tight flex items-center gap-2">
                     <MapPin size={20} className="text-[#60A5FA]" />
@@ -766,47 +731,81 @@ export default function FLOWSApp() {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                  {Object.values(ZONES_DATABASE).map((zone) => (
-                    <div 
-                      key={zone.id}
-                      className="bg-[#1F2937] border border-[#374151] hover:border-[#60A5FA]/30 rounded-2xl p-4 flex flex-col justify-between transition-colors shadow-lg"
-                    >
-                      <div className="flex justify-between items-start pb-3 border-b border-[#374151]/50">
-                        <div>
-                          <h4 className="text-sm font-black text-white">{zone.name}</h4>
-                          <span className="text-[10px] text-[#9CA3AF]">{zone.purok}</span>
-                        </div>
-                        <span 
-                          className="w-2.5 h-2.5 rounded-full"
-                          style={{ backgroundColor: getAlertColor(zone.alertLevel) }}
-                        />
-                      </div>
-
-                      <div className="my-4 flex items-center justify-between">
-                        <div>
-                          <span className="text-[9px] font-bold text-[#9CA3AF] uppercase block">PRECIPITATION</span>
-                          <span className="text-xl font-black text-white font-mono">{zone.amount} mm</span>
-                        </div>
-                        <div className="text-right">
-                          <span className="text-[9px] font-bold text-[#9CA3AF] uppercase block">WARNING LEVEL</span>
-                          <span className="text-xs font-black uppercase" style={{ color: getAlertColor(zone.alertLevel) }}>
-                            {zone.alertLevel} Alert
-                          </span>
-                        </div>
-                      </div>
-
-                      <button
-                        onClick={() => {
-                          setSelectedZone(zone.id);
-                          setActiveTab('weather');
+                  {Object.values(ZONES_DATABASE).map((zone) => {
+                    const isSelected = zone.id === selectedZone;
+                    return (
+                      <div 
+                        key={zone.id}
+                        onClick={() => setSelectedZone(zone.id)}
+                        className={`rounded-2xl p-5 flex flex-col justify-between transition-all duration-300 shadow-lg cursor-pointer ${
+                          isSelected 
+                            ? 'bg-[#1F2937] border-2 scale-[1.03] shadow-2xl' 
+                            : 'bg-[#1F2937]/50 border border-[#374151] hover:bg-[#1F2937]/80 hover:scale-[1.01]'
+                        }`}
+                        style={{
+                          borderColor: isSelected ? getAlertColor(zone.alertLevel) : '#374151',
+                          boxShadow: isSelected 
+                            ? `0 0 0 2px ${getAlertColor(zone.alertLevel)}, 0 0 25px ${getAlertColor(zone.alertLevel)}30` 
+                            : 'none'
                         }}
-                        className="w-full py-1.5 bg-[#111827]/40 hover:bg-[#111827] text-[#60A5FA] font-bold text-[10px] uppercase rounded-xl transition-all border border-[#374151] flex items-center justify-center gap-1"
                       >
-                        <span>Focus Zone Dashboard</span>
-                        <ArrowRight size={10} />
-                      </button>
-                    </div>
-                  ))}
+                        <div className="flex justify-between items-start pb-3 border-b border-[#374151]/50">
+                          <div>
+                            <div className="flex items-center gap-1.5">
+                              <h4 className="text-sm font-black text-white">{zone.name}</h4>
+                              {isSelected && (
+                                <span className="flex h-2 w-2 relative">
+                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#60A5FA] opacity-75"></span>
+                                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[#60A5FA]"></span>
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-[10px] text-[#9CA3AF]">{zone.purok}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {isSelected && (
+                              <span className="text-[8px] font-black uppercase bg-[#60A5FA]/20 text-[#60A5FA] px-1.5 py-0.5 rounded tracking-wide animate-pulse">
+                                Selected
+                              </span>
+                            )}
+                            <span 
+                              className="w-2.5 h-2.5 rounded-full"
+                              style={{ backgroundColor: getAlertColor(zone.alertLevel) }}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="my-4 flex items-center justify-between">
+                          <div>
+                            <span className="text-[9px] font-bold text-[#9CA3AF] uppercase block">PRECIPITATION</span>
+                            <span className="text-xl font-black text-white font-mono">{zone.amount} mm</span>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-[9px] font-bold text-[#9CA3AF] uppercase block">WARNING LEVEL</span>
+                            <span className="text-xs font-black uppercase" style={{ color: getAlertColor(zone.alertLevel) }}>
+                              {zone.alertLevel} Alert
+                            </span>
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedZone(zone.id);
+                            setActiveTab('weather');
+                          }}
+                          className={`w-full py-1.5 font-bold text-[10px] uppercase rounded-xl transition-all border flex items-center justify-center gap-1 cursor-pointer ${
+                            isSelected 
+                              ? 'bg-[#60A5FA] hover:bg-[#60A5FA]/90 text-white border-transparent shadow-md'
+                              : 'bg-[#111827]/40 hover:bg-[#111827] text-[#60A5FA] border-[#374151]'
+                          }`}
+                        >
+                          <span>Focus Zone Dashboard</span>
+                          <ArrowRight size={10} />
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -815,7 +814,7 @@ export default function FLOWSApp() {
                 TAB 3: ALERTS THRESHOLDS SUMMARY
                 ======================================================== */}
             {activeTab === 'alerts' && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fade-in">
                 
                 {/* Threshold Rules */}
                 <div className="md:col-span-2 bg-[#1F2937] border border-[#374151] rounded-2xl p-5 space-y-4 shadow-xl">

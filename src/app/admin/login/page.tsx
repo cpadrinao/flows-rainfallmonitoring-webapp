@@ -51,9 +51,8 @@ export default function AdminLoginPage() {
       {/* Background glow effects */}
       <div className="absolute w-[500px] h-[500px] rounded-full bg-[#60A5FA] blur-[150px] opacity-5 pointer-events-none -translate-x-40" />
       <div className="absolute w-[450px] h-[450px] rounded-full bg-[#A78BFA] blur-[150px] opacity-5 pointer-events-none translate-x-40" />
-
       {/* Main card */}
-      <div className="w-full max-w-md bg-[#1F2937]/90 border border-[#374151] rounded-3xl p-8 shadow-2xl backdrop-blur-md relative z-10 weather-glow-blue">
+      <div className="w-full max-w-md bg-[#1F2937]/90 border border-[#374151] rounded-3xl p-8 shadow-2xl backdrop-blur-md relative z-10 weather-glow-blue animate-fade-in">
         
         {/* Back Link */}
         <div className="mb-6">
