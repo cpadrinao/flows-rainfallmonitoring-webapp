@@ -15,7 +15,11 @@ import {
   X,
   Radio,
   ChevronRight,
-  TrendingUp
+  TrendingUp,
+  Sun,
+  Moon,
+  Clock,
+  Home
 } from 'lucide-react';
 
 interface ZoneItem {
@@ -39,6 +43,73 @@ export default function ZoneManagement() {
   const router = useRouter();
   const [authorized, setAuthorized] = useState(false);
   const [zones, setZones] = useState<ZoneItem[]>([]);
+  
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const [phTime, setPhTime] = useState<string>('');
+  const [phDate, setPhDate] = useState<string>('');
+  const [countdownTime, setCountdownTime] = useState<string>('');
+
+  // Load and apply theme from local storage
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme') as 'dark' | 'light';
+    if (savedTheme) {
+      setTheme(savedTheme);
+    }
+  }, []);
+
+  // Apply theme to html element so CSS selectors [data-theme="light"] work globally
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    const nextTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(nextTheme);
+    localStorage.setItem('theme', nextTheme);
+  };
+
+  // Synchronize Live Time
+  useEffect(() => {
+    const updatePhTime = () => {
+      const now = new Date();
+      const dateOptions: Intl.DateTimeFormatOptions = { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      };
+      const timeOptions: Intl.DateTimeFormatOptions = { 
+        hour: '2-digit', 
+        minute: '2-digit', 
+        second: '2-digit', 
+        hour12: true 
+      };
+      
+      setPhDate(now.toLocaleDateString('en-US', dateOptions));
+      setPhTime(now.toLocaleTimeString('en-US', timeOptions));
+    };
+
+    updatePhTime();
+    const interval = setInterval(updatePhTime, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Synchronize Countdown Timer (resets every hour boundary starting from exactly 1 hour)
+  useEffect(() => {
+    const updateCountdown = () => {
+      const now = new Date();
+      const nextHour = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours() + 1, 0, 0, 0);
+      const diffSec = Math.floor((nextHour.getTime() - now.getTime()) / 1000);
+      const hours = Math.floor(diffSec / 3600);
+      const minutes = Math.floor((diffSec % 3600) / 60);
+      const seconds = diffSec % 60;
+      const formatted = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+      setCountdownTime(formatted);
+    };
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+    return () => clearInterval(interval);
+  }, []);
   
   // Modal states
   const [showModal, setShowModal] = useState(false);
@@ -119,31 +190,28 @@ export default function ZoneManagement() {
     }
 
     if (editingId) {
-      // Edit mode
+      // Edit mode: Preserve existing API telemetry metrics
       const updated = zones.map(z => {
         if (z.id === editingId) {
           return {
             ...z,
             name: zoneName.trim(),
-            purok: purokDesc.trim() || 'General Territory',
-            alertLevel,
-            amount: Number(rainAmount) || 0,
-            status: weatherStatus.trim() || 'Clear'
+            purok: purokDesc.trim() || 'General Territory'
           };
         }
         return z;
       });
       saveZonesToStorage(updated);
     } else {
-      // Add mode
+      // Add mode: Initialize zone with Green Alert and Pending API Sync status
       const newId = `zone-${Date.now()}`;
       const newZone: ZoneItem = {
         id: newId,
         name: zoneName.trim(),
         purok: purokDesc.trim() || 'General Territory',
-        alertLevel,
-        amount: Number(rainAmount) || 0,
-        status: weatherStatus.trim() || 'Clear'
+        alertLevel: 'Green',
+        amount: 0.0,
+        status: 'Pending API Sync'
       };
       saveZonesToStorage([...zones, newZone]);
     }
@@ -176,33 +244,132 @@ export default function ZoneManagement() {
     );
   }
   return (
-    <div className="bg-[#0b0f19] min-h-screen w-full text-[#F9FAFB] font-sans flex flex-col justify-between relative overflow-x-hidden animate-fade-in">
+    <div data-theme={theme} className="bg-[#0b0f19] min-h-screen w-full text-[#F9FAFB] font-sans flex flex-col justify-between relative overflow-x-hidden animate-fade-in transition-colors duration-500">
       
       {/* Background glow */}
       <div className="absolute w-[500px] h-[500px] rounded-full bg-[#60A5FA] blur-[150px] opacity-5 pointer-events-none -translate-y-20 left-10" />
 
       {/* CORE ADMIN NAVIGATION HEADER */}
-      <header className="bg-[#111827] border-b border-[#374151] sticky top-0 z-20 px-6 py-4 flex justify-between items-center shadow-lg">
-        <div className="flex items-center gap-3">
-          <Link href="/admin/dashboard" className="p-2 bg-[#1F2937] hover:bg-[#374151] border border-[#374151] rounded-xl text-[#9CA3AF] hover:text-white transition-colors">
-            <ArrowLeft size={16} />
-          </Link>
-          <div>
-            <h1 className="text-base font-black tracking-tight flex items-center gap-1.5">
-              ZONE MANAGEMENT
-              <span className="text-[9px] bg-[#60A5FA]/10 text-[#60A5FA] border border-[#60A5FA]/30 px-1.5 py-0.5 rounded font-black tracking-widest uppercase">Admin</span>
-            </h1>
-            <p className="text-[10px] text-[#9CA3AF] font-semibold">Define and calibrate local sensor territory scopes</p>
+      <header className="bg-[#111827]/95 border-b border-[#374151]/70 sticky top-0 z-30 px-4 sm:px-6 py-3 flex flex-col md:flex-row justify-between items-center gap-3 backdrop-blur-md shadow-lg transition-all duration-300">
+        
+        {/* Branding Logo */}
+        <div className="flex items-center justify-between w-full md:w-auto">
+          <div className="flex items-center gap-2.5">
+            <div className="w-10 h-10 rounded-lg bg-[#1F2937] border border-[#374151] overflow-hidden flex items-center justify-center shrink-0">
+              <img src="/FLOWS.png" alt="FLOWS Logo" className="w-full h-full object-contain scale-[3.5]" />
+            </div>
+            <div>
+              <h1 className="text-base font-black tracking-tight text-white flex items-center gap-1.5 leading-none">
+                ZONE MANAGEMENT
+                <span className="text-[9px] bg-[#60A5FA]/10 text-[#60A5FA] border border-[#60A5FA]/30 px-1.5 py-0.5 rounded font-black tracking-widest uppercase">Admin</span>
+              </h1>
+              <p className="text-[8px] text-[#9CA3AF] font-bold uppercase tracking-wider mt-0.5">Define and calibrate local sensor territory scopes</p>
+            </div>
+          </div>
+
+          {/* Mobile Right Quick Controls */}
+          <div className="flex md:hidden items-center gap-1.5">
+            <button
+              onClick={toggleTheme}
+              className="p-1.5 bg-[#1F2937] border border-[#374151] rounded-lg text-[#9CA3AF] hover:text-white cursor-pointer"
+              title="Toggle Theme"
+            >
+              {theme === 'dark' ? <Sun size={13} className="text-[#F59E0B]" /> : <Moon size={13} className="text-[#7c3aed]" />}
+            </button>
+            <Link 
+              href="/admin/dashboard"
+              className="p-1.5 bg-[#1F2937] border border-[#374151] rounded-lg text-[#9CA3AF] hover:text-white flex items-center justify-center cursor-pointer"
+              title="Back to Dashboard"
+            >
+              <Home size={13} />
+            </Link>
           </div>
         </div>
 
-        <button 
-          onClick={openAddModal}
-          className="flex items-center gap-1 bg-[#60A5FA] hover:bg-[#60A5FA]/90 text-[#111827] font-black text-xs tracking-wider uppercase py-2 px-4 rounded-xl transition-all duration-150 shadow-md shadow-blue-500/10"
-        >
-          <Plus size={14} />
-          <span>Add Zone</span>
-        </button>
+        {/* Live Right-side controls (Desktop/Tablet) */}
+        <div className="hidden sm:flex items-center gap-2 shrink-0">
+          
+          {/* Countdown Card (API Next Forecast) */}
+          <div className="flex items-center gap-2 bg-[#1F2937]/55 border border-[#374151]/60 px-3 py-1.5 rounded-xl shadow-inner select-none shrink-0">
+            <Clock size={14} className="text-[#60A5FA] animate-pulse" />
+            <div className="text-left leading-none">
+              <span className="text-[8px] font-black text-[#60A5FA] tracking-wider uppercase block mb-0.5">API NEXT FORECAST</span>
+              <span className="text-xs font-black font-mono tracking-tight text-white">{countdownTime || '00:59:59'}</span>
+            </div>
+          </div>
+
+          {/* Date & Time Card with Aligned Philippine Flag */}
+          <div className="flex items-center gap-2.5 bg-[#1F2937]/55 border border-[#374151]/60 px-3 py-1.5 rounded-xl shadow-inner select-none shrink-0 justify-center">
+            <div className="text-left leading-none space-y-1">
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-black font-mono tracking-tight text-white">{phTime || '10:27:00 PM'}</span>
+                <span className="text-[8px] font-black text-[#60A5FA] tracking-wider uppercase bg-[#60A5FA]/10 px-1.5 py-0.5 rounded flex items-center gap-1 select-none">
+                  PH <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 9" className="w-4 h-2 shadow-sm rounded-[1px] inline-block align-middle select-none">
+                    <rect width="18" height="9" fill="#FCD116" />
+                    <rect width="18" height="4.5" fill="#0038A8" />
+                    <rect y="4.5" width="18" height="4.5" fill="#CE1126" />
+                    <polygon points="0,0 0,9 7.79,4.5" fill="#FFFFFF" />
+                    <circle cx="2.5" cy="4.5" r="0.9" fill="#FCD116" />
+                  </svg>
+                </span>
+              </div>
+              <div className="text-[9px] text-[#9CA3AF] font-bold tracking-wide">{phDate || 'Thursday, May 21, 2026'}</div>
+            </div>
+          </div>
+
+          {/* Sun/Moon Theme Toggle Trigger */}
+          <button
+            onClick={toggleTheme}
+            className="p-2 bg-[#1F2937]/80 hover:bg-[#253245] border border-[#374151] hover:border-[#60A5FA]/40 rounded-xl text-[#9CA3AF] hover:text-white transition-all shadow-md group shrink-0 cursor-pointer"
+            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          >
+            {theme === 'dark' ? (
+              <Sun size={15} className="text-[#F59E0B] animate-spin" style={{ animationDuration: '10s' }} />
+            ) : (
+              <Moon size={15} className="text-[#7c3aed]" />
+            )}
+          </button>
+
+          {/* Back to Dashboard Button positioned at the very right */}
+          <Link 
+            href="/admin/dashboard"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#1F2937] hover:bg-[#253245] border border-[#374151] hover:border-[#60A5FA]/40 rounded-xl text-xs font-black text-[#F9FAFB] hover:text-white transition-all shadow-md group shrink-0 cursor-pointer"
+            title="Back to Dashboard"
+          >
+            <span>Back to Dashboard</span>
+          </Link>
+
+        </div>
+
+        {/* Mobile Header Row for Time & Countdown */}
+        <div className="flex sm:hidden items-center justify-between w-full gap-2 border-t border-[#374151]/30 pt-2 select-none">
+          {/* Countdown Card */}
+          <div className="flex items-center gap-1.5 bg-[#1F2937]/55 border border-[#374151]/60 px-2.5 py-1 rounded-lg shadow-inner flex-1 justify-center">
+            <Clock size={11} className="text-[#60A5FA]" />
+            <div className="text-left leading-none">
+              <span className="text-[7px] font-black text-[#60A5FA] tracking-wider uppercase block">NEXT FORECAST</span>
+              <span className="text-[10px] font-bold font-mono tracking-tight text-white">{countdownTime || '00:59:59'}</span>
+            </div>
+          </div>
+          {/* Date & Time Card */}
+          <div className="flex items-center gap-1.5 bg-[#1F2937]/55 border border-[#374151]/60 px-2.5 py-1 rounded-lg shadow-inner flex-1 justify-center">
+            <div className="text-center leading-none">
+              <div className="flex items-center justify-center gap-1">
+                <span className="text-[10px] font-bold font-mono tracking-tight text-white">{phTime ? phTime.replace(/:\d+\s/, ' ') : '10:27 PM'}</span>
+                <span className="text-[7px] font-black text-[#60A5FA] tracking-wider uppercase bg-[#60A5FA]/10 px-1 rounded flex items-center gap-0.5">
+                  PH <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 9" className="w-3.5 h-1.5 shadow-sm rounded-[1px] inline-block align-middle select-none">
+                    <rect width="18" height="9" fill="#FCD116" />
+                    <rect width="18" height="4.5" fill="#0038A8" />
+                    <rect y="4.5" width="18" height="4.5" fill="#CE1126" />
+                    <polygon points="0,0 0,9 7.79,4.5" fill="#FFFFFF" />
+                    <circle cx="2.5" cy="4.5" r="0.9" fill="#FCD116" />
+                  </svg>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </header>
 
       {/* MAIN CONTAINER */}
@@ -223,9 +390,19 @@ export default function ZoneManagement() {
               <MapPin size={18} className="text-[#60A5FA]" />
               <h3 className="text-sm font-black text-white">Monitored Sectors Array ({zones.length})</h3>
             </div>
-            <div className="flex items-center gap-1 text-[10px] font-mono text-[#9CA3AF]">
-              <Radio size={12} className="text-[#4ADE80] animate-pulse" />
-              <span>ACTIVE TELEMETRY STREAM</span>
+            
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={openAddModal}
+                className="flex items-center gap-1.5 bg-[#60A5FA] hover:bg-[#60A5FA]/90 text-[#111827] font-black text-[11px] tracking-wider uppercase py-2 px-4 rounded-xl transition-all duration-150 shadow-md cursor-pointer"
+              >
+                <Plus size={13} />
+                <span>Add Zone</span>
+              </button>
+              <div className="hidden sm:flex items-center gap-1 text-[10px] font-mono text-[#9CA3AF]">
+                <Radio size={12} className="text-[#4ADE80] animate-pulse" />
+                <span>ACTIVE TELEMETRY STREAM</span>
+              </div>
             </div>
           </div>
 
@@ -372,52 +549,6 @@ export default function ZoneManagement() {
                   onChange={(e) => setPurokDesc(e.target.value)}
                   className="w-full bg-[#111827] border border-[#374151] focus:border-[#60A5FA] rounded-xl p-2.5 text-white focus:outline-none transition-colors"
                 />
-              </div>
-
-              {/* Field: Alert Level */}
-              <div>
-                <label className="block text-[10px] font-bold text-[#9CA3AF] uppercase tracking-wider mb-1">
-                  Alert Level Warning
-                </label>
-                <select 
-                  value={alertLevel}
-                  onChange={(e) => setAlertLevel(e.target.value as any)}
-                  className="w-full bg-[#111827] border border-[#374151] focus:border-[#60A5FA] rounded-xl p-2.5 text-white focus:outline-none"
-                >
-                  <option value="Green">Green Alert (Safe)</option>
-                  <option value="Yellow">Yellow Alert (Monitor)</option>
-                  <option value="Orange">Orange Alert (Warning)</option>
-                  <option value="Red">Red Alert (Critical)</option>
-                </select>
-              </div>
-
-              {/* Grid: Rain & Weather Status */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[10px] font-bold text-[#9CA3AF] uppercase tracking-wider mb-1">
-                    Rainfall (mm)
-                  </label>
-                  <input 
-                    type="number" 
-                    step="0.1" 
-                    placeholder="0.0" 
-                    value={rainAmount}
-                    onChange={(e) => setRainAmount(Number(e.target.value))}
-                    className="w-full bg-[#111827] border border-[#374151] focus:border-[#60A5FA] rounded-xl p-2.5 text-white focus:outline-none font-mono"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-bold text-[#9CA3AF] uppercase tracking-wider mb-1">
-                    Weather Status
-                  </label>
-                  <input 
-                    type="text" 
-                    placeholder="e.g. Moderate Rain" 
-                    value={weatherStatus}
-                    onChange={(e) => setWeatherStatus(e.target.value)}
-                    className="w-full bg-[#111827] border border-[#374151] focus:border-[#60A5FA] rounded-xl p-2.5 text-white focus:outline-none"
-                  />
-                </div>
               </div>
 
               {/* Form Buttons */}

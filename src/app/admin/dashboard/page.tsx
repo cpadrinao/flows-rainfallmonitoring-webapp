@@ -17,7 +17,9 @@ import {
   ArrowRight,
   User,
   ExternalLink,
-  ChevronRight
+  ChevronRight,
+  Sun,
+  Moon
 } from 'lucide-react';
 
 export default function AdminDashboard() {
@@ -25,6 +27,11 @@ export default function AdminDashboard() {
   const [authorized, setAuthorized] = useState(false);
   const [lastFetchTime, setLastFetchTime] = useState('');
   const [currentUser, setCurrentUser] = useState('admin');
+  
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const [phTime, setPhTime] = useState<string>('');
+  const [phDate, setPhDate] = useState<string>('');
+  const [countdownTime, setCountdownTime] = useState<string>('');
 
   // Verify authorization
   useEffect(() => {
@@ -37,6 +44,70 @@ export default function AdminDashboard() {
       if (user) setCurrentUser(user);
     }
   }, [router]);
+
+  // Load and apply theme from local storage
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme') as 'dark' | 'light';
+    if (savedTheme) {
+      setTheme(savedTheme);
+    }
+  }, []);
+
+  // Apply theme to html element so CSS selectors [data-theme="light"] work globally
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    const nextTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(nextTheme);
+    localStorage.setItem('theme', nextTheme);
+  };
+
+  // Synchronize Live Time
+  useEffect(() => {
+    const updatePhTime = () => {
+      const now = new Date();
+      const dateOptions: Intl.DateTimeFormatOptions = { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      };
+      const timeOptions: Intl.DateTimeFormatOptions = { 
+        hour: '2-digit', 
+        minute: '2-digit', 
+        second: '2-digit', 
+        hour12: true 
+      };
+      
+      setPhDate(now.toLocaleDateString('en-US', dateOptions));
+      setPhTime(now.toLocaleTimeString('en-US', timeOptions));
+    };
+
+    updatePhTime();
+    const interval = setInterval(updatePhTime, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Synchronize Countdown Timer (resets every hour boundary starting from exactly 1 hour)
+  useEffect(() => {
+    const updateCountdown = () => {
+      const now = new Date();
+      const nextHour = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours() + 1, 0, 0, 0);
+      const diffSec = Math.floor((nextHour.getTime() - now.getTime()) / 1000);
+      
+      const hours = Math.floor(diffSec / 3600);
+      const minutes = Math.floor((diffSec % 3600) / 60);
+      const seconds = diffSec % 60;
+      
+      const formatted = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+      setCountdownTime(formatted);
+    };
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Set simulated sync time
   useEffect(() => {
@@ -65,54 +136,140 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="bg-[#0b0f19] min-h-screen w-full text-[#F9FAFB] font-sans flex flex-col justify-between animate-fade-in">
+    <div data-theme={theme} className="bg-[#0b0f19] min-h-screen w-full text-[#F9FAFB] font-sans flex flex-col justify-between relative overflow-x-hidden transition-colors duration-500 animate-fade-in">
       
       {/* Dynamic Background Glows */}
       <div className="absolute w-[500px] h-[500px] rounded-full bg-[#60A5FA] blur-[150px] opacity-5 pointer-events-none -translate-y-20 left-10" />
       <div className="absolute w-[450px] h-[450px] rounded-full bg-[#4ADE80] blur-[150px] opacity-5 pointer-events-none -translate-y-20 right-10" />
 
       {/* CORE ADMIN NAVIGATION HEADER */}
-      <header className="bg-[#111827] border-b border-[#374151] sticky top-0 z-20 px-6 py-4 flex justify-between items-center shadow-lg">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-[#60A5FA]/10 border border-[#60A5FA]/20 rounded-xl text-[#60A5FA]">
-            <ShieldAlert size={20} className="animate-pulse" />
+      <header className="bg-[#111827]/95 border-b border-[#374151]/70 sticky top-0 z-30 px-4 sm:px-6 py-3 flex flex-col md:flex-row justify-between items-center gap-3 backdrop-blur-md shadow-lg transition-all duration-300">
+        
+        {/* Branding Logo */}
+        <div className="flex items-center justify-between w-full md:w-auto">
+          <div className="flex items-center gap-2.5">
+            <div className="w-10 h-10 rounded-lg bg-[#1F2937] border border-[#374151] overflow-hidden flex items-center justify-center shrink-0">
+              <img src="/FLOWS.png" alt="FLOWS Logo" className="w-full h-full object-contain scale-[3.5]" />
+            </div>
+            <div>
+              <h1 className="text-base font-black tracking-tight text-white flex items-center gap-1.5 leading-none">
+                F.L.O.W.S. CONTROL
+                <span className="text-[9px] bg-[#60A5FA]/10 text-[#60A5FA] border border-[#60A5FA]/30 px-1.5 py-0.5 rounded font-black tracking-widest uppercase">Console</span>
+              </h1>
+              <p className="text-[8px] text-[#9CA3AF] font-bold uppercase tracking-wider mt-0.5">Barangay Rizal Rainfall System</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-base font-black tracking-tight flex items-center gap-1.5">
-              F.L.O.W.S. CONTROL
-              <span className="text-[9px] bg-[#60A5FA]/10 text-[#60A5FA] border border-[#60A5FA]/30 px-1.5 py-0.5 rounded font-black tracking-widest uppercase">Console</span>
-            </h1>
-            <p className="text-[10px] text-[#9CA3AF] font-semibold">Barangay Rizal Rainfall System</p>
+
+          {/* Mobile Right Quick Controls */}
+          <div className="flex md:hidden items-center gap-1.5">
+            <button
+              onClick={toggleTheme}
+              className="p-1.5 bg-[#1F2937] border border-[#374151] rounded-lg text-[#9CA3AF] hover:text-white cursor-pointer"
+              title="Toggle Theme"
+            >
+              {theme === 'dark' ? <Sun size={13} className="text-[#F59E0B]" /> : <Moon size={13} className="text-[#7c3aed]" />}
+            </button>
+            <button 
+              onClick={handleLogout}
+              className="p-1.5 bg-[#EF4444]/10 border border-[#EF4444]/30 rounded-lg text-[#EF4444] hover:bg-[#EF4444]/20 flex items-center justify-center cursor-pointer"
+              title="Logout"
+            >
+              <LogOut size={13} />
+            </button>
           </div>
         </div>
 
-        {/* Action Controls */}
-        <div className="flex items-center gap-4">
+        {/* Live Right-side controls (Desktop/Tablet) */}
+        <div className="hidden sm:flex items-center gap-2 shrink-0">
           
-          {/* System Online Status Badge */}
-          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#1F2937] border border-[#374151]">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#4ADE80] opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#4ADE80]"></span>
-            </span>
-            <span className="text-[10px] font-bold text-[#4ADE80] tracking-wider uppercase">Telemetry Established</span>
+          {/* Countdown Card (API Next Forecast) */}
+          <div className="flex items-center gap-2 bg-[#1F2937]/55 border border-[#374151]/60 px-3 py-1.5 rounded-xl shadow-inner select-none shrink-0">
+            <Clock size={14} className="text-[#60A5FA] animate-pulse" />
+            <div className="text-left leading-none">
+              <span className="text-[8px] font-black text-[#60A5FA] tracking-wider uppercase block mb-0.5">API NEXT FORECAST</span>
+              <span className="text-xs font-black font-mono tracking-tight text-white">{countdownTime || '00:59:59'}</span>
+            </div>
           </div>
 
-          {/* User profile dropdown indicator */}
-          <div className="flex items-center gap-2 text-xs font-bold text-[#9CA3AF] bg-[#1F2937]/50 border border-[#374151]/50 py-1.5 px-3 rounded-lg">
+          {/* Date & Time Card with Aligned Philippine Flag */}
+          <div className="flex items-center gap-2.5 bg-[#1F2937]/55 border border-[#374151]/60 px-3 py-1.5 rounded-xl shadow-inner select-none shrink-0 justify-center">
+            <div className="text-left leading-none space-y-1">
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-black font-mono tracking-tight text-white">{phTime || '10:27:00 PM'}</span>
+                <span className="text-[8px] font-black text-[#60A5FA] tracking-wider uppercase bg-[#60A5FA]/10 px-1.5 py-0.5 rounded flex items-center gap-1 select-none">
+                  PH <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 9" className="w-4 h-2 shadow-sm rounded-[1px] inline-block align-middle select-none">
+                    <rect width="18" height="9" fill="#FCD116" />
+                    <rect width="18" height="4.5" fill="#0038A8" />
+                    <rect y="4.5" width="18" height="4.5" fill="#CE1126" />
+                    <polygon points="0,0 0,9 7.79,4.5" fill="#FFFFFF" />
+                    <circle cx="2.5" cy="4.5" r="0.9" fill="#FCD116" />
+                  </svg>
+                </span>
+              </div>
+              <div className="text-[9px] text-[#9CA3AF] font-bold tracking-wide">{phDate || 'Thursday, May 21, 2026'}</div>
+            </div>
+          </div>
+
+          {/* User profile indicator */}
+          <div className="flex items-center gap-2 text-xs font-bold text-[#9CA3AF] bg-[#1F2937]/50 border border-[#374151]/50 py-1.5 px-3 rounded-xl select-none">
             <User size={12} className="text-[#60A5FA]" />
-            <span className="capitalize">{currentUser}</span>
+            <span className="capitalize text-white">{currentUser}</span>
           </div>
 
-          {/* Logout Button */}
+          {/* Sun/Moon Theme Toggle Trigger */}
+          <button
+            onClick={toggleTheme}
+            className="p-2 bg-[#1F2937]/80 hover:bg-[#253245] border border-[#374151] hover:border-[#60A5FA]/40 rounded-xl text-[#9CA3AF] hover:text-white transition-all shadow-md group shrink-0 cursor-pointer"
+            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          >
+            {theme === 'dark' ? (
+              <Sun size={15} className="text-[#F59E0B] animate-spin" style={{ animationDuration: '10s' }} />
+            ) : (
+              <Moon size={15} className="text-[#7c3aed]" />
+            )}
+          </button>
+
+          {/* Logout Button positioned at the very right */}
           <button 
             onClick={handleLogout}
-            className="flex items-center gap-1.5 bg-[#EF4444]/10 hover:bg-[#EF4444]/20 border border-[#EF4444]/30 hover:border-[#EF4444]/50 py-1.5 px-3 rounded-lg text-xs font-extrabold text-[#EF4444] transition-all duration-150"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#EF4444]/10 hover:bg-[#EF4444]/20 border border-[#EF4444]/30 hover:border-[#EF4444]/50 rounded-xl text-xs font-black text-[#EF4444] transition-all shadow-md group shrink-0 cursor-pointer"
+            title="Logout and Close Console Session"
           >
-            <LogOut size={12} />
             <span>Logout</span>
+            <LogOut size={12} className="transform group-hover:translate-x-0.5 transition-transform" />
           </button>
+
         </div>
+
+        {/* Mobile Header Row for Time & Countdown */}
+        <div className="flex sm:hidden items-center justify-between w-full gap-2 border-t border-[#374151]/30 pt-2 select-none">
+          {/* Countdown Card */}
+          <div className="flex items-center gap-1.5 bg-[#1F2937]/55 border border-[#374151]/60 px-2.5 py-1 rounded-lg shadow-inner flex-1 justify-center">
+            <Clock size={11} className="text-[#60A5FA]" />
+            <div className="text-left leading-none">
+              <span className="text-[7px] font-black text-[#60A5FA] tracking-wider uppercase block">NEXT FORECAST</span>
+              <span className="text-[10px] font-bold font-mono tracking-tight text-white">{countdownTime || '00:59:59'}</span>
+            </div>
+          </div>
+          {/* Date & Time Card */}
+          <div className="flex items-center gap-1.5 bg-[#1F2937]/55 border border-[#374151]/60 px-2.5 py-1 rounded-lg shadow-inner flex-1 justify-center">
+            <div className="text-center leading-none">
+              <div className="flex items-center justify-center gap-1">
+                <span className="text-[10px] font-bold font-mono tracking-tight text-white">{phTime ? phTime.replace(/:\d+\s/, ' ') : '10:27 PM'}</span>
+                <span className="text-[7px] font-black text-[#60A5FA] tracking-wider uppercase bg-[#60A5FA]/10 px-1 rounded flex items-center gap-0.5">
+                  PH <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 9" className="w-3.5 h-1.5 shadow-sm rounded-[1px] inline-block align-middle select-none">
+                    <rect width="18" height="9" fill="#FCD116" />
+                    <rect width="18" height="4.5" fill="#0038A8" />
+                    <rect y="4.5" width="18" height="4.5" fill="#CE1126" />
+                    <polygon points="0,0 0,9 7.79,4.5" fill="#FFFFFF" />
+                    <circle cx="2.5" cy="4.5" r="0.9" fill="#FCD116" />
+                  </svg>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </header>
 
       {/* MAIN CONTAINER */}
@@ -271,6 +428,107 @@ export default function AdminDashboard() {
             <p>
               All active modifications to zone profiles, threshold calibrations, and validated history records require administrative credentials. Any changes recorded will be automatically cataloged in the local storage telemetry ledger for auditing purposes.
             </p>
+          </div>
+        </div>
+
+        {/* DOPPLER API HEARTBEAT / HEALTH LOGS TERMINAL */}
+        <div className="space-y-3.5">
+          <h3 className="text-xs font-black uppercase text-[#9CA3AF] tracking-wider ml-1">
+            Doppler API Heartbeat &amp; Health Logs
+          </h3>
+
+          <div className="bg-[#111827] border border-[#374151] rounded-2xl overflow-hidden shadow-2xl">
+            
+            {/* Terminal Header Bar */}
+            <div className="flex items-center justify-between px-5 py-3 bg-[#0b0f19] border-b border-[#374151]/60">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#EF4444]" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#F59E0B]" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#4ADE80]" />
+                </div>
+                <span className="text-[10px] font-mono font-bold text-[#9CA3AF] tracking-widest uppercase">FLOWS-DOPPLER-STREAM v2.4.1 — Live API Monitor</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#4ADE80] animate-ping" />
+                <span className="text-[9px] font-bold text-[#4ADE80] uppercase tracking-wider">STREAM ACTIVE</span>
+              </div>
+            </div>
+
+            {/* Terminal Log Lines */}
+            <div className="p-5 font-mono text-[11px] space-y-1.5 max-h-72 overflow-y-auto select-text">
+              <div className="flex items-start gap-3">
+                <span className="text-[#4ADE80] font-black shrink-0">[ OK ]</span>
+                <span className="text-[#9CA3AF]"><span className="text-[#374151]">2026-05-22 00:58:01</span> — Doppler radar sync established on port :8443. Handshake successful.</span>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="text-[#4ADE80] font-black shrink-0">[ OK ]</span>
+                <span className="text-[#9CA3AF]"><span className="text-[#374151]">2026-05-22 00:58:03</span> — Zone 1 (Purok Narra) telemetry pull: 32.8 mm/hr. Record committed.</span>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="text-[#4ADE80] font-black shrink-0">[ OK ]</span>
+                <span className="text-[#9CA3AF]"><span className="text-[#374151]">2026-05-22 00:58:04</span> — Zone 2 (Purok Mahogany) telemetry pull: 12.4 mm/hr. Record committed.</span>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="text-[#F59E0B] font-black shrink-0">[WARN]</span>
+                <span className="text-[#9CA3AF]"><span className="text-[#374151]">2026-05-22 00:58:05</span> — Zone 2: Rain rate anomaly spike detected (45.2 mm/hr). Flagging for review.</span>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="text-[#4ADE80] font-black shrink-0">[ OK ]</span>
+                <span className="text-[#9CA3AF]"><span className="text-[#374151]">2026-05-22 00:58:06</span> — Zone 3 (Sitio Pag-asa) telemetry pull: 22.1 mm/hr. Record committed.</span>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="text-[#4ADE80] font-black shrink-0">[ OK ]</span>
+                <span className="text-[#9CA3AF]"><span className="text-[#374151]">2026-05-22 00:58:07</span> — Zone 4 (Purok Acacia) telemetry pull: 8.5 mm/hr. Record committed.</span>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="text-[#4ADE80] font-black shrink-0">[ OK ]</span>
+                <span className="text-[#9CA3AF]"><span className="text-[#374151]">2026-05-22 00:58:08</span> — Zone 5 (Centro) telemetry pull: 3.2 mm/hr. Record committed.</span>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="text-[#EF4444] font-black shrink-0">[ ERR]</span>
+                <span className="text-[#9CA3AF]"><span className="text-[#374151]">2026-05-22 00:58:09</span> — Doppler echo timeout on Zone 1 secondary sensor (node-1B). Retrying in 5s...</span>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="text-[#4ADE80] font-black shrink-0">[ OK ]</span>
+                <span className="text-[#9CA3AF]"><span className="text-[#374151]">2026-05-22 00:58:14</span> — Zone 1 secondary sensor (node-1B) reconnected. Telemetry restored.</span>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="text-[#4ADE80] font-black shrink-0">[ OK ]</span>
+                <span className="text-[#9CA3AF]"><span className="text-[#374151]">2026-05-22 00:58:15</span> — Full sector sweep complete. 5 of 5 zones reporting. API health: OPTIMAL.</span>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="text-[#4ADE80] font-black shrink-0">[ OK ]</span>
+                <span className="text-[#9CA3AF]"><span className="text-[#374151]">2026-05-22 00:59:01</span> — Scheduled 60-second heartbeat ping to PAGASA relay endpoint. Response: 200 OK.</span>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="text-[#A78BFA] font-black shrink-0">[INFO]</span>
+                <span className="text-[#9CA3AF]"><span className="text-[#374151]">2026-05-22 01:00:00</span> — Hourly forecast batch dispatched to resident observation frontend. Zones synced: 5.</span>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="text-[#4ADE80] font-black shrink-0">[ OK ]</span>
+                <span className="text-[#9CA3AF]"><span className="text-[#374151]">2026-05-22 01:00:02</span> — All telemetry streams nominal. Next full sweep in 60 seconds.</span>
+              </div>
+              {/* Blinking cursor line */}
+              <div className="flex items-center gap-3 mt-2">
+                <span className="text-[#60A5FA] font-black shrink-0 animate-pulse">[ &gt;&gt; ]</span>
+                <span className="text-[#60A5FA] font-mono text-[11px]">Waiting for next API cycle...<span className="inline-block w-1.5 h-3 bg-[#60A5FA] ml-0.5 animate-pulse align-middle" /></span>
+              </div>
+            </div>
+
+            {/* Terminal footer stats row */}
+            <div className="bg-[#0b0f19] border-t border-[#374151]/60 px-5 py-2.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-[9px] font-mono">
+              <div className="flex items-center gap-4">
+                <span className="text-[#4ADE80] font-bold">✓ 11 OK</span>
+                <span className="text-[#F59E0B] font-bold">⚠ 1 WARN</span>
+                <span className="text-[#EF4444] font-bold">✗ 1 ERR (Resolved)</span>
+                <span className="text-[#A78BFA] font-bold">ℹ 1 INFO</span>
+              </div>
+              <div className="text-[#9CA3AF]">
+                API Endpoint: <span className="text-[#60A5FA]">doppler.flows.pagasa.relay:8443</span> · Latency: <span className="text-[#4ADE80]">38ms</span>
+              </div>
+            </div>
+
           </div>
         </div>
 

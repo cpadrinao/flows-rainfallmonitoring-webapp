@@ -20,17 +20,42 @@ import {
   CheckCircle2,
   AlertCircle,
   ArrowLeft,
+  ArrowRight,
+  Sun,
+  Moon,
   Calendar,
   Clock
 } from 'lucide-react';
 
 export default function EmergencyPage() {
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [activeCenter, setActiveCenter] = useState('center-1');
   
   // Date & Time states in Philippine Time
   const [phTime, setPhTime] = useState<string>('');
   const [phDate, setPhDate] = useState<string>('');
+  const [countdownTime, setCountdownTime] = useState<string>('');
 
+  // Load and apply theme from local storage
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme') as 'dark' | 'light';
+    if (savedTheme) {
+      setTheme(savedTheme);
+    }
+  }, []);
+
+  // Apply theme to html element so CSS selectors [data-theme="light"] work globally
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    const nextTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(nextTheme);
+    localStorage.setItem('theme', nextTheme);
+  };
+
+  // Synchronize Live Time
   useEffect(() => {
     const updatePhTime = () => {
       const now = new Date();
@@ -56,72 +81,176 @@ export default function EmergencyPage() {
     return () => clearInterval(interval);
   }, []);
 
+  // Synchronize Countdown Timer (resets every hour boundary starting from exactly 1 hour)
+  useEffect(() => {
+    const updateCountdown = () => {
+      const now = new Date();
+      const nextHour = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours() + 1, 0, 0, 0);
+      const diffSec = Math.floor((nextHour.getTime() - now.getTime()) / 1000);
+      
+      const hours = Math.floor(diffSec / 3600);
+      const minutes = Math.floor((diffSec % 3600) / 60);
+      const seconds = diffSec % 60;
+      
+      const formatted = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+      setCountdownTime(formatted);
+    };
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
-    <div className="bg-[#0b0f19] min-h-screen w-full text-[#F9FAFB] font-sans flex flex-col justify-between relative overflow-x-hidden">
+    <div data-theme={theme} className="bg-[#0b0f19] min-h-screen w-full text-[#F9FAFB] font-sans flex flex-col justify-between relative overflow-x-hidden transition-colors duration-500">
       
       {/* Background Ambient Red Glow for Emergency Context */}
       <div className="absolute w-[600px] h-[600px] rounded-full bg-[#EF4444] blur-[160px] opacity-10 pointer-events-none left-1/2 -translate-x-1/2 -top-[100px]" />
 
-      {/* TOP NAVBAR (Same responsive style as main dashboard) */}
-      <header className="bg-[#111827]/95 border-b border-[#374151]/70 sticky top-0 z-30 px-4 sm:px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4 backdrop-blur-md shadow-lg">
+      {/* TOP NAVBAR (Gives smooth desktop integration and dynamic time/flag indicators) */}
+      <header className="bg-[#111827]/95 border-b border-[#374151]/70 sticky top-0 z-30 px-4 sm:px-6 py-3 flex flex-col md:flex-row justify-between items-center gap-3 backdrop-blur-md shadow-lg transition-all duration-300">
         
-        {/* Branding & Back to Gateway */}
+        {/* Branding Logo */}
         <div className="flex items-center justify-between w-full md:w-auto">
-          <div className="flex items-center gap-3">
-            <Link 
-              href="/?view=gateway" 
-              className="inline-flex items-center gap-2 px-3.5 py-2 bg-[#1F2937] hover:bg-[#253245] border border-[#374151] hover:border-[#60A5FA]/30 rounded-xl text-xs font-black text-[#F9FAFB] hover:text-white transition-all shadow-md group shrink-0"
-              title="Back to Landing Page"
-            >
-              <ArrowLeft size={14} className="transform group-hover:-translate-x-0.5 transition-transform" />
-              <span>Back to Landing Page</span>
-            </Link>
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-[#1F2937] border border-[#374151] p-0.5 overflow-hidden flex items-center justify-center shrink-0">
+              <img src="/FLOWS.png" alt="FLOWS Logo" className="w-full h-full object-contain" />
+            </div>
             <div>
-              <h1 className="text-lg font-black tracking-tight text-white flex items-center gap-1.5 ml-1">
+              <h1 className="text-base font-black tracking-tight text-white flex items-center gap-1.5 leading-none">
                 EMERGENCY HUB
                 <span className="w-1.5 h-1.5 bg-[#EF4444] rounded-full animate-ping"></span>
               </h1>
-              <p className="text-[10px] text-[#EF4444] font-bold tracking-wider uppercase ml-1">Barangay Rizal Portal</p>
+              <p className="text-[8px] text-[#9CA3AF] font-bold uppercase tracking-wider mt-0.5">Barangay Rizal Rescue Portal</p>
             </div>
+          </div>
+
+          {/* Mobile Right Quick Controls */}
+          <div className="flex md:hidden items-center gap-1.5">
+            <button
+              onClick={toggleTheme}
+              className="p-1.5 bg-[#1F2937] border border-[#374151] rounded-lg text-[#9CA3AF] hover:text-white cursor-pointer"
+              title="Toggle Theme"
+            >
+              {theme === 'dark' ? <Sun size={13} className="text-[#F59E0B]" /> : <Moon size={13} className="text-[#7c3aed]" />}
+            </button>
+            <Link 
+              href="/?view=gateway"
+              className="p-1.5 bg-[#1F2937] border border-[#374151] rounded-lg text-[#9CA3AF] hover:text-white flex items-center justify-center cursor-pointer"
+              title="Back to Landing Page"
+            >
+              <Home size={13} />
+            </Link>
           </div>
         </div>
 
         {/* DESKTOP INTEGRATED NAVIGATION TABS */}
-        <nav className="hidden md:flex items-center gap-2 bg-[#1F2937]/50 border border-[#374151]/50 p-1 rounded-xl">
+        <nav className="hidden md:flex items-center gap-1.5 bg-[#1F2937]/50 border border-[#374151]/50 p-1 rounded-xl">
           <Link
             href="/?view=dashboard&tab=weather"
-            className="px-4 py-2 text-xs font-black uppercase rounded-lg text-[#9CA3AF] hover:text-white transition-colors"
+            className="px-3 py-1.5 text-xs font-black uppercase rounded-lg text-[#9CA3AF] hover:text-white transition-colors"
           >
             Weather Dashboard
           </Link>
           <Link
             href="/?view=dashboard&tab=zones"
-            className="px-4 py-2 text-xs font-black uppercase rounded-lg text-[#9CA3AF] hover:text-white transition-colors"
+            className="px-3 py-1.5 text-xs font-black uppercase rounded-lg text-[#9CA3AF] hover:text-white transition-colors"
           >
             Zones Overview
           </Link>
           <Link
             href="/?view=dashboard&tab=alerts"
-            className="px-4 py-2 text-xs font-black uppercase rounded-lg text-[#9CA3AF] hover:text-white transition-colors"
+            className="px-3 py-1.5 text-xs font-black uppercase rounded-lg text-[#9CA3AF] hover:text-white transition-colors"
           >
             Alert Warnings
           </Link>
           <div
-            className="px-4 py-2 text-xs font-black uppercase rounded-lg bg-[#111827] text-[#EF4444] border border-[#EF4444]/20 cursor-default"
+            className="px-3 py-1.5 text-xs font-black uppercase rounded-lg bg-[#111827] text-[#EF4444] border border-[#EF4444]/20 cursor-default"
           >
             Emergency Hub
           </div>
         </nav>
 
-        {/* Live Date, Time & PST 🇵🇭 Badge (Fully Responsive) */}
-        <div className="flex items-center gap-2.5 bg-[#1F2937]/55 border border-[#374151]/60 px-3 py-1.5 rounded-xl shadow-inner w-full md:w-auto justify-center md:justify-end">
-          <span className="text-sm select-none">🇵🇭</span>
-          <div className="text-left leading-none space-y-1">
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs font-black font-mono tracking-tight text-white select-none">{phTime || '10:27:00 PM'}</span>
-              <span className="text-[8px] font-black text-[#EF4444] tracking-wider uppercase bg-[#EF4444]/10 px-1 rounded select-none">PST</span>
+        {/* Live Right-side controls (Desktop/Tablet) */}
+        <div className="hidden sm:flex items-center gap-2 shrink-0">
+          
+          {/* Countdown Card (API Next Forecast) */}
+          <div className="flex items-center gap-2 bg-[#1F2937]/55 border border-[#374151]/60 px-3 py-1.5 rounded-xl shadow-inner select-none shrink-0">
+            <Clock size={14} className="text-[#EF4444] animate-pulse" />
+            <div className="text-left leading-none">
+              <span className="text-[8px] font-black text-[#EF4444] tracking-wider uppercase block mb-0.5">API NEXT FORECAST</span>
+              <span className="text-xs font-black font-mono tracking-tight text-white">{countdownTime || '00:59:59'}</span>
             </div>
-            <div className="text-[9px] text-[#9CA3AF] font-bold tracking-wide select-none">{phDate || 'Thursday, May 21, 2026'}</div>
+          </div>
+
+          {/* Date & Time Card with Aligned Philippine Flag */}
+          <div className="flex items-center gap-2.5 bg-[#1F2937]/55 border border-[#374151]/60 px-3 py-1.5 rounded-xl shadow-inner select-none shrink-0 justify-center">
+            <div className="text-left leading-none space-y-1">
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-black font-mono tracking-tight text-white">{phTime || '10:27:00 PM'}</span>
+                <span className="text-[8px] font-black text-[#EF4444] tracking-wider uppercase bg-[#EF4444]/10 px-1.5 py-0.5 rounded flex items-center gap-1 select-none">
+                  PH <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 9" className="w-4 h-2 shadow-sm rounded-[1px] inline-block align-middle select-none">
+                    <rect width="18" height="9" fill="#FCD116" />
+                    <rect width="18" height="4.5" fill="#0038A8" />
+                    <rect y="4.5" width="18" height="4.5" fill="#CE1126" />
+                    <polygon points="0,0 0,9 7.79,4.5" fill="#FFFFFF" />
+                    <circle cx="2.5" cy="4.5" r="0.9" fill="#FCD116" />
+                  </svg>
+                </span>
+              </div>
+              <div className="text-[9px] text-[#9CA3AF] font-bold tracking-wide">{phDate || 'Thursday, May 21, 2026'}</div>
+            </div>
+          </div>
+
+          {/* Sun/Moon Theme Toggle Trigger */}
+          <button
+            onClick={toggleTheme}
+            className="p-2 bg-[#1F2937]/80 hover:bg-[#253245] border border-[#374151] hover:border-[#60A5FA]/40 rounded-xl text-[#9CA3AF] hover:text-white transition-all shadow-md group shrink-0 cursor-pointer"
+            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          >
+            {theme === 'dark' ? (
+              <Sun size={15} className="text-[#F59E0B] animate-spin" style={{ animationDuration: '10s' }} />
+            ) : (
+              <Moon size={15} className="text-[#7c3aed]" />
+            )}
+          </button>
+
+          {/* Back to Landing Page Button positioned at the very right */}
+          <Link 
+            href="/?view=gateway"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#1F2937] hover:bg-[#253245] border border-[#374151] hover:border-[#60A5FA]/40 rounded-xl text-xs font-black text-[#F9FAFB] hover:text-white transition-all shadow-md group shrink-0 cursor-pointer"
+            title="Back to Landing Page"
+          >
+            <span>Back to Landing</span>
+          </Link>
+
+        </div>
+
+        {/* Mobile Header Row for Time & Countdown */}
+        <div className="flex sm:hidden items-center justify-between w-full gap-2 border-t border-[#374151]/30 pt-2 select-none">
+          {/* Countdown Card */}
+          <div className="flex items-center gap-1.5 bg-[#1F2937]/55 border border-[#374151]/60 px-2.5 py-1 rounded-lg shadow-inner flex-1 justify-center">
+            <Clock size={11} className="text-[#EF4444]" />
+            <div className="text-left leading-none">
+              <span className="text-[7px] font-black text-[#EF4444] tracking-wider uppercase block">NEXT FORECAST</span>
+              <span className="text-[10px] font-bold font-mono tracking-tight text-white">{countdownTime || '00:59:59'}</span>
+            </div>
+          </div>
+          {/* Date & Time Card */}
+          <div className="flex items-center gap-1.5 bg-[#1F2937]/55 border border-[#374151]/60 px-2.5 py-1 rounded-lg shadow-inner flex-1 justify-center">
+            <div className="text-center leading-none">
+              <div className="flex items-center justify-center gap-1">
+                <span className="text-[10px] font-bold font-mono tracking-tight text-white">{phTime ? phTime.replace(/:\d+\s/, ' ') : '10:27 PM'}</span>
+                <span className="text-[7px] font-black text-[#EF4444] tracking-wider uppercase bg-[#EF4444]/10 px-1 rounded flex items-center gap-0.5">
+                  PH <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 9" className="w-3.5 h-1.5 shadow-sm rounded-[1px] inline-block align-middle select-none">
+                    <rect width="18" height="9" fill="#FCD116" />
+                    <rect width="18" height="4.5" fill="#0038A8" />
+                    <rect y="4.5" width="18" height="4.5" fill="#CE1126" />
+                    <polygon points="0,0 0,9 7.79,4.5" fill="#FFFFFF" />
+                    <circle cx="2.5" cy="4.5" r="0.9" fill="#FCD116" />
+                  </svg>
+                </span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -317,7 +446,7 @@ export default function EmergencyPage() {
       </main>
 
       {/* DOCK-STABLE BOTTOM NAVIGATION BAR ON MOBILE DEVICES */}
-      <div className="fixed bottom-4 left-4 right-4 z-40 md:hidden">
+      <div className="flows-fixed-nav pb-[env(safe-area-inset-bottom)]">
         <nav className="bg-[#1F2937]/90 border border-[#374151]/80 rounded-2xl flex justify-around items-center px-2 py-2 backdrop-blur-lg shadow-2xl">
           
           <Link 

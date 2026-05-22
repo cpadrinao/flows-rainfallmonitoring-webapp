@@ -8,6 +8,7 @@ import {
   CloudDrizzle,
   Cloud,
   Sun,
+  Moon,
   Droplets, 
   Timer, 
   Activity, 
@@ -31,7 +32,8 @@ import {
   ArrowLeft,
   Calendar,
   Clock,
-  Compass
+  Compass,
+  Home
 } from 'lucide-react';
 
 // Define TS Interfaces for Zone Weather Data
@@ -137,6 +139,9 @@ const ZONES_DATABASE: Record<string, ZoneData> = {
 };
 
 export default function FLOWSApp() {
+  // Theme state
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+
   // Portal vs Dashboard view mode selector
   const [viewMode, setViewMode] = useState<'gateway' | 'dashboard'>('gateway');
   const [activeTab, setActiveTab] = useState<'weather' | 'zones' | 'alerts'>('weather');
@@ -146,6 +151,7 @@ export default function FLOWSApp() {
   // Date & Time states in Philippine Time
   const [phTime, setPhTime] = useState<string>('');
   const [phDate, setPhDate] = useState<string>('');
+  const [countdownTime, setCountdownTime] = useState<string>('');
 
   // Handle URL query parameter synchronization
   useEffect(() => {
@@ -189,6 +195,26 @@ export default function FLOWSApp() {
     }
   };
 
+  // Load and apply theme from local storage
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme') as 'dark' | 'light';
+    if (savedTheme) {
+      setTheme(savedTheme);
+    }
+  }, []);
+
+  // Apply theme to html element so CSS selectors [data-theme="light"] work globally
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    const nextTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(nextTheme);
+    localStorage.setItem('theme', nextTheme);
+  };
+
+  // Synchronize Live Time
   useEffect(() => {
     const updatePhTime = () => {
       const now = new Date();
@@ -212,6 +238,25 @@ export default function FLOWSApp() {
 
     updatePhTime();
     const interval = setInterval(updatePhTime, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Synchronize Countdown Timer (resets every hour boundary starting from exactly 1 hour)
+  useEffect(() => {
+    const updateCountdown = () => {
+      const now = new Date();
+      const nextHour = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours() + 1, 0, 0, 0);
+      const diffSec = Math.floor((nextHour.getTime() - now.getTime()) / 1000);
+      
+      const hours = Math.floor(diffSec / 3600);
+      const minutes = Math.floor((diffSec % 3600) / 60);
+      const seconds = diffSec % 60;
+      
+      const formatted = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+      setCountdownTime(formatted);
+    };
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
     return () => clearInterval(interval);
   }, []);
 
@@ -258,7 +303,7 @@ export default function FLOWSApp() {
   };
 
   return (
-    <div className="bg-[#0b0f19] min-h-screen w-full text-[#F9FAFB] font-sans flex flex-col justify-between relative overflow-x-hidden">
+    <div data-theme={theme} className="bg-[#0b0f19] min-h-screen w-full text-[#F9FAFB] font-sans flex flex-col justify-between relative overflow-x-hidden transition-colors duration-500">
       
       {/* Background ambient radial glowing color aura */}
       <div 
@@ -272,13 +317,58 @@ export default function FLOWSApp() {
       {/* ========================================================
           GATEWAY SCREEN (Clean welcome page with two choices)
           ======================================================== */}
+      {/* FLOATING WEATHER BACKGROUND PARTICLES (Floats across entire screen and blurs behind central cards) */}
       {viewMode === 'gateway' && (
-        <div className="flex-1 w-full max-w-lg mx-auto px-4 py-8 flex flex-col justify-center items-center z-10 space-y-8 animate-fade-in">
+        <div className="fixed inset-0 w-full h-full pointer-events-none overflow-hidden z-0 select-none" style={{ maskImage: 'radial-gradient(ellipse 75% 60% at 50% 50%, transparent 28%, black 65%)', WebkitMaskImage: 'radial-gradient(ellipse 75% 60% at 50% 50%, transparent 28%, black 65%)' }}>
+          {/* Cloud 1 */}
+          <div className="absolute top-[10%] left-[8%] text-[#60A5FA]/20 animate-float-slow transform scale-110">
+            <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"><path d="M17.5 19A3.5 3.5 0 0 0 21 15.5c0-2.79-2.54-4.5-5-4.5-.48 0-.96.06-1.4.17A5.5 5.5 0 0 0 4 13.5a3.5 3.5 0 0 0 3.5 3.5h10Z"/></svg>
+          </div>
+          {/* Sun */}
+          <div className="absolute top-[20%] right-[12%] text-[#F59E0B]/15 animate-float-medium transform scale-125">
+            <svg xmlns="http://www.w3.org/2000/svg" width="90" height="90" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+          </div>
+          {/* Raindrop 1 */}
+          <div className="absolute bottom-[25%] left-[15%] text-[#60A5FA]/25 animate-float-fast transform scale-90">
+            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22a7 7 0 0 0 7-7c0-4.3-7-11-7-11S5 10.7 5 15a7 7 0 0 0 7 7z"/></svg>
+          </div>
+          {/* Raindrop 2 */}
+          <div className="absolute top-[45%] left-[25%] text-[#60A5FA]/20 animate-float-slow transform scale-110">
+            <svg xmlns="http://www.w3.org/2000/svg" width="45" height="45" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22a7 7 0 0 0 7-7c0-4.3-7-11-7-11S5 10.7 5 15a7 7 0 0 0 7 7z"/></svg>
+          </div>
+          {/* Cloud 2 */}
+          <div className="absolute bottom-[15%] right-[18%] text-[#9CA3AF]/15 animate-float-slow transform scale-125">
+            <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16z"/><path d="M20 19.5A2.5 2.5 0 0 0 17.5 17h-11A2.5 2.5 0 0 0 4 19.5c0 .28.22.5.5.5h15c.28 0 .5-.22.5-.5z"/></svg>
+          </div>
+          {/* Lightning Bolt */}
+          <div className="absolute top-[55%] right-[30%] text-[#F59E0B]/20 animate-float-fast transform scale-110">
+            <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          </div>
+          {/* Drizzle Cloud */}
+          <div className="absolute top-[60%] left-[10%] text-[#60A5FA]/15 animate-float-medium transform scale-110">
+            <svg xmlns="http://www.w3.org/2000/svg" width="75" height="75" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"><path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"/><path d="M8 19v2"/><path d="M12 21v2"/><path d="M16 19v2"/></svg>
+          </div>
+          {/* Extra top-right Cloud */}
+          <div className="absolute top-[5%] right-[25%] text-[#60A5FA]/12 animate-float-medium transform scale-150">
+            <svg xmlns="http://www.w3.org/2000/svg" width="110" height="110" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="0.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17.5 19A3.5 3.5 0 0 0 21 15.5c0-2.79-2.54-4.5-5-4.5-.48 0-.96.06-1.4.17A5.5 5.5 0 0 0 4 13.5a3.5 3.5 0 0 0 3.5 3.5h10Z"/></svg>
+          </div>
+          {/* Extra bottom-left Raindrop */}
+          <div className="absolute bottom-[10%] left-[40%] text-[#60A5FA]/18 animate-float-slow transform scale-100">
+            <svg xmlns="http://www.w3.org/2000/svg" width="35" height="35" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22a7 7 0 0 0 7-7c0-4.3-7-11-7-11S5 10.7 5 15a7 7 0 0 0 7 7z"/></svg>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================
+          GATEWAY SCREEN (Clean welcome page with two choices)
+          ======================================================= */}
+      {viewMode === 'gateway' && (
+        <div className="relative flex-1 w-full max-w-xl mx-auto px-4 py-8 flex flex-col justify-center items-center z-10 space-y-6 animate-fade-in min-h-[80vh]">
           
           {/* Logo & Headline */}
-          <div className="text-center space-y-4">
-            <div className="inline-flex items-center justify-center p-4 bg-[#60A5FA]/10 border border-[#60A5FA]/20 rounded-3xl text-[#60A5FA] mb-2 shadow-inner">
-              <ShieldAlert size={48} className="animate-pulse" />
+          <div className="text-center space-y-3 z-10 relative">
+            <div className="inline-flex items-center justify-center bg-[#1F2937] border border-[#374151] rounded-3xl mb-2 shadow-2xl overflow-hidden w-36 h-36 mx-auto hover:scale-105 transition-transform duration-300">
+              <img src="/FLOWS.png" alt="FLOWS Logo" className="w-full h-full object-contain scale-[3.5] transition-transform" />
             </div>
             <h1 className="text-4xl font-black text-white tracking-tight flex items-center justify-center gap-2">
               F.L.O.W.S.
@@ -287,40 +377,72 @@ export default function FLOWSApp() {
                 <span className="relative inline-flex rounded-full h-3 w-3 bg-[#4ADE80]"></span>
               </span>
             </h1>
-            <p className="text-xs font-bold text-[#9CA3AF] max-w-xs mx-auto leading-relaxed">
-              Barangay Rizal Flood and Rainfall Observatory
+            <p className="text-xs font-black text-[#60A5FA] max-w-sm mx-auto leading-relaxed uppercase tracking-wider">
+              Flood Level Observation and Warning System
+            </p>
+          </div>
+
+          {/* New Description Card */}
+          <div className="bg-[#1F2937]/85 border border-[#374151]/80 rounded-2xl p-6 text-center max-w-md mx-auto space-y-2.5 shadow-2xl backdrop-blur-xl z-10 relative">
+            <p className="text-sm font-black text-white uppercase tracking-wider">Your Local Weather Hub</p>
+            <p className="text-xs text-[#9CA3AF] leading-relaxed">
+              F.L.O.W.S. is your direct source for real-time weather updates in Barangay Rizal. Our automated system tracks heavy rainfall across different local zones, giving you the clear, reliable information you need to stay safe and prepare early.
             </p>
           </div>
 
           {/* Main Choices Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-md">
             
             {/* CHOICE 1: Resident Observatory Dashboard */}
             <button 
               onClick={enterDashboard}
-              className="bg-[#1F2937]/80 hover:bg-[#253245] border border-[#374151] hover:border-[#60A5FA]/40 rounded-2xl p-6 text-center transition-all duration-300 shadow-xl group text-white flex flex-col items-center justify-center space-y-3 cursor-pointer"
+              className="bg-[#1F2937]/80 hover:bg-[#253245] border border-[#374151] hover:border-[#60A5FA]/40 rounded-2xl p-5 text-center transition-all duration-300 shadow-xl group text-white flex flex-col items-center justify-center space-y-3 cursor-pointer backdrop-blur-xl"
             >
-              <div className="p-3.5 bg-[#60A5FA]/10 border border-[#60A5FA]/20 rounded-xl text-[#60A5FA] group-hover:scale-110 transition-transform">
+              <div className="p-3 bg-[#60A5FA]/10 border border-[#60A5FA]/20 rounded-xl text-[#60A5FA] group-hover:scale-110 transition-transform">
                 <CloudRain size={24} />
               </div>
-              <span className="text-base font-black text-white group-hover:text-[#60A5FA] transition-colors leading-tight">
-                View Dashboard
-              </span>
+              <div className="flex flex-col items-center space-y-1">
+                <span className="text-base font-black text-white group-hover:text-[#60A5FA] transition-colors leading-tight">
+                  View Dashboard
+                </span>
+                <span className="text-[9px] uppercase font-black tracking-wider text-[#60A5FA] bg-[#60A5FA]/10 px-2 py-0.5 rounded">
+                  For Residents
+                </span>
+              </div>
             </button>
 
             {/* CHOICE 2: Log in as Admin */}
             <Link 
               href="/admin/login"
-              className="bg-[#1F2937]/80 hover:bg-[#253245] border border-[#374151] hover:border-[#A78BFA]/40 rounded-2xl p-6 text-center transition-all duration-300 shadow-xl group text-white flex flex-col items-center justify-center space-y-3 cursor-pointer"
+              className="bg-[#1F2937]/80 hover:bg-[#253245] border border-[#374151] hover:border-[#A78BFA]/40 rounded-2xl p-5 text-center transition-all duration-300 shadow-xl group text-white flex flex-col items-center justify-center space-y-3 cursor-pointer backdrop-blur-xl"
             >
-              <div className="p-3.5 bg-[#A78BFA]/10 border border-[#A78BFA]/20 rounded-xl text-[#A78BFA] group-hover:scale-110 transition-transform">
+              <div className="p-3 bg-[#A78BFA]/10 border border-[#A78BFA]/20 rounded-xl text-[#A78BFA] group-hover:scale-110 transition-transform">
                 <Lock size={24} />
               </div>
-              <span className="text-base font-black text-white group-hover:text-[#A78BFA] transition-colors leading-tight">
-                Login System
-              </span>
+              <div className="flex flex-col items-center space-y-1">
+                <span className="text-base font-black text-white group-hover:text-[#A78BFA] transition-colors leading-tight">
+                  Login System
+                </span>
+                <span className="text-[9px] uppercase font-black tracking-wider text-[#A78BFA] bg-[#A78BFA]/10 px-2 py-0.5 rounded">
+                  For Admins
+                </span>
+              </div>
             </Link>
 
+          </div>
+
+          {/* Under button label tags */}
+          <div className="flex justify-between items-center w-full max-w-sm px-6 text-[10px] font-extrabold text-[#9CA3AF] uppercase tracking-wider select-none">
+            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#60A5FA] animate-pulse" /> For Residents</span>
+            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#A78BFA]" /> For Admins</span>
+          </div>
+
+          {/* Dummy Credentials Access Note */}
+          <div className="bg-[#1F2937]/40 border border-[#374151]/30 rounded-xl p-3 max-w-sm mx-auto text-center">
+            <p className="text-[9px] font-mono text-[#9CA3AF] leading-relaxed">
+              DEMO ACCESS: Log in to the <strong className="text-[#A78BFA]">Login System</strong> using credentials:<br />
+              Username: <code className="text-[#60A5FA] bg-[#111827] px-1 py-0.2 rounded font-mono font-bold">admin</code> | Password: <code className="text-[#60A5FA] bg-[#111827] px-1 py-0.2 rounded font-mono font-bold">admin123</code>
+            </p>
           </div>
 
         </div>
@@ -333,39 +455,47 @@ export default function FLOWSApp() {
         <div className="flex-1 flex flex-col animate-fade-in">
           
           {/* TOP NAVBAR (Gives smooth desktop integration and dynamic time/flag indicators) */}
-          <header className="bg-[#111827]/95 border-b border-[#374151]/70 sticky top-0 z-30 px-4 sm:px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4 backdrop-blur-md shadow-lg">
+          <header className="bg-[#111827]/95 border-b border-[#374151]/70 sticky top-0 z-30 px-4 sm:px-6 py-3 flex flex-col md:flex-row justify-between items-center gap-3 backdrop-blur-md shadow-lg transition-all duration-300">
             
-            {/* Branding Logo & Back to Gateway */}
+            {/* Branding Logo */}
             <div className="flex items-center justify-between w-full md:w-auto">
-              <div className="flex items-center gap-3">
-                <button 
-                  onClick={enterGateway}
-                  className="p-1.5 bg-[#1F2937] hover:bg-[#374151] border border-[#374151] rounded-xl text-[#9CA3AF] hover:text-white transition-colors"
-                  title="Back to Gateway"
-                >
-                  <ArrowLeft size={16} />
-                </button>
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-lg bg-[#1F2937] border border-[#374151] overflow-hidden flex items-center justify-center shrink-0">
+                  <img src="/FLOWS.png" alt="FLOWS Logo" className="w-full h-full object-contain scale-[3.5] transition-transform" />
+                </div>
                 <div>
-                  <h1 className="text-lg font-black tracking-tight text-white flex items-center gap-1.5">
+                  <h1 className="text-base font-black tracking-tight text-white flex items-center gap-1.5 leading-none">
                     F.L.O.W.S.
                     <span className="w-1.5 h-1.5 bg-[#EF4444] rounded-full animate-ping"></span>
                   </h1>
-                  <p className="text-[10px] text-[#9CA3AF] font-bold">Barangay Rizal Rainfall Monitor</p>
+                  <p className="text-[8px] text-[#9CA3AF] font-bold uppercase tracking-wider mt-0.5">Flood Level Observation and Warning System</p>
                 </div>
               </div>
 
-              {/* Status Pill on mobile */}
-              <div className="flex md:hidden items-center gap-1.5 px-2 py-0.5 rounded-full bg-[#1F2937] border border-[#374151] text-[9px] font-bold text-[#60A5FA]">
-                <span className="w-1 h-1 bg-[#60A5FA] rounded-full animate-pulse" />
-                <span>LIVE FEED</span>
+              {/* Mobile Right Quick Controls */}
+              <div className="flex md:hidden items-center gap-1.5">
+                <button
+                  onClick={toggleTheme}
+                  className="p-1.5 bg-[#1F2937] border border-[#374151] rounded-lg text-[#9CA3AF] hover:text-white cursor-pointer"
+                  title="Toggle Theme"
+                >
+                  {theme === 'dark' ? <Sun size={13} className="text-[#F59E0B]" /> : <Moon size={13} className="text-[#7c3aed]" />}
+                </button>
+                <button 
+                  onClick={enterGateway}
+                  className="p-1.5 bg-[#1F2937] border border-[#374151] rounded-lg text-[#9CA3AF] hover:text-white flex items-center justify-center cursor-pointer"
+                  title="Back to Landing Page"
+                >
+                  <Home size={13} />
+                </button>
               </div>
             </div>
 
-            {/* DESKTOP INTEGRATED NAVIGATION TABS (Resolves Buggy bottom navbar on web layout) */}
-            <nav className="hidden md:flex items-center gap-2 bg-[#1F2937]/50 border border-[#374151]/50 p-1 rounded-xl">
+            {/* DESKTOP INTEGRATED NAVIGATION TABS */}
+            <nav className="hidden md:flex items-center gap-1.5 bg-[#1F2937]/50 border border-[#374151]/50 p-1 rounded-xl">
               <button
                 onClick={() => changeTab('weather')}
-                className={`px-4 py-2 text-xs font-black uppercase rounded-lg transition-all ${
+                className={`px-3 py-1.5 text-xs font-black uppercase rounded-lg transition-all cursor-pointer ${
                   activeTab === 'weather' ? 'bg-[#111827] text-[#60A5FA]' : 'text-[#9CA3AF] hover:text-white'
                 }`}
               >
@@ -373,7 +503,7 @@ export default function FLOWSApp() {
               </button>
               <button
                 onClick={() => changeTab('zones')}
-                className={`px-4 py-2 text-xs font-black uppercase rounded-lg transition-all ${
+                className={`px-3 py-1.5 text-xs font-black uppercase rounded-lg transition-all cursor-pointer ${
                   activeTab === 'zones' ? 'bg-[#111827] text-[#60A5FA]' : 'text-[#9CA3AF] hover:text-white'
                 }`}
               >
@@ -381,7 +511,7 @@ export default function FLOWSApp() {
               </button>
               <button
                 onClick={() => changeTab('alerts')}
-                className={`px-4 py-2 text-xs font-black uppercase rounded-lg transition-all ${
+                className={`px-3 py-1.5 text-xs font-black uppercase rounded-lg transition-all cursor-pointer ${
                   activeTab === 'alerts' ? 'bg-[#111827] text-[#60A5FA]' : 'text-[#9CA3AF] hover:text-white'
                 }`}
               >
@@ -389,21 +519,93 @@ export default function FLOWSApp() {
               </button>
               <Link
                 href="/emergency"
-                className="px-4 py-2 text-xs font-black uppercase rounded-lg text-[#9CA3AF] hover:text-[#EF4444] transition-colors"
+                className="px-3 py-1.5 text-xs font-black uppercase rounded-lg text-[#9CA3AF] hover:text-[#EF4444] transition-colors"
               >
                 Emergency Hub
               </Link>
             </nav>
 
-            {/* Live Date, Time & PST 🇵🇭 Badge (Fully Responsive) */}
-            <div className="flex items-center gap-2.5 bg-[#1F2937]/55 border border-[#374151]/60 px-3 py-1.5 rounded-xl shadow-inner w-full sm:w-auto justify-center sm:justify-end">
-              <span className="text-sm select-none">🇵🇭</span>
-              <div className="text-left leading-none space-y-1">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs font-black font-mono tracking-tight text-white select-none">{phTime || '10:27:00 PM'}</span>
-                  <span className="text-[8px] font-black text-[#60A5FA] tracking-wider uppercase bg-[#60A5FA]/10 px-1 rounded select-none">PST</span>
+            {/* Live Right-side controls (Desktop/Tablet) */}
+            <div className="hidden sm:flex items-center gap-2 shrink-0">
+              
+              {/* Countdown Card (API Next Forecast) */}
+              <div className="flex items-center gap-2 bg-[#1F2937]/55 border border-[#374151]/60 px-3 py-1.5 rounded-xl shadow-inner select-none shrink-0">
+                <Clock size={14} className="text-[#60A5FA] animate-pulse" />
+                <div className="text-left leading-none">
+                  <span className="text-[8px] font-black text-[#60A5FA] tracking-wider uppercase block mb-0.5">API NEXT FORECAST</span>
+                  <span className="text-xs font-black font-mono tracking-tight text-white">{countdownTime || '00:59:59'}</span>
                 </div>
-                <div className="text-[9px] text-[#9CA3AF] font-bold tracking-wide select-none">{phDate || 'Thursday, May 21, 2026'}</div>
+              </div>
+
+              {/* Date & Time Card with Aligned Philippine Flag */}
+              <div className="flex items-center gap-2.5 bg-[#1F2937]/55 border border-[#374151]/60 px-3 py-1.5 rounded-xl shadow-inner select-none shrink-0 justify-center">
+                <div className="text-left leading-none space-y-1">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-black font-mono tracking-tight text-white">{phTime || '10:27:00 PM'}</span>
+                    <span className="text-[8px] font-black text-[#60A5FA] tracking-wider uppercase bg-[#60A5FA]/10 px-1.5 py-0.5 rounded flex items-center gap-1 select-none">
+                      PH <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 9" className="w-4 h-2 shadow-sm rounded-[1px] inline-block align-middle select-none">
+                        <rect width="18" height="9" fill="#FCD116" />
+                        <rect width="18" height="4.5" fill="#0038A8" />
+                        <rect y="4.5" width="18" height="4.5" fill="#CE1126" />
+                        <polygon points="0,0 0,9 7.79,4.5" fill="#FFFFFF" />
+                        <circle cx="2.5" cy="4.5" r="0.9" fill="#FCD116" />
+                      </svg>
+                    </span>
+                  </div>
+                  <div className="text-[9px] text-[#9CA3AF] font-bold tracking-wide">{phDate || 'Thursday, May 21, 2026'}</div>
+                </div>
+              </div>
+
+              {/* Sun/Moon Theme Toggle Trigger */}
+              <button
+                onClick={toggleTheme}
+                className="p-2 bg-[#1F2937]/80 hover:bg-[#253245] border border-[#374151] hover:border-[#60A5FA]/40 rounded-xl text-[#9CA3AF] hover:text-white transition-all shadow-md group shrink-0 cursor-pointer"
+                title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+              >
+                {theme === 'dark' ? (
+                  <Sun size={15} className="text-[#F59E0B] animate-spin" style={{ animationDuration: '10s' }} />
+                ) : (
+                  <Moon size={15} className="text-[#7c3aed]" />
+                )}
+              </button>
+
+              {/* Back to Landing Page Button positioned at the very right */}
+              <button 
+                onClick={enterGateway}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#1F2937] hover:bg-[#253245] border border-[#374151] hover:border-[#60A5FA]/40 rounded-xl text-xs font-black text-[#F9FAFB] hover:text-white transition-all shadow-md group shrink-0 cursor-pointer"
+                title="Back to Landing Page"
+              >
+                <span>Back to Landing</span>
+              </button>
+
+            </div>
+
+            {/* Mobile Header Row for Time & Countdown */}
+            <div className="flex sm:hidden items-center justify-between w-full gap-2 border-t border-[#374151]/30 pt-2 select-none">
+              {/* Countdown Card */}
+              <div className="flex items-center gap-1.5 bg-[#1F2937]/55 border border-[#374151]/60 px-2.5 py-1 rounded-lg shadow-inner flex-1 justify-center">
+                <Clock size={11} className="text-[#60A5FA]" />
+                <div className="text-left leading-none">
+                  <span className="text-[7px] font-black text-[#60A5FA] tracking-wider uppercase block">NEXT FORECAST</span>
+                  <span className="text-[10px] font-bold font-mono tracking-tight text-white">{countdownTime || '00:59:59'}</span>
+                </div>
+              </div>
+              {/* Date & Time Card */}
+              <div className="flex items-center gap-1.5 bg-[#1F2937]/55 border border-[#374151]/60 px-2.5 py-1 rounded-lg shadow-inner flex-1 justify-center">
+                <div className="text-center leading-none">
+                  <div className="flex items-center justify-center gap-1">
+                    <span className="text-[10px] font-bold font-mono tracking-tight text-white">{phTime ? phTime.replace(/:\d+\s/, ' ') : '10:27 PM'}</span>
+                    <span className="text-[7px] font-black text-[#60A5FA] tracking-wider uppercase bg-[#60A5FA]/10 px-1 rounded flex items-center gap-0.5">
+                      PH <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 9" className="w-3.5 h-1.5 shadow-sm rounded-[1px] inline-block align-middle select-none">
+                        <rect width="18" height="9" fill="#FCD116" />
+                        <rect width="18" height="4.5" fill="#0038A8" />
+                        <rect y="4.5" width="18" height="4.5" fill="#CE1126" />
+                        <polygon points="0,0 0,9 7.79,4.5" fill="#FFFFFF" />
+                        <circle cx="2.5" cy="4.5" r="0.9" fill="#FCD116" />
+                      </svg>
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -417,19 +619,19 @@ export default function FLOWSApp() {
               <div>
                 <span className="text-[10px] font-bold text-[#60A5FA] uppercase tracking-wider block">Observer Dashboard</span>
                 <h2 className="text-2xl font-black text-white tracking-tight flex items-center gap-2">
-                  Barangay Rizal Rainfall Observatory
+                  Rainfall Forecast as of today
                 </h2>
               </div>
 
               {/* Responsive Zone Selector Dropdown */}
-              {activeTab !== 'alerts' ? (
+              {activeTab === 'weather' ? (
                 <div className="relative w-full md:w-72">
                   <label className="block text-[9px] font-bold text-[#9CA3AF] uppercase tracking-wider mb-1">
                     Active Monitoring Zone
                   </label>
                   <button 
                     onClick={() => setShowDropdown(!showDropdown)}
-                    className="w-full flex items-center justify-between px-4 py-2.5 bg-[#1F2937] border border-[#374151] rounded-xl text-left shadow-lg focus:outline-none hover:bg-[#253245] transition-colors cursor-pointer"
+                    className="w-full flex items-center justify-between px-4 py-2.5 bg-[#1F2937] border border-[#374151] rounded-xl text-left shadow-lg focus:outline-none focus-visible:outline-none focus:ring-0 hover:bg-[#253245] transition-colors cursor-pointer"
                   >
                     <div className="flex items-center gap-2">
                       <span 
@@ -476,12 +678,12 @@ export default function FLOWSApp() {
                     </>
                   )}
                 </div>
-              ) : (
-                <div className="text-right text-[10px] text-[#60A5FA] font-black uppercase tracking-wider bg-[#60A5FA]/10 border border-[#60A5FA]/20 px-3.5 py-2.5 rounded-xl flex items-center gap-2 self-end h-[46px]">
+              ) : activeTab === 'alerts' ? (
+                <div className="w-full text-left text-[10px] text-[#60A5FA] font-black uppercase tracking-wider bg-[#60A5FA]/10 border border-[#60A5FA]/20 px-3.5 py-2.5 rounded-xl flex items-center justify-start gap-2 h-[46px]">
                   <span className="w-2 h-2 rounded-full bg-[#60A5FA] animate-pulse" />
                   <span>System Reference Manual</span>
                 </div>
-              )}
+              ) : null}
             </div>
 
             {/* TAB VIEW MODE RESOLUTION */}
@@ -740,7 +942,7 @@ export default function FLOWSApp() {
                         className={`rounded-2xl p-5 flex flex-col justify-between transition-all duration-300 shadow-lg cursor-pointer ${
                           isSelected 
                             ? 'bg-[#1F2937] border-2 scale-[1.03] shadow-2xl' 
-                            : 'bg-[#1F2937]/50 border border-[#374151] hover:bg-[#1F2937]/80 hover:scale-[1.01]'
+                            : 'bg-[#1F2937]/50 border-2 border-[#374151] hover:bg-[#1F2937]/80 hover:scale-[1.01]'
                         }`}
                         style={{
                           borderColor: isSelected ? getAlertColor(zone.alertLevel) : '#374151',
@@ -894,51 +1096,53 @@ export default function FLOWSApp() {
 
           </main>
 
-          {/* DOCK-STABLE BOTTOM NAVIGATION BAR ON MOBILE DEVICES (Hidden on Desktop) */}
-          <div className="fixed bottom-4 left-4 right-4 z-40 md:hidden">
-            <nav className="bg-[#1F2937]/90 border border-[#374151]/80 rounded-2xl flex justify-around items-center px-2 py-2 backdrop-blur-lg shadow-2xl">
-              
-              <button 
-                onClick={() => changeTab('weather')}
-                className={`flex flex-col items-center justify-center py-1 flex-1 text-center transition-colors ${
-                  activeTab === 'weather' ? 'text-[#60A5FA] font-black' : 'text-[#9CA3AF]'
-                }`}
-              >
-                <CloudRain size={18} className={activeTab === 'weather' ? 'animate-bounce' : ''} />
-                <span className="text-[9px] font-bold mt-1 tracking-wide">Weather</span>
-              </button>
+        </div>
+      )}
 
-              <button 
-                onClick={() => changeTab('zones')}
-                className={`flex flex-col items-center justify-center py-1 flex-1 text-center transition-colors ${
-                  activeTab === 'zones' ? 'text-[#60A5FA] font-black' : 'text-[#9CA3AF]'
-                }`}
-              >
-                <MapPin size={18} className={activeTab === 'zones' ? 'animate-bounce' : ''} />
-                <span className="text-[9px] font-bold mt-1 tracking-wide">Zones</span>
-              </button>
+      {/* DOCK-STABLE BOTTOM NAVIGATION BAR ON MOBILE DEVICES (Hidden on Desktop) */}
+      {viewMode === 'dashboard' && (
+        <div className="flows-fixed-nav pb-[env(safe-area-inset-bottom)]">
+          <nav className="bg-[#1F2937]/90 border border-[#374151]/80 rounded-2xl flex justify-around items-center px-2 py-2 backdrop-blur-lg shadow-2xl">
+            
+            <button 
+              onClick={() => changeTab('weather')}
+              className={`flex flex-col items-center justify-center py-1 flex-1 text-center transition-colors ${
+                activeTab === 'weather' ? 'text-[#60A5FA] font-black' : 'text-[#9CA3AF]'
+              }`}
+            >
+              <CloudRain size={18} className={activeTab === 'weather' ? 'animate-bounce' : ''} />
+              <span className="text-[9px] font-bold mt-1 tracking-wide">Weather</span>
+            </button>
 
-              <button 
-                onClick={() => changeTab('alerts')}
-                className={`flex flex-col items-center justify-center py-1 flex-1 text-center transition-colors ${
-                  activeTab === 'alerts' ? 'text-[#60A5FA] font-black' : 'text-[#9CA3AF]'
-                }`}
-              >
-                <Bell size={18} className={activeTab === 'alerts' ? 'animate-bounce' : ''} />
-                <span className="text-[9px] font-bold mt-1 tracking-wide">Alerts</span>
-              </button>
+            <button 
+              onClick={() => changeTab('zones')}
+              className={`flex flex-col items-center justify-center py-1 flex-1 text-center transition-colors ${
+                activeTab === 'zones' ? 'text-[#60A5FA] font-black' : 'text-[#9CA3AF]'
+              }`}
+            >
+              <MapPin size={18} className={activeTab === 'zones' ? 'animate-bounce' : ''} />
+              <span className="text-[9px] font-bold mt-1 tracking-wide">Zones</span>
+            </button>
 
-              <Link 
-                href="/emergency"
-                className="flex flex-col items-center justify-center py-1 flex-1 text-[#9CA3AF] hover:text-[#EF4444] transition-colors"
-              >
-                <ShieldAlert size={18} />
-                <span className="text-[9px] font-bold mt-1 tracking-wide">Emergency</span>
-              </Link>
+            <button 
+              onClick={() => changeTab('alerts')}
+              className={`flex flex-col items-center justify-center py-1 flex-1 text-center transition-colors ${
+                activeTab === 'alerts' ? 'text-[#60A5FA] font-black' : 'text-[#9CA3AF]'
+              }`}
+            >
+              <Bell size={18} className={activeTab === 'alerts' ? 'animate-bounce' : ''} />
+              <span className="text-[9px] font-bold mt-1 tracking-wide">Alerts</span>
+            </button>
 
-            </nav>
-          </div>
+            <Link 
+              href="/emergency"
+              className="flex flex-col items-center justify-center py-1 flex-1 text-[#9CA3AF] hover:text-[#EF4444] transition-colors"
+            >
+              <ShieldAlert size={18} />
+              <span className="text-[9px] font-bold mt-1 tracking-wide">Emergency</span>
+            </Link>
 
+          </nav>
         </div>
       )}
 

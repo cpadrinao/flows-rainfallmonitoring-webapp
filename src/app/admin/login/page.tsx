@@ -3,13 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Lock, User, ShieldAlert, ArrowLeft, Radio, AlertCircle } from 'lucide-react';
+import { Lock, User, ShieldAlert, ArrowLeft, Radio, AlertCircle, Sun, Moon } from 'lucide-react';
 
 export default function AdminLoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const router = useRouter();
 
   // Redirect if already logged in
@@ -19,6 +20,25 @@ export default function AdminLoginPage() {
       router.push('/admin/dashboard');
     }
   }, [router]);
+
+  // Load and apply theme from local storage
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme') as 'dark' | 'light';
+    if (savedTheme) {
+      setTheme(savedTheme);
+    }
+  }, []);
+
+  // Apply theme to html element so CSS selectors [data-theme="light"] work globally
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    const nextTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(nextTheme);
+    localStorage.setItem('theme', nextTheme);
+  };
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,28 +66,36 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="bg-[#0b0f19] min-h-screen w-full flex items-center justify-center p-4 relative overflow-hidden">
+    <div data-theme={theme} className="bg-[#0b0f19] min-h-screen w-full flex items-center justify-center p-4 relative overflow-hidden transition-colors duration-500">
       
       {/* Background glow effects */}
       <div className="absolute w-[500px] h-[500px] rounded-full bg-[#60A5FA] blur-[150px] opacity-5 pointer-events-none -translate-x-40" />
       <div className="absolute w-[450px] h-[450px] rounded-full bg-[#A78BFA] blur-[150px] opacity-5 pointer-events-none translate-x-40" />
+      
       {/* Main card */}
       <div className="w-full max-w-md bg-[#1F2937]/90 border border-[#374151] rounded-3xl p-8 shadow-2xl backdrop-blur-md relative z-10 weather-glow-blue animate-fade-in">
         
-        {/* Back Link */}
-        <div className="mb-6">
+        {/* Header Row with Back Link and Theme Toggle */}
+        <div className="flex items-center justify-between mb-6">
           <Link href="/" className="inline-flex items-center gap-1.5 text-xs text-[#9CA3AF] hover:text-[#60A5FA] transition-colors">
-            <ArrowLeft size={14} />
             <span>Back to Resident App</span>
           </Link>
+
+          <button
+            onClick={toggleTheme}
+            className="p-2 bg-[#111827]/40 border border-[#374151]/50 rounded-xl text-[#9CA3AF] hover:text-white transition-all cursor-pointer"
+            title="Toggle Light/Dark Theme"
+          >
+            {theme === 'dark' ? <Sun size={14} className="text-[#F59E0B]" /> : <Moon size={14} className="text-[#7c3aed]" />}
+          </button>
         </div>
 
         {/* Logo and branding */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center p-3 bg-[#60A5FA]/10 border border-[#60A5FA]/20 rounded-2xl text-[#60A5FA] mb-3">
-            <ShieldAlert size={36} className="animate-pulse" />
+          <div className="inline-flex items-center justify-center p-2 bg-[#1F2937] border border-[#374151] rounded-3xl mb-3 shadow-xl overflow-hidden w-20 h-20 mx-auto hover:scale-105 transition-transform duration-300">
+            <img src="/FLOWS.png" alt="FLOWS Logo" className="w-full h-full object-contain scale-[3.5]" />
           </div>
-          <h1 className="text-2xl font-black text-white tracking-tight flex items-center justify-center gap-1.5">
+          <h1 className="text-2xl font-black text-white data-[theme=light]:text-slate-900 tracking-tight flex items-center justify-center gap-1.5 transition-colors">
             F.L.O.W.S.
             <span className="text-xs bg-[#60A5FA]/20 text-[#60A5FA] px-2 py-0.5 rounded font-black tracking-widest uppercase">Admin</span>
           </h1>
@@ -143,8 +171,17 @@ export default function AdminLoginPage() {
 
         </form>
 
+        {/* Demo Credentials Box */}
+        <div className="mt-6 bg-[#111827]/40 border border-[#374151]/30 rounded-xl p-3 text-center">
+          <p className="text-[10px] font-mono text-[#9CA3AF] leading-relaxed">
+            DEMO ACCESS:<br />
+            Username: <code className="text-[#60A5FA] bg-[#111827] px-1 py-0.5 rounded font-mono font-bold">admin</code><br />
+            Password: <code className="text-[#60A5FA] bg-[#111827] px-1 py-0.5 rounded font-mono font-bold">admin123</code>
+          </p>
+        </div>
+
         {/* Footer note */}
-        <div className="mt-8 text-center border-t border-[#374151]/50 pt-4 flex items-center justify-center gap-1.5">
+        <div className="mt-6 text-center border-t border-[#374151]/50 pt-4 flex items-center justify-center gap-1.5">
           <Radio size={12} className="text-[#4ADE80] animate-pulse" />
           <span className="text-[9px] font-mono text-[#9CA3AF]">SECURE LOCAL SESSION ACTIVE</span>
         </div>
