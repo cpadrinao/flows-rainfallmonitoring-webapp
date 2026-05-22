@@ -399,10 +399,10 @@ export default function FLOWSApp() {
               </div>
             </div>
 
-            {/* Restored Mini Description with Typing Animation - Enlarged text & Dots looping removed */}
+            {/* Restored Mini Description with Typing Animation - Smaller, elegant supporting text */}
             <div className="pt-2 w-full max-w-md mx-auto space-y-3 text-center">
               <div className="w-16 h-0.5 bg-gradient-to-r from-transparent via-slate-700 to-transparent mx-auto" />
-              <p className="text-lg sm:text-xl md:text-[22px] text-slate-200 leading-relaxed font-normal select-none min-h-[160px] sm:min-h-[120px] md:min-h-[100px] transition-all duration-300">
+              <p className="text-[11px] sm:text-xs md:text-sm text-slate-400 leading-relaxed font-medium select-none min-h-[120px] sm:min-h-[90px] md:min-h-[75px] transition-all duration-300">
                 {displayedText}
               </p>
             </div>
@@ -589,17 +589,28 @@ export default function FLOWSApp() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
                 <span className="text-[10px] font-bold text-[#60A5FA] uppercase tracking-wider block">Observer Dashboard</span>
-                <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2">
-                  <span>
-                    {activeTab === 'emergency' 
-                      ? 'Emergency Portal & Shelter Status' 
-                      : activeTab === 'alerts' 
-                      ? 'System Guidelines & Reference' 
-                      : 'Rainfall Forecast as of Today'}
-                  </span>
-                  {phDate && (
-                    <span className="text-xs sm:text-sm font-normal text-slate-400 border-t sm:border-t-0 sm:border-l border-slate-700 pt-1 sm:pt-0 sm:pl-2.5">
-                      {phDate}
+                <h2 className="text-lg sm:text-xl md:text-2xl font-black text-white tracking-tight leading-tight select-none">
+                  {activeTab === 'emergency' ? (
+                    <span className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2">
+                      <span>Emergency Portal & Shelter Status</span>
+                      {phDate && (
+                        <span className="text-xs sm:text-sm font-normal text-slate-400 border-t sm:border-t-0 sm:border-l border-slate-700 pt-1 sm:pt-0 sm:pl-2.5">
+                          {phDate}
+                        </span>
+                      )}
+                    </span>
+                  ) : activeTab === 'alerts' ? (
+                    <span className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2">
+                      <span>System Guidelines & Reference</span>
+                      {phDate && (
+                        <span className="text-xs sm:text-sm font-normal text-slate-400 border-t sm:border-t-0 sm:border-l border-slate-700 pt-1 sm:pt-0 sm:pl-2.5">
+                          {phDate}
+                        </span>
+                      )}
+                    </span>
+                  ) : (
+                    <span>
+                      Rainfall Forecast as of <span className="text-[#60A5FA]">{phDate || 'Today'}</span>
                     </span>
                   )}
                 </h2>

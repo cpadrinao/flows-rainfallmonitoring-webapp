@@ -14,7 +14,7 @@
   --color-red-accent: #EF4444;
   --color-purple-accent: #A78BFA;
   
-  --font-helvetica: "Helvetica Neue", Arial, Helvetica, sans-serif;
+  --font-roboto-mono: var(--font-roboto-mono), ui-monospace, SFMono-Regular, Roboto, "Courier New", monospace;
 }
 
 @theme inline {
@@ -30,13 +30,13 @@
   --color-accent-red: var(--color-red-accent);
   --color-accent-purple: var(--color-purple-accent);
   
-  --font-sans: var(--font-helvetica);
+  --font-sans: var(--font-roboto-mono);
 }
 
 body {
   background-color: #111827;
   color: #F9FAFB;
-  font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+  font-family: var(--font-roboto-mono), ui-monospace, SFMono-Regular, Roboto, "Courier New", monospace;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }

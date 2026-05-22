@@ -113,3 +113,17 @@ In the Weather section and Zones Overview section, add the current day and date 
 Always make sure that every UI change is fully responsive, especially for smaller mobile screens.
 
 Also, remove the sun icon/button from the top navbar/header.
+
+------------------------------------------------------------
+
+[PROMPT 11]
+The description text on the landing page is still too large. Reduce the paragraph font size further so it clearly looks like supporting text under the main system title instead of competing with it visually.
+
+Replace the font across the entire application with “Roboto Mono” to create a cleaner and more consistent visual identity.
+
+For the “Rainfall Forecast as of Today” section, the date and day currently look separated. Combine them into a single grouped text format such as:
+“Rainfall Forecast as of Saturday, May 23, 2026”
+Adjust the font size and spacing if necessary so the text remains clean, balanced, and responsive on smaller screens.
+
+Also, update the browser tab title to:
+“F.L.O.W.S. | Rainfall Monitoring Dashboard”
