@@ -1,11 +1,120 @@
 [PROMPT 1]
-I want you to record every prompt I make and list it in recordedprompts.txt here's the folder location:
-D:\Programming\AppDev-FLOWS\flows-rainfallmonitoring-webapp\recordedprompts.txt
+From now on, record all my prompts and place it in recordedprompts.txt.
 
-Follow the numbering also.
+Build the frontend UI for F.L.O.W.S. (Flood and Local Observatory Warning System), a mobile-first rainfall monitoring web app for Barangay Rizal. Use only hardcoded mock data and focus only on the frontend design.
 
-Also check if this has been implemented already:
+Use these colors: Background: #111827 Cards/Surfaces: #1F2937 Borders: #374151 Text: #F9FAFB Muted Text: #9CA3AF Blue Accent: #60A5FA Green Accent: #4ADE80 Yellow Accent: #F59E0B Orange Accent: #F97316 Red Accent: #EF4444 Purple Accent: #A78BFA
 
+The font family should be: Helvetica Neue, Arial, Helvetica, sans-serif;
+
+The resident dashboard should have a header with F.L.O.W.S. and a live status pill, a zone selector dropdown, and a bento-style grid layout. Include cards for current rainfall status, rainfall amount, duration, humidity, and a 24-hour rainfall trend using mini bars. Add an advisory card with a warning message. Include a bottom navigation bar with Weather, Zones, Alerts, and Emergency.
+
+The design should be simple but weather dashboard theme.
+
+---------------------------------------------------------
+
+[PROMPT 2]
+Apply numbers to the recorded prompts.txt in order of the prompts. Also change the tsx filenames according to its respective pages name.
+
+The emergency page should contain emergency hotlines with clickable tel links, evacuation reminders, and evacuation center information.
+
+The admin login page should contain username and password fields with a login button. Use mock credentials: Username: admin Password: admin123 Store login state in localStorage.
+
+The admin dashboard should show an online status badge, logout button, quick navigation cards, and summary cards for active zones, last fetch time, and records logged today.
+
+The zone management page should display a list or table of zones with edit and remove actions. Include a form or modal for adding and editing zones with validation for empty zone names.
+
+The rainfall history page should display a table with zone name, date and time, rainfall amount, and validation status. Include statuses like PASSED, FLAGGED, and CORRECTED. Add simple pagination.
+
+---------------------------------------------------------
+
+[PROMPT 3]
+I want it to be approachable to web also, currently when I ran it it shows a mobile layout which is good but as I said it should be responsive but must look good when its on mobile browser, still implement the web version also just make it responsive.
+
+To fix:
+
+1.) The navbar on bottom is floating but too buggy, especially when navigating to emergency page. 
+
+2.) Upon running, the users must see two options first, View Dashboard for Barangay Rizal and the other one log in as admin so it will be clean.  
+
+3.) Also in the time section, add the date and include that its from philippine time, add philippine flag if necessary.
+
+Ensure that it will smoothly be responsive from any screen sizes.
+
+---------------------------------------------------------
+
+[PROMPT 4]
+to fix:
+1.) Landing page isnt simple, too much text it must be simple view dashboard and login system buttons only.
+
+2.) In Emeregency Hub remove braodacst sire since residents are allowed to just view only not boradcast silence, fix the layout there and make sure that  its perfectly balanced and doesnt waste spaces.
+
+2a). remove the admin portal button there also. I can see the back button in there but replace that and add a button that says back to landing page or something, pick one thats suitable for that button name.
+
+3.) In zones overview, it should highlight which zone is picked, For exmaple I chose zone 2 in the dropdown it should highlith the cardbox that is zone 2 in there.
+
+4.) WHat's the purpose of alert warnings section? is it neceassry? If yes, remove the dropdwon in alert warnings if its just for guide of users on the guide of something something.
+
+6.) Add smooth animation when navigating to pages
+
+---------------------------------------------------------
+
+[PROMPT 5]
+Let's focus on renaming parts:
+
+FLOWS - Flood Level Observation and Warning System
+
+1. Add the meaning of FLOWS in the landing page
+
+Add this description on landing page:
+Your Local Weather Hub
+F.L.O.W.S. is your direct source for real-time weather updates in Barangay Rizal. Our automated system tracks heavy rainfall across different local zones, giving you the clear, reliable information you need to stay safe and prepare early.
+
+Add some short tag below the button like "For Resident" "For Admins"
+
+Also provide me a dummy acount on how to access the admin page.
+
+2.) The back to dashboard button isnt consistent throughout the pages, remove that button in the Name part and placed it  in the right corner it should be in the right part of the time and date card.
+
+3.) add a card besides date and time card in the left side of that card that says next update in 1 hour. It counts down and resets after an hour, so that section will be API Next forecast then date and time then back to landing page button.
+
+If possible add a philippine flag in the date and time  beside PH adjust the size and make sure its evenly sized and doesnt look out of place.
+
+4.) Add and replace the logo with the logo in path D:\Programming\AppDev-FLOWS\flows-rainfallmonitoring-webapp\src\app\img\FlowsLogo.png
+Remove background if you can or if not tell me so I can do it.
+
+5.) Add a light mode and dark mode button feauture trigger, position it where its best positioned, ensure smoothnesss when navigating to dark and light mode and add animation that trainsitions it.
+
+---------------------------------------------------------
+
+[PROMPT 6]
+1.) When I Click light mode there's still some parts that arent supported, also when in light mode, try using dirty white. Ensure that elements with background darkblue is dirty white and container color is dark blue if possible. Check throughly from admin to resident side if there are colors that arent complementing in light mode.
+
+2.) In next forecast check if its really 1 hour if the timer really starts with 1 hour. 
+
+3.) Remove the arrow icon in Back to Landing button.
+
+4.) in admin section, admins can only add zone not add weather forecast since the goal of this system is to generate weather API and the weather API will just suppliment the data. The goal of admin is to check if api logs are healthy or not. Currently we wont focus on api but later we'll do. We're just focusing in the frontend first.
+
+5.) in small screen sizes can you make the bottom navbar buttons floating like throughout the screen its visible. Currently I need to scroll to bottom to see the bottom navbar buttons.
+
+6.) Check throughly the sizings make sure they are equally aligned to each other, the boxes and everything from big screen to small screen size.
+
+About the dark blue im referencing to the current dark blue color of the webapp, refer to that.
+
+---------------------------------------------------------
+
+[PROMPT 7]
+To fix:
+1.) the dark mode feature is not working. The button is working but its not shifting into light mode. In light mode ensure that it's fixed. Sometime I see some containers that are color blue but the contents are still dark blue or color white which is not complementing in light mode feature.
+
+2.) Remove the focus on this button in the zone selection in residents view. I think its not necessarily to do that.
+
+3.) Replace the logo to this logo D:\Programming\AppDev-FLOWS\flows-rainfallmonitoring-webapp\src\app\img\FLOWS.png
+
+---------------------------------------------------------
+
+[PROMPT 8]
 To fix: 
 1.) Remove the zone dropdown in Zones Overview section. 
 
@@ -19,14 +128,9 @@ To fix:
 
 6.) Change the Barangay Rizal Rainfall Obsertvatory text to Rainfall Forecast as of today.
 
-------------------------------------------------------------
+---------------------------------------------------------
 
-[PROMPT 2]
-Continue
-
-------------------------------------------------------------
-
-[PROMPT 3]
+[PROMPT 9]
 From now on, create plans before implementing changes. Still record my prompts in recordingprompts.txt; just find it in the files.
 
 To fix:
@@ -48,29 +152,18 @@ Some text, cards, borders, buttons, and background combinations are difficult to
 
 5.) In Logs History, there should no longer be action buttons. It should only record rainfall logs generated by the API and provide a button that exports the logs as a PDF file. When clicked, it should automatically convert and download the logs as a PDF.
 
-------------------------------------------------------------
+---------------------------------------------------------
 
-[PROMPT 4]
-Please continue what we're working with.
-
-------------------------------------------------------------
-
-[PROMPT 5]
+[PROMPT 10]
 Still record the prompts only in this path:D:\Programming\AppDev-FLOWS\flows-rainfallmonitoring-webapp\recordedprompts.txt
 
 Fix the color contrast combinations in the light mode. Currently its still not complimenting with each other. There are still some parts that arent the same color as them, so its still a messy look.
 
 Don't remove the mini description in the laning page, still include the mini description just structure it cleanly and accordingly.
 
-------------------------------------------------------------
+---------------------------------------------------------
 
-[PROMPT 6]
-learn this skill for me add this to md if you like or anythin just to remember this.
-https://github.com/nextlevelbuilder/ui-ux-pro-max-skill.git
-
-------------------------------------------------------------
-
-[PROMPT 7]
+[PROMPT 11]
 I noticed the design still looks AI-generated because many of the colors are neon. Please redesign only the color palette and switch to more solid, natural-looking colors. Avoid neon-style colors since they make the UI feel overly artificial. I want the colors to have a more human-touch and professionally designed appearance.
 
 On the landing page, the Dashboard button beside the Admin Login button is white, which makes the text difficult to see. Also, when navigating to the dashboard, the navbar turns white even though the app is in dark mode. Fix these color matching and visibility issues.
@@ -79,9 +172,9 @@ For the landing page description, add a typing animation effect where the text a
 
 In light mode, use a black-smoke style color as the secondary color. Also, the “Official Telemetry Advisory” card in the weather section does not visually complement the light mode theme. Review the overall light mode palette and fix any colors that feel inconsistent or non-complementary.
 
-------------------------------------------------------------
+-----------------------------------------------------
 
-[PROMPT 8]
+[PROMPT 12]
 From now on dont create remodel plan afterwards, just create a list that you've done afterwards so I can review what you've accomplished.
 To fix:
 
@@ -95,7 +188,7 @@ Also, enlarge the system description text and make the typing animation slower f
 
 ------------------------------------------------------------
 
-[PROMPT 9]
+[PROMPT 13]
 In recordedprompts.txt I asked you to record all my prompts not replace the contents there with the latest prompt. Just stack it and add it based on numbers there. Restore the previous prompts there and  base on numbering system.
 
 Upon running the webapp, it prompted error:
@@ -103,7 +196,7 @@ The default export is not a React Component in "/page"
 
 ------------------------------------------------------------
 
-[PROMPT 10]
+[PROMPT 14]
 Remove the logo from the landing page itself and instead use it as the browser favicon/browser tab icon beside the text “F.L.O.W.S. | Rainfall”.
 
 Balance the sizing, spacing, and layout of the landing page carefully since this is the first screen users will see. Make the overall composition feel polished, professional, visually balanced, and pleasing to the eyes.
@@ -116,7 +209,7 @@ Also, remove the sun icon/button from the top navbar/header.
 
 ------------------------------------------------------------
 
-[PROMPT 11]
+[PROMPT 15]
 The description text on the landing page is still too large. Reduce the paragraph font size further so it clearly looks like supporting text under the main system title instead of competing with it visually.
 
 Replace the font across the entire application with “Roboto Mono” to create a cleaner and more consistent visual identity.
@@ -127,3 +220,14 @@ Adjust the font size and spacing if necessary so the text remains clean, balance
 
 Also, update the browser tab title to:
 “F.L.O.W.S. | Rainfall Monitoring Dashboard”
+
+
+-------------------------------------------------------------
+
+[PROMPT 16]
+In small screens, the bottom navbar shouldnt float, its like fixed but still showable when your on top of the screen and when you scroll down it follows your scroll.
+
+In official Telemetry Warning, the description is in bold style and upon testing it in mobile version, its too thick to eyes. Don't make it bold style, just the description only.
+
+Upon checking the font style its still not Roboto Mono. Change the font style across the webapp and ensure that its Roboto Mono.
+

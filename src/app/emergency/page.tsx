@@ -415,8 +415,8 @@ export default function EmergencyPage() {
       </main>
 
       {/* DOCK-STABLE BOTTOM NAVIGATION BAR ON MOBILE DEVICES */}
-      <div className="flows-fixed-nav pb-[env(safe-area-inset-bottom)]">
-        <nav className="bg-[#1F2937]/90 border border-[#374151]/80 rounded-2xl flex justify-around items-center px-2 py-2 backdrop-blur-lg shadow-2xl">
+      <div className="flows-fixed-nav pb-[env(safe-area-inset-bottom)] bg-[#111827]/95 border-t border-[#374151]/80 backdrop-blur-lg shadow-2xl">
+        <nav className="flex justify-around items-center px-2 py-2">
           
           <Link 
             href="/?view=dashboard&tab=weather"

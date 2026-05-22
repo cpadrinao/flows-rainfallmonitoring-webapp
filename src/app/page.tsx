@@ -871,7 +871,7 @@ export default function FLOWSApp() {
                       <h4 className="text-xs font-black uppercase tracking-wider" style={{ color: getAlertColor(activeZoneData.alertLevel) }}>
                         Official Telemetry Advisory Warning
                       </h4>
-                      <p className="text-xs font-bold text-white leading-relaxed">
+                      <p className="text-xs font-normal text-white leading-relaxed">
                         {activeZoneData.advisoryText}
                       </p>
                       
@@ -1380,8 +1380,8 @@ export default function FLOWSApp() {
 
       {/* DOCK-STABLE BOTTOM NAVIGATION BAR ON MOBILE DEVICES (Hidden on Desktop) */}
       {viewMode === 'dashboard' && (
-        <div className="flows-fixed-nav pb-[env(safe-area-inset-bottom)]">
-          <nav className="bg-[#1F2937]/90 border border-[#374151]/80 rounded-2xl flex justify-around items-center px-2 py-2 backdrop-blur-lg shadow-2xl">
+        <div className="flows-fixed-nav pb-[env(safe-area-inset-bottom)] bg-[#111827]/95 border-t border-[#374151]/80 backdrop-blur-lg shadow-2xl">
+          <nav className="flex justify-around items-center px-2 py-2">
             
             <button 
               onClick={() => changeTab('weather')}
