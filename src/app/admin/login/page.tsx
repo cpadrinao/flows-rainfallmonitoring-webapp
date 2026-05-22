@@ -93,7 +93,7 @@ export default function AdminLoginPage() {
         {/* Logo and branding */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center p-2 bg-[#1F2937] border border-[#374151] rounded-3xl mb-3 shadow-xl overflow-hidden w-20 h-20 mx-auto hover:scale-105 transition-transform duration-300">
-            <img src="/FLOWS.png" alt="FLOWS Logo" className="w-full h-full object-contain scale-[3.5]" />
+            <img src="/flowsnoname.png" alt="FLOWS Logo" className="w-full h-full object-contain" />
           </div>
           <h1 className="text-2xl font-black text-white data-[theme=light]:text-slate-900 tracking-tight flex items-center justify-center gap-1.5 transition-colors">
             F.L.O.W.S.

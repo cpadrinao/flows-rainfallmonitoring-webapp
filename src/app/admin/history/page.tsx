@@ -19,8 +19,11 @@ import {
   Sun,
   Moon,
   Clock,
-  Home
+  Home,
+  FileDown
 } from 'lucide-react';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface HistoryItem {
   id: string;
@@ -156,19 +159,43 @@ export default function RainfallHistory() {
     localStorage.setItem('flows_history_db', JSON.stringify(updatedHistory));
   };
 
-  // Quick action: Correct flagged status
-  const handleCorrectStatus = (id: string) => {
-    const updated = history.map(item => {
-      if (item.id === id) {
-        return {
-          ...item,
-          status: 'CORRECTED' as const,
-          notes: 'Corrected and validated by administrator.'
-        };
-      }
-      return item;
+  // Export to PDF function
+  const exportToPDF = () => {
+    const doc = new jsPDF();
+    
+    // Add title
+    doc.setFontSize(18);
+    doc.setTextColor(40);
+    doc.text('FLOWS Rainfall History Logs', 14, 22);
+    
+    // Add subtitle/date
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 30);
+
+    // Prepare table data
+    const tableColumn = ["Log ID", "Zone Territory", "Date & Time", "Rainfall (mm)", "Status", "Notes"];
+    const tableRows = filteredHistory.map(log => [
+      log.id,
+      log.zoneName,
+      log.datetime,
+      log.amount.toString(),
+      log.status,
+      log.notes
+    ]);
+
+    // Generate table
+    autoTable(doc, {
+      head: [tableColumn],
+      body: tableRows,
+      startY: 35,
+      theme: 'grid',
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [41, 128, 185] }
     });
-    saveHistoryToStorage(updated);
+
+    // Save PDF
+    doc.save('FLOWS_Rainfall_Logs.pdf');
   };
 
   // Filter history logs based on search query & status dropdown
@@ -225,9 +252,9 @@ export default function RainfallHistory() {
         
         {/* Branding Logo */}
         <div className="flex items-center justify-between w-full md:w-auto">
-          <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-lg bg-[#1F2937] border border-[#374151] overflow-hidden flex items-center justify-center shrink-0">
-              <img src="/FLOWS.png" alt="FLOWS Logo" className="w-full h-full object-contain scale-[3.5]" />
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-[#1F2937] border border-[#374151] overflow-hidden flex items-center justify-center shrink-0 p-1">
+              <img src="/flowsnoname.png" alt="FLOWS Logo" className="w-full h-full object-contain" />
             </div>
             <div>
               <h1 className="text-base font-black tracking-tight text-white flex items-center gap-1.5 leading-none">
@@ -370,23 +397,32 @@ export default function RainfallHistory() {
             />
           </div>
 
-          {/* Filters Select */}
+          {/* Filters Select & Export */}
           <div className="flex w-full md:w-auto items-center gap-3">
             <div className="flex items-center gap-2 text-xs text-[#9CA3AF] font-bold whitespace-nowrap">
               <Filter size={14} className="text-[#60A5FA]" />
-              <span>Filter Status:</span>
+              <span className="hidden sm:inline">Filter Status:</span>
             </div>
             
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full md:w-48 bg-[#111827] border border-[#374151] focus:border-[#60A5FA] rounded-xl p-2 text-xs text-white focus:outline-none"
+              className="w-full md:w-40 bg-[#111827] border border-[#374151] focus:border-[#60A5FA] rounded-xl p-2 text-xs text-white focus:outline-none"
             >
               <option value="ALL">All Validations</option>
               <option value="PASSED">Passed Only</option>
               <option value="FLAGGED">Flagged Only</option>
               <option value="CORRECTED">Corrected Only</option>
             </select>
+
+            <button
+              onClick={exportToPDF}
+              className="flex items-center justify-center gap-2 bg-[#10B981]/10 hover:bg-[#10B981]/20 border border-[#10B981]/30 hover:border-[#10B981]/50 text-[#10B981] rounded-xl p-2 px-4 transition-all duration-300 font-bold text-xs"
+              title="Export as PDF"
+            >
+              <FileDown size={14} />
+              <span className="hidden sm:inline">Export</span>
+            </button>
           </div>
 
         </div>
@@ -412,8 +448,7 @@ export default function RainfallHistory() {
                     <th className="p-4">Date & Time</th>
                     <th className="p-4">Rainfall (mm)</th>
                     <th className="p-4">Validation Status</th>
-                    <th className="p-4">Log Notes</th>
-                    <th className="p-4 pr-6 text-right">Actions</th>
+                    <th className="p-4 pr-6">Log Notes</th>
                   </tr>
                 </thead>
 
@@ -447,24 +482,8 @@ export default function RainfallHistory() {
                       </td>
 
                       {/* Notes */}
-                      <td className="p-4 text-[#9CA3AF] italic max-w-xs truncate" title={log.notes}>
+                      <td className="p-4 pr-6 text-[#9CA3AF] italic max-w-xs truncate" title={log.notes}>
                         {log.notes}
-                      </td>
-
-                      {/* Action buttons (Manual validation override) */}
-                      <td className="p-4 pr-6 text-right">
-                        {log.status === 'FLAGGED' ? (
-                          <button
-                            onClick={() => handleCorrectStatus(log.id)}
-                            className="bg-[#60A5FA]/10 hover:bg-[#60A5FA]/20 border border-[#60A5FA]/30 hover:border-[#60A5FA] py-1 px-2.5 rounded-lg text-[9px] font-black uppercase text-[#60A5FA] transition-all duration-150 flex items-center justify-center gap-1 ml-auto"
-                            title="Override and Validate Flagged Sensor Spikes"
-                          >
-                            <Check size={10} />
-                            <span>Correct</span>
-                          </button>
-                        ) : (
-                          <span className="text-[9px] font-bold text-[#4B5563] uppercase select-none mr-2">Verified</span>
-                        )}
                       </td>
 
                     </tr>

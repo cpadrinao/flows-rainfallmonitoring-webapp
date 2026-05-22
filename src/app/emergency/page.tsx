@@ -113,7 +113,7 @@ export default function EmergencyPage() {
         <div className="flex items-center justify-between w-full md:w-auto">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-[#1F2937] border border-[#374151] p-0.5 overflow-hidden flex items-center justify-center shrink-0">
-              <img src="/FLOWS.png" alt="FLOWS Logo" className="w-full h-full object-contain" />
+              <img src="/flowsnoname.png" alt="FLOWS Logo" className="w-full h-full object-contain" />
             </div>
             <div>
               <h1 className="text-base font-black tracking-tight text-white flex items-center gap-1.5 leading-none">

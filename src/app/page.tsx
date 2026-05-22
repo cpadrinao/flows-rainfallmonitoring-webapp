@@ -144,9 +144,12 @@ export default function FLOWSApp() {
 
   // Portal vs Dashboard view mode selector
   const [viewMode, setViewMode] = useState<'gateway' | 'dashboard'>('gateway');
-  const [activeTab, setActiveTab] = useState<'weather' | 'zones' | 'alerts'>('weather');
+  const [activeTab, setActiveTab] = useState<'weather' | 'zones' | 'alerts' | 'emergency'>('weather');
   const [selectedZone, setSelectedZone] = useState<string>('zone-1');
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
+  
+  // Active Shelter Center inside the emergency view
+  const [activeCenter, setActiveCenter] = useState<string>('center-1');
   
   // Date & Time states in Philippine Time
   const [phTime, setPhTime] = useState<string>('');
@@ -162,13 +165,13 @@ export default function FLOWSApp() {
       if (view === 'dashboard') {
         setViewMode('dashboard');
       }
-      if (tab === 'weather' || tab === 'zones' || tab === 'alerts') {
+      if (tab === 'weather' || tab === 'zones' || tab === 'alerts' || tab === 'emergency') {
         setActiveTab(tab as any);
       }
     }
   }, []);
 
-  const changeTab = (tab: 'weather' | 'zones' | 'alerts') => {
+  const changeTab = (tab: 'weather' | 'zones' | 'alerts' | 'emergency') => {
     setActiveTab(tab);
     if (typeof window !== 'undefined') {
       const url = new URL(window.location.href);
@@ -363,88 +366,61 @@ export default function FLOWSApp() {
           GATEWAY SCREEN (Clean welcome page with two choices)
           ======================================================= */}
       {viewMode === 'gateway' && (
-        <div className="relative flex-1 w-full max-w-xl mx-auto px-4 py-8 flex flex-col justify-center items-center z-10 space-y-6 animate-fade-in min-h-[80vh]">
-          
-          {/* Logo & Headline */}
-          <div className="text-center space-y-3 z-10 relative">
-            <div className="inline-flex items-center justify-center bg-[#1F2937] border border-[#374151] rounded-3xl mb-2 shadow-2xl overflow-hidden w-36 h-36 mx-auto hover:scale-105 transition-transform duration-300">
-              <img src="/FLOWS.png" alt="FLOWS Logo" className="w-full h-full object-contain scale-[3.5] transition-transform" />
-            </div>
-            <h1 className="text-4xl font-black text-white tracking-tight flex items-center justify-center gap-2">
-              F.L.O.W.S.
-              <span className="relative flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#4ADE80] opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-[#4ADE80]"></span>
-              </span>
-            </h1>
-            <p className="text-xs font-black text-[#60A5FA] max-w-sm mx-auto leading-relaxed uppercase tracking-wider">
-              Flood Level Observation and Warning System
-            </p>
-          </div>
-
-          {/* New Description Card */}
-          <div className="bg-[#1F2937]/85 border border-[#374151]/80 rounded-2xl p-6 text-center max-w-md mx-auto space-y-2.5 shadow-2xl backdrop-blur-xl z-10 relative">
-            <p className="text-sm font-black text-white uppercase tracking-wider">Your Local Weather Hub</p>
-            <p className="text-xs text-[#9CA3AF] leading-relaxed">
-              F.L.O.W.S. is your direct source for real-time weather updates in Barangay Rizal. Our automated system tracks heavy rainfall across different local zones, giving you the clear, reliable information you need to stay safe and prepare early.
-            </p>
-          </div>
-
-          {/* Main Choices Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-md">
+        <div className="relative flex-1 w-full max-w-xl mx-auto px-4 py-8 flex flex-col justify-center items-center z-10 animate-fade-in min-h-[80vh]">
+          {/* Minimalist Landing */}
+          <div className="w-full max-w-lg p-8 sm:p-12 relative z-10 flex flex-col items-center space-y-12">
             
-            {/* CHOICE 1: Resident Observatory Dashboard */}
-            <button 
-              onClick={enterDashboard}
-              className="bg-[#1F2937]/80 hover:bg-[#253245] border border-[#374151] hover:border-[#60A5FA]/40 rounded-2xl p-5 text-center transition-all duration-300 shadow-xl group text-white flex flex-col items-center justify-center space-y-3 cursor-pointer backdrop-blur-xl"
-            >
-              <div className="p-3 bg-[#60A5FA]/10 border border-[#60A5FA]/20 rounded-xl text-[#60A5FA] group-hover:scale-110 transition-transform">
-                <CloudRain size={24} />
-              </div>
-              <div className="flex flex-col items-center space-y-1">
-                <span className="text-base font-black text-white group-hover:text-[#60A5FA] transition-colors leading-tight">
+            {/* Logo Section - Completely Borderless and blended */}
+            <div className="relative group flex justify-center items-center">
+              <img 
+                src="/flowsnoname.png" 
+                alt="FLOWS Logo" 
+                className="w-32 h-32 sm:w-40 sm:h-40 object-contain drop-shadow-2xl group-hover:scale-105 transition-transform duration-500" 
+              />
+            </div>
+
+            {/* Typography Section */}
+            <div className="text-center space-y-3">
+              <h1 className="text-5xl sm:text-7xl font-black text-slate-800 dark:text-white tracking-tight flex items-center justify-center gap-2">
+                F.L.O.W.S.
+                <span className="relative flex h-3 w-3 sm:h-4 sm:w-4 -mt-4 sm:-mt-6">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 sm:h-4 sm:w-4 bg-teal-500"></span>
+                </span>
+              </h1>
+              {/* Tagline: design-aligned slate color instead of blue */}
+              <p className="text-xs sm:text-sm font-bold text-slate-500 dark:text-slate-400 max-w-sm mx-auto leading-relaxed uppercase tracking-[0.15em] select-none">
+                Flood Level Observation and Warning System
+              </p>
+            </div>
+
+            {/* Action Buttons Grid */}
+            <div className="w-full flex flex-col sm:flex-row gap-4 pt-4">
+              
+              {/* Choice 1: Resident Dashboard */}
+              <button 
+                onClick={enterDashboard}
+                className="flex-1 bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 rounded-2xl py-4 px-6 text-center transition-all duration-300 shadow-xl group flex items-center justify-center gap-3 cursor-pointer"
+              >
+                <CloudRain size={20} className="group-hover:scale-110 transition-transform duration-200" />
+                <span className="text-sm font-black leading-tight">
                   View Dashboard
                 </span>
-                <span className="text-[9px] uppercase font-black tracking-wider text-[#60A5FA] bg-[#60A5FA]/10 px-2 py-0.5 rounded">
-                  For Residents
+              </button>
+
+              {/* Choice 2: Login System */}
+              <Link 
+                href="/admin/login"
+                className="flex-1 bg-white dark:bg-slate-900 text-slate-800 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-2xl py-4 px-6 text-center transition-all duration-300 shadow-sm hover:shadow-md group flex items-center justify-center gap-3 cursor-pointer"
+              >
+                <Lock size={20} className="text-slate-500 dark:text-slate-400 group-hover:scale-110 transition-transform duration-200" />
+                <span className="text-sm font-bold leading-tight">
+                  Admin Login
                 </span>
-              </div>
-            </button>
-
-            {/* CHOICE 2: Log in as Admin */}
-            <Link 
-              href="/admin/login"
-              className="bg-[#1F2937]/80 hover:bg-[#253245] border border-[#374151] hover:border-[#A78BFA]/40 rounded-2xl p-5 text-center transition-all duration-300 shadow-xl group text-white flex flex-col items-center justify-center space-y-3 cursor-pointer backdrop-blur-xl"
-            >
-              <div className="p-3 bg-[#A78BFA]/10 border border-[#A78BFA]/20 rounded-xl text-[#A78BFA] group-hover:scale-110 transition-transform">
-                <Lock size={24} />
-              </div>
-              <div className="flex flex-col items-center space-y-1">
-                <span className="text-base font-black text-white group-hover:text-[#A78BFA] transition-colors leading-tight">
-                  Login System
-                </span>
-                <span className="text-[9px] uppercase font-black tracking-wider text-[#A78BFA] bg-[#A78BFA]/10 px-2 py-0.5 rounded">
-                  For Admins
-                </span>
-              </div>
-            </Link>
-
+              </Link>
+            </div>
+            
           </div>
-
-          {/* Under button label tags */}
-          <div className="flex justify-between items-center w-full max-w-sm px-6 text-[10px] font-extrabold text-[#9CA3AF] uppercase tracking-wider select-none">
-            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#60A5FA] animate-pulse" /> For Residents</span>
-            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#A78BFA]" /> For Admins</span>
-          </div>
-
-          {/* Dummy Credentials Access Note */}
-          <div className="bg-[#1F2937]/40 border border-[#374151]/30 rounded-xl p-3 max-w-sm mx-auto text-center">
-            <p className="text-[9px] font-mono text-[#9CA3AF] leading-relaxed">
-              DEMO ACCESS: Log in to the <strong className="text-[#A78BFA]">Login System</strong> using credentials:<br />
-              Username: <code className="text-[#60A5FA] bg-[#111827] px-1 py-0.2 rounded font-mono font-bold">admin</code> | Password: <code className="text-[#60A5FA] bg-[#111827] px-1 py-0.2 rounded font-mono font-bold">admin123</code>
-            </p>
-          </div>
-
         </div>
       )}
 
@@ -460,8 +436,8 @@ export default function FLOWSApp() {
             {/* Branding Logo */}
             <div className="flex items-center justify-between w-full md:w-auto">
               <div className="flex items-center gap-2.5">
-                <div className="w-10 h-10 rounded-lg bg-[#1F2937] border border-[#374151] overflow-hidden flex items-center justify-center shrink-0">
-                  <img src="/FLOWS.png" alt="FLOWS Logo" className="w-full h-full object-contain scale-[3.5] transition-transform" />
+                <div className="w-10 h-10 rounded-lg bg-[#1F2937] border border-[#374151] overflow-hidden flex items-center justify-center shrink-0 p-1">
+                  <img src="/flowsnoname.png" alt="FLOWS Logo" className="w-full h-full object-contain transition-transform" />
                 </div>
                 <div>
                   <h1 className="text-base font-black tracking-tight text-white flex items-center gap-1.5 leading-none">
@@ -515,14 +491,16 @@ export default function FLOWSApp() {
                   activeTab === 'alerts' ? 'bg-[#111827] text-[#60A5FA]' : 'text-[#9CA3AF] hover:text-white'
                 }`}
               >
-                Alert Warnings
+                User Guide
               </button>
-              <Link
-                href="/emergency"
-                className="px-3 py-1.5 text-xs font-black uppercase rounded-lg text-[#9CA3AF] hover:text-[#EF4444] transition-colors"
+              <button
+                onClick={() => changeTab('emergency')}
+                className={`px-3 py-1.5 text-xs font-black uppercase rounded-lg transition-all cursor-pointer ${
+                  activeTab === 'emergency' ? 'bg-[#111827] text-[#EF4444]' : 'text-[#9CA3AF] hover:text-[#EF4444]'
+                }`}
               >
                 Emergency Hub
-              </Link>
+              </button>
             </nav>
 
             {/* Live Right-side controls (Desktop/Tablet) */}
@@ -682,6 +660,11 @@ export default function FLOWSApp() {
                 <div className="w-full text-left text-[10px] text-[#60A5FA] font-black uppercase tracking-wider bg-[#60A5FA]/10 border border-[#60A5FA]/20 px-3.5 py-2.5 rounded-xl flex items-center justify-start gap-2 h-[46px]">
                   <span className="w-2 h-2 rounded-full bg-[#60A5FA] animate-pulse" />
                   <span>System Reference Manual</span>
+                </div>
+              ) : activeTab === 'emergency' ? (
+                <div className="w-full text-left text-[10px] text-[#EF4444] font-black uppercase tracking-wider bg-[#EF4444]/10 border border-[#EF4444]/20 px-3.5 py-2.5 rounded-xl flex items-center justify-start gap-2 h-[46px]">
+                  <span className="w-2 h-2 rounded-full bg-[#EF4444] animate-pulse" />
+                  <span>Rizal Emergency Portal</span>
                 </div>
               ) : null}
             </div>
@@ -1015,80 +998,361 @@ export default function FLOWSApp() {
             {/* ========================================================
                 TAB 3: ALERTS THRESHOLDS SUMMARY
                 ======================================================== */}
+            {/* ========================================================
+                TAB 3: VISUAL USER GUIDE SECTION (Jargon-free explanations & limits)
+                ======================================================== */}
             {activeTab === 'alerts' && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fade-in">
+              <div className="space-y-6 animate-fade-in">
                 
-                {/* Threshold Rules */}
-                <div className="md:col-span-2 bg-[#1F2937] border border-[#374151] rounded-2xl p-5 space-y-4 shadow-xl">
-                  <h3 className="text-sm font-black text-white uppercase tracking-wider pb-2 border-b border-[#374151] flex items-center gap-2">
-                    <Bell size={16} className="text-[#EF4444]" />
-                    F.L.O.W.S. System Warn Calibration limits
+                {/* Header info */}
+                <div>
+                  <h3 className="text-lg font-black text-white tracking-tight flex items-center gap-2">
+                    <Info size={20} className="text-[#60A5FA]" />
+                    F.L.O.W.S. System Reference Guide
                   </h3>
-
-                  <div className="space-y-3.5">
-                    
-                    <div className="flex gap-3">
-                      <div className="w-7 h-7 rounded-full bg-[#EF4444]/15 flex items-center justify-center font-bold text-xs text-[#EF4444] shrink-0 border border-[#EF4444]/30">R</div>
-                      <div>
-                        <h4 className="text-xs font-black text-[#EF4444] uppercase">Red Threshold: Critical (&gt; 30mm/hr)</h4>
-                        <p className="text-[11px] text-[#9CA3AF] mt-0.5">Heavy prolonged rain. Evacuation coordinates fully armed. Proceed to Barangay Gym shelter.</p>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-3">
-                      <div className="w-7 h-7 rounded-full bg-[#F97316]/15 flex items-center justify-center font-bold text-xs text-[#F97316] shrink-0 border border-[#F97316]/30">O</div>
-                      <div>
-                        <h4 className="text-xs font-black text-[#F97316] uppercase">Orange Threshold: Warning (15 - 30mm/hr)</h4>
-                        <p className="text-[11px] text-[#9CA3AF] mt-0.5">Extreme precipitation levels. Secure home goods. Prepare evacuation grab bags.</p>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-3">
-                      <div className="w-7 h-7 rounded-full bg-[#F59E0B]/15 flex items-center justify-center font-bold text-xs text-[#F59E0B] shrink-0 border border-[#F59E0B]/30">Y</div>
-                      <div>
-                        <h4 className="text-xs font-black text-[#F59E0B] uppercase">Yellow Threshold: Monitor (7.5 - 15mm/hr)</h4>
-                        <p className="text-[11px] text-[#9CA3AF] mt-0.5">Heavy rains ongoing. Mudslide checks active. Gutters and drains active monitoring.</p>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-3">
-                      <div className="w-7 h-7 rounded-full bg-[#4ADE80]/15 flex items-center justify-center font-bold text-xs text-[#4ADE80] shrink-0 border border-[#4ADE80]/30">G</div>
-                      <div>
-                        <h4 className="text-xs font-black text-[#4ADE80] uppercase">Green Threshold: Normal (&lt; 7.5mm/hr)</h4>
-                        <p className="text-[11px] text-[#9CA3AF] mt-0.5">Safe rain indices. Continuous sync verified. Standard overcast operations.</p>
-                      </div>
-                    </div>
-
-                  </div>
+                  <p className="text-xs text-[#9CA3AF]">
+                    A visual user manual explaining how our automated sensors track and report local storm events.
+                  </p>
                 </div>
 
-                {/* Local Broadcast Activity */}
-                <div className="bg-[#1F2937] border border-[#374151] rounded-2xl p-5 space-y-4 shadow-xl">
-                  <h3 className="text-xs font-black uppercase text-[#9CA3AF] tracking-wider pb-2 border-b border-[#374151]">
-                    System Timeline Broadcasts
-                  </h3>
+                {/* Main Visual Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   
-                  <div className="relative pl-4 border-l border-[#374151] space-y-4 ml-1">
+                  {/* Column 1 & 2: Understanding Your Weather Cards */}
+                  <div className="md:col-span-2 space-y-4">
+                    <h4 className="text-xs font-black uppercase text-[#9CA3AF] tracking-wider ml-1">
+                      Understanding Your Weather Cards
+                    </h4>
                     
-                    <div className="relative">
-                      <span className="absolute -left-[21px] top-1 w-2 h-2 rounded-full bg-[#EF4444]" />
-                      <div className="text-[10px] text-[#EF4444] font-black uppercase">Red Alert Triggered • 9:45 PM</div>
-                      <p className="text-[11px] text-white font-bold leading-relaxed mt-0.5">Zone 1 Riverside sensor exceeded critical threshold.</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      
+                      {/* Card 1: Rain Status */}
+                      <div className="weather-glass rounded-2xl p-4 border border-[#374151]/50 space-y-2 hover:border-[#60A5FA]/30 transition-colors">
+                        <div className="flex items-center gap-2.5 text-[#60A5FA]">
+                          <div className="p-2 bg-[#60A5FA]/10 rounded-xl">
+                            <CloudRain size={18} />
+                          </div>
+                          <span className="text-xs font-black uppercase tracking-wider text-white">Rain Status</span>
+                        </div>
+                        <p className="text-[11px] text-[#9CA3AF] leading-relaxed">
+                          Tells you whether it is currently dry, overcast, or raining heavily in your purok. It receives constant telemetry from our automated radar and sensor node.
+                        </p>
+                      </div>
+
+                      {/* Card 2: Rainfall Amount */}
+                      <div className="weather-glass rounded-2xl p-4 border border-[#374151]/50 space-y-2 hover:border-[#60A5FA]/30 transition-colors">
+                        <div className="flex items-center gap-2.5 text-[#4ADE80]">
+                          <div className="p-2 bg-[#4ADE80]/10 rounded-xl">
+                            <Droplets size={18} />
+                          </div>
+                          <span className="text-xs font-black uppercase tracking-wider text-white">Rainfall Amount</span>
+                        </div>
+                        <p className="text-[11px] text-[#9CA3AF] leading-relaxed">
+                          Measures the height of water (in millimeters) accumulated on flat land over the last hour. A higher number signals a heavier rate of storm-water build-up.
+                        </p>
+                      </div>
+
+                      {/* Card 3: Continuity */}
+                      <div className="weather-glass rounded-2xl p-4 border border-[#374151]/50 space-y-2 hover:border-[#F59E0B]/30 transition-colors">
+                        <div className="flex items-center gap-2.5 text-[#F59E0B]">
+                          <div className="p-2 bg-[#F59E0B]/10 rounded-xl">
+                            <Timer size={18} />
+                          </div>
+                          <span className="text-xs font-black uppercase tracking-wider text-white">Rain Continuity</span>
+                        </div>
+                        <p className="text-[11px] text-[#9CA3AF] leading-relaxed">
+                          Tracks exactly how long the rain has been falling continuously without stopping. Prolonged rainfall fills local drains and increases landslide risk on hillsides.
+                        </p>
+                      </div>
+
+                      {/* Card 4: Saturation */}
+                      <div className="weather-glass rounded-2xl p-4 border border-[#374151]/50 space-y-2 hover:border-[#A78BFA]/30 transition-colors">
+                        <div className="flex items-center gap-2.5 text-[#A78BFA]">
+                          <div className="p-2 bg-[#A78BFA]/10 rounded-xl">
+                            <Activity size={18} />
+                          </div>
+                          <span className="text-xs font-black uppercase tracking-wider text-white">Air Moisture (Humidity)</span>
+                        </div>
+                        <p className="text-[11px] text-[#9CA3AF] leading-relaxed">
+                          Checks the amount of water vapor in the atmosphere. High moisture percentages mean that dense clouds are locked in, meaning the rain will likely continue.
+                        </p>
+                      </div>
+
+                      {/* Card 5: Trend Timeline */}
+                      <div className="weather-glass rounded-2xl p-4 border border-[#374151]/50 space-y-2 hover:border-[#60A5FA]/30 transition-colors sm:col-span-2">
+                        <div className="flex items-center gap-2.5 text-[#60A5FA]">
+                          <div className="p-2 bg-[#60A5FA]/10 rounded-xl">
+                            <TrendingUp size={18} />
+                          </div>
+                          <span className="text-xs font-black uppercase tracking-wider text-white">24-Hour Precipitation Trend</span>
+                        </div>
+                        <p className="text-[11px] text-[#9CA3AF] leading-relaxed">
+                          A visual record showing cumulative telemetry logs hour-by-hour. This history helps you see if the storm is steadily growing stronger, remaining stable, or beginning to fade.
+                        </p>
+                      </div>
+
+                    </div>
+                  </div>
+
+                  {/* Column 3: Alert Severities & Timeline */}
+                  <div className="space-y-4">
+                    <h4 className="text-xs font-black uppercase text-[#9CA3AF] tracking-wider ml-1">
+                      Alert Severity Indicators
+                    </h4>
+                    
+                    <div className="bg-[#1F2937] border border-[#374151] rounded-2xl p-5 space-y-4 shadow-xl">
+                      
+                      {/* Green */}
+                      <div className="flex gap-3 items-start pb-3 border-b border-[#374151]/50">
+                        <span className="w-6 h-6 rounded-full bg-[#4ADE80]/15 flex items-center justify-center font-bold text-[10px] text-[#4ADE80] shrink-0 border border-[#4ADE80]/30 mt-0.5">G</span>
+                        <div>
+                          <h5 className="text-[11px] font-black text-[#4ADE80] uppercase">Green (Normal)</h5>
+                          <p className="text-[10px] text-[#9CA3AF] mt-0.5 leading-snug">Safe weather index. Telemetry checks are healthy. Local routines flow normally.</p>
+                        </div>
+                      </div>
+
+                      {/* Yellow */}
+                      <div className="flex gap-3 items-start pb-3 border-b border-[#374151]/50">
+                        <span className="w-6 h-6 rounded-full bg-[#F59E0B]/15 flex items-center justify-center font-bold text-[10px] text-[#F59E0B] shrink-0 border border-[#F59E0B]/30 mt-0.5">Y</span>
+                        <div>
+                          <h5 className="text-[11px] font-black text-[#F59E0B] uppercase">Yellow (Monitor)</h5>
+                          <p className="text-[10px] text-[#9CA3AF] mt-0.5 leading-snug">Rains starting to pick up. Local drains are monitored and hillside checks are active.</p>
+                        </div>
+                      </div>
+
+                      {/* Orange */}
+                      <div className="flex gap-3 items-start pb-3 border-b border-[#374151]/50">
+                        <span className="w-6 h-6 rounded-full bg-[#F97316]/15 flex items-center justify-center font-bold text-[10px] text-[#F97316] shrink-0 border border-[#F97316]/30 mt-0.5">O</span>
+                        <div>
+                          <h5 className="text-[11px] font-black text-[#F97316] uppercase">Orange (Prepare)</h5>
+                          <p className="text-[10px] text-[#9CA3AF] mt-0.5 leading-snug">Very heavy rains. Move valuable home appliances to higher counters and pack emergency go bags.</p>
+                        </div>
+                      </div>
+
+                      {/* Red */}
+                      <div className="flex gap-3 items-start">
+                        <span className="w-6 h-6 rounded-full bg-[#EF4444]/15 flex items-center justify-center font-bold text-[10px] text-[#EF4444] shrink-0 border border-[#EF4444]/30 mt-0.5">R</span>
+                        <div>
+                          <h5 className="text-[11px] font-black text-[#EF4444] uppercase">Red (Evacuate)</h5>
+                          <p className="text-[10px] text-[#9CA3AF] mt-0.5 leading-snug">Critical flooding risk. Turn off your main household electricity breaker and head immediately to the Multipurpose Gym.</p>
+                        </div>
+                      </div>
+
                     </div>
 
-                    <div className="relative">
-                      <span className="absolute -left-[21px] top-1 w-2 h-2 rounded-full bg-[#F97316]" />
-                      <div className="text-[10px] text-[#F97316] font-black uppercase">Orange Alert Triggered • 9:15 PM</div>
-                      <p className="text-[11px] text-white font-bold leading-relaxed mt-0.5">Zone 3 precipitation hit 22.1 mm.</p>
-                    </div>
-
-                    <div className="relative">
-                      <span className="absolute -left-[21px] top-1 w-2 h-2 rounded-full bg-[#4ADE80]" />
-                      <div className="text-[10px] text-[#4ADE80] font-black uppercase">Telemetry Sync OK • 8:00 PM</div>
-                      <p className="text-[11px] text-[#9CA3AF] leading-relaxed mt-0.5">All 5 sensor nodes synchronized successfully.</p>
+                    {/* Timeline Feed */}
+                    <div className="bg-[#1F2937] border border-[#374151] rounded-2xl p-5 space-y-4 shadow-xl">
+                      <h5 className="text-[10px] font-black uppercase text-[#9CA3AF] tracking-wider pb-2 border-b border-[#374151]">
+                        Barangay Telemetry Timeline
+                      </h5>
+                      <div className="relative pl-4 border-l border-[#374151] space-y-4 ml-1">
+                        <div className="relative">
+                          <span className="absolute -left-[21px] top-1 w-2 h-2 rounded-full bg-[#EF4444]" />
+                          <div className="text-[9px] text-[#EF4444] font-black uppercase">Red Alert Triggered • 9:45 PM</div>
+                          <p className="text-[10px] text-white font-bold leading-relaxed mt-0.5">Zone 1 Riverside sensor exceeded critical threshold.</p>
+                        </div>
+                        <div className="relative">
+                          <span className="absolute -left-[21px] top-1 w-2 h-2 rounded-full bg-[#F97316]" />
+                          <div className="text-[9px] text-[#F97316] font-black uppercase">Orange Alert Triggered • 9:15 PM</div>
+                          <p className="text-[10px] text-white font-bold leading-relaxed mt-0.5">Zone 3 precipitation hit 22.1 mm.</p>
+                        </div>
+                      </div>
                     </div>
 
                   </div>
+
+                </div>
+
+              </div>
+            )}
+
+            {/* ========================================================
+                TAB 4: EMERGENCY HUB SECTION (Integrated client-side rescue portal)
+                ======================================================== */}
+            {activeTab === 'emergency' && (
+              <div className="space-y-6 animate-fade-in">
+                
+                {/* Title */}
+                <div>
+                  <h3 className="text-lg font-black text-white tracking-tight flex items-center gap-2">
+                    <ShieldAlert size={20} className="text-[#EF4444] animate-pulse" />
+                    Barangay Rizal Rescue & Disaster Services
+                  </h3>
+                  <p className="text-xs text-[#9CA3AF]">
+                    Official emergency hotlines, shelter statuses, and safety checklists for residents.
+                  </p>
+                </div>
+
+                {/* Grid layout */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  
+                  {/* Column 1: Shelters */}
+                  <div className="space-y-4">
+                    <h4 className="text-xs font-black uppercase text-[#9CA3AF] tracking-wider ml-1">
+                      Designated Evacuation Shelters
+                    </h4>
+                    
+                    {/* Gym */}
+                    <div 
+                      onClick={() => setActiveCenter('center-1')}
+                      className={`bg-[#1F2937] border p-5 rounded-2xl cursor-pointer transition-all duration-300 ${
+                        activeCenter === 'center-1' ? 'border-[#60A5FA] weather-glow-blue scale-[1.02]' : 'border-[#374151] hover:scale-[1.01]'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex gap-2.5">
+                          <MapPin size={18} className="text-[#60A5FA] mt-0.5" />
+                          <div>
+                            <h5 className="text-xs font-black text-white">Barangay Rizal Multipurpose Gym</h5>
+                            <p className="text-[10px] text-[#9CA3AF] mt-0.5 leading-snug">High School Complex (Elevated Ground)</p>
+                          </div>
+                        </div>
+                        <span className="text-[8px] font-black text-[#4ADE80] bg-[#4ADE80]/10 px-2 py-0.5 rounded-full shrink-0">ACTIVE</span>
+                      </div>
+                      <div className="mt-4 pt-3 border-t border-[#374151]/50 flex justify-between items-center text-[10px] text-[#9CA3AF]">
+                        <span>Capacity Filled: <strong className="text-white">42% (210 / 500)</strong></span>
+                        <div className="w-16 bg-[#111827] rounded-full h-1.5 overflow-hidden">
+                          <div className="bg-[#F59E0B] h-full" style={{ width: '42%' }} />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* School Annex */}
+                    <div 
+                      onClick={() => setActiveCenter('center-2')}
+                      className={`bg-[#1F2937] border p-5 rounded-2xl cursor-pointer transition-all duration-300 ${
+                        activeCenter === 'center-2' ? 'border-[#60A5FA] weather-glow-blue scale-[1.02]' : 'border-[#374151] hover:scale-[1.01]'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex gap-2.5">
+                          <MapPin size={18} className="text-[#A78BFA] mt-0.5" />
+                          <div>
+                            <h5 className="text-xs font-black text-white">Rizal Elementary School Annex</h5>
+                            <p className="text-[10px] text-[#9CA3AF] mt-0.5 leading-snug">Central Plaza Grounds (Elevated Annex)</p>
+                          </div>
+                        </div>
+                        <span className="text-[8px] font-black text-[#4ADE80] bg-[#4ADE80]/10 px-2 py-0.5 rounded-full shrink-0">ACTIVE</span>
+                      </div>
+                      <div className="mt-4 pt-3 border-t border-[#374151]/50 flex justify-between items-center text-[10px] text-[#9CA3AF]">
+                        <span>Capacity Filled: <strong className="text-white">15% (45 / 300)</strong></span>
+                        <div className="w-16 bg-[#111827] rounded-full h-1.5 overflow-hidden">
+                          <div className="bg-[#4ADE80] h-full" style={{ width: '15%' }} />
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+
+                  {/* Column 2: Hotlines */}
+                  <div className="space-y-4">
+                    <h4 className="text-xs font-black uppercase text-[#9CA3AF] tracking-wider ml-1">
+                      Clickable Telephone Links
+                    </h4>
+                    
+                    <div className="flex flex-col gap-3">
+                      
+                      <a 
+                        href="tel:5557492"
+                        className="bg-[#1F2937] hover:bg-[#253245] border border-[#374151] hover:border-[#60A5FA]/40 p-4 rounded-2xl flex items-center justify-between transition-all duration-300 group"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-[#60A5FA]/10 flex items-center justify-center text-[#60A5FA] border border-[#374151]/50 group-hover:scale-105 transition-transform">
+                            <Users size={20} />
+                          </div>
+                          <div>
+                            <h5 className="text-xs font-black text-white leading-tight">Barangay Rescue</h5>
+                            <span className="text-[10px] text-[#9CA3AF]">Command Headquarters</span>
+                          </div>
+                        </div>
+                        <span className="text-xs font-bold text-[#60A5FA] font-mono bg-[#60A5FA]/10 py-1 px-2.5 rounded-lg">555-7492</span>
+                      </a>
+
+                      <a 
+                        href="tel:0498291111"
+                        className="bg-[#1F2937] hover:bg-[#253245] border border-[#374151] hover:border-[#EF4444]/40 p-4 rounded-2xl flex items-center justify-between transition-all duration-300 group"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-[#EF4444]/10 flex items-center justify-center text-[#EF4444] border border-[#374151]/50 group-hover:scale-105 transition-transform">
+                            <ShieldAlert size={20} />
+                          </div>
+                          <div>
+                            <h5 className="text-xs font-black text-white leading-tight">MDRRMO HQ</h5>
+                            <span className="text-[10px] text-[#9CA3AF]">Disaster Response HQ</span>
+                          </div>
+                        </div>
+                        <span className="text-xs font-bold text-[#EF4444] font-mono bg-[#EF4444]/10 py-1 px-2.5 rounded-lg">(049) 829-1111</span>
+                      </a>
+
+                      <a 
+                        href="tel:5557654"
+                        className="bg-[#1F2937] hover:bg-[#253245] border border-[#374151] hover:border-[#A78BFA]/40 p-4 rounded-2xl flex items-center justify-between transition-all duration-300 group"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-[#A78BFA]/10 flex items-center justify-center text-[#A78BFA] border border-[#374151]/50 group-hover:scale-105 transition-transform">
+                            <Users size={20} />
+                          </div>
+                          <div>
+                            <h5 className="text-xs font-black text-white leading-tight">Rizal Police Desk</h5>
+                            <span className="text-[10px] text-[#9CA3AF]">Police Sub-station</span>
+                          </div>
+                        </div>
+                        <span className="text-xs font-bold text-[#A78BFA] font-mono bg-[#A78BFA]/10 py-1 px-2.5 rounded-lg">555-7654</span>
+                      </a>
+
+                      <a 
+                        href="tel:5553473"
+                        className="bg-[#1F2937] hover:bg-[#253245] border border-[#374151] hover:border-[#F97316]/40 p-4 rounded-2xl flex items-center justify-between transition-all duration-300 group"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-[#F97316]/10 flex items-center justify-center text-[#F97316] border border-[#374151]/50 group-hover:scale-105 transition-transform">
+                            <Flame size={20} />
+                          </div>
+                          <div>
+                            <h5 className="text-xs font-black text-white leading-tight">Rizal BFP Fire Desk</h5>
+                            <span className="text-[10px] text-[#9CA3AF]">Fire Emergencies</span>
+                          </div>
+                        </div>
+                        <span className="text-xs font-bold text-[#F97316] font-mono bg-[#F97316]/10 py-1 px-2.5 rounded-lg">555-3473</span>
+                      </a>
+
+                    </div>
+                  </div>
+
+                  {/* Column 3: Reminders */}
+                  <div className="bg-[#1F2937] border border-[#374151] rounded-2xl p-5 space-y-4 shadow-xl h-fit">
+                    <h4 className="text-xs font-black uppercase text-white tracking-wider pb-2 border-b border-[#374151] flex items-center gap-1.5">
+                      <AlertTriangle size={15} className="text-[#F59E0B] animate-pulse" />
+                      Evacuation Reminders
+                    </h4>
+
+                    <div className="space-y-4 text-xs leading-relaxed">
+                      <div className="flex gap-3">
+                        <span className="w-5 h-5 rounded-full bg-[#EF4444]/15 flex items-center justify-center text-[#EF4444] font-bold text-[10px] shrink-0">1</span>
+                        <div>
+                          <span className="font-extrabold text-white block">Go Bag Packing</span>
+                          <span className="text-[#9CA3AF]">Pack light: gather clean water (1L/person), canned foods, essential medicines, cash, and ID documents in zip bags.</span>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-3">
+                        <span className="w-5 h-5 rounded-full bg-[#F59E0B]/15 flex items-center justify-center text-[#F59E0B] font-bold text-[10px] shrink-0">2</span>
+                        <div>
+                          <span className="font-extrabold text-white block">Circuit Breaker & LPG</span>
+                          <span className="text-[#9CA3AF]">Turn off the main electrical breaker switch and gas valves before leaving to protect against fires or live wiring.</span>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-3">
+                        <span className="w-5 h-5 rounded-full bg-[#4ADE80]/15 flex items-center justify-center text-[#4ADE80] font-bold text-[10px] shrink-0">3</span>
+                        <div>
+                          <span className="font-extrabold text-white block">Official Shelters Only</span>
+                          <span className="text-[#9CA3AF]">Proceed only to Barangay designated elevated evacuation centers. Avoid taking low-lying pathways.</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
                 </div>
 
               </div>
@@ -1131,16 +1395,18 @@ export default function FLOWSApp() {
               }`}
             >
               <Bell size={18} className={activeTab === 'alerts' ? 'animate-bounce' : ''} />
-              <span className="text-[9px] font-bold mt-1 tracking-wide">Alerts</span>
+              <span className="text-[9px] font-bold mt-1 tracking-wide">Guide</span>
             </button>
 
-            <Link 
-              href="/emergency"
-              className="flex flex-col items-center justify-center py-1 flex-1 text-[#9CA3AF] hover:text-[#EF4444] transition-colors"
+            <button 
+              onClick={() => changeTab('emergency')}
+              className={`flex flex-col items-center justify-center py-1 flex-1 text-center transition-colors ${
+                activeTab === 'emergency' ? 'text-[#EF4444] font-black' : 'text-[#9CA3AF]'
+              }`}
             >
-              <ShieldAlert size={18} />
+              <ShieldAlert size={18} className={activeTab === 'emergency' ? 'animate-bounce' : ''} />
               <span className="text-[9px] font-bold mt-1 tracking-wide">Emergency</span>
-            </Link>
+            </button>
 
           </nav>
         </div>
