@@ -16,8 +16,6 @@ import {
   Radio,
   ChevronRight,
   TrendingUp,
-  Sun,
-  Moon,
   Clock,
   Home
 } from 'lucide-react';
@@ -44,29 +42,16 @@ export default function ZoneManagement() {
   const [authorized, setAuthorized] = useState(false);
   const [zones, setZones] = useState<ZoneItem[]>([]);
   
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const [theme] = useState<'dark'>('dark');
   const [phTime, setPhTime] = useState<string>('');
   const [phDate, setPhDate] = useState<string>('');
   const [countdownTime, setCountdownTime] = useState<string>('');
 
-  // Load and apply theme from local storage
+  // Enforce dark mode globally
   useEffect(() => {
-    const savedTheme = localStorage.getItem('theme') as 'dark' | 'light';
-    if (savedTheme) {
-      setTheme(savedTheme);
-    }
+    document.documentElement.setAttribute('data-theme', 'dark');
+    document.documentElement.classList.add('dark');
   }, []);
-
-  // Apply theme to html element so CSS selectors [data-theme="light"] work globally
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-  }, [theme]);
-
-  const toggleTheme = () => {
-    const nextTheme = theme === 'dark' ? 'light' : 'dark';
-    setTheme(nextTheme);
-    localStorage.setItem('theme', nextTheme);
-  };
 
   // Synchronize Live Time
   useEffect(() => {
@@ -269,13 +254,6 @@ export default function ZoneManagement() {
 
           {/* Mobile Right Quick Controls */}
           <div className="flex md:hidden items-center gap-1.5">
-            <button
-              onClick={toggleTheme}
-              className="p-1.5 bg-[#1F2937] border border-[#374151] rounded-lg text-[#9CA3AF] hover:text-white cursor-pointer"
-              title="Toggle Theme"
-            >
-              {theme === 'dark' ? <Sun size={13} className="text-[#F59E0B]" /> : <Moon size={13} className="text-[#7c3aed]" />}
-            </button>
             <Link 
               href="/admin/dashboard"
               className="p-1.5 bg-[#1F2937] border border-[#374151] rounded-lg text-[#9CA3AF] hover:text-white flex items-center justify-center cursor-pointer"
@@ -316,19 +294,6 @@ export default function ZoneManagement() {
               <div className="text-[9px] text-[#9CA3AF] font-bold tracking-wide">{phDate || 'Thursday, May 21, 2026'}</div>
             </div>
           </div>
-
-          {/* Sun/Moon Theme Toggle Trigger */}
-          <button
-            onClick={toggleTheme}
-            className="p-2 bg-[#1F2937]/80 hover:bg-[#253245] border border-[#374151] hover:border-[#60A5FA]/40 rounded-xl text-[#9CA3AF] hover:text-white transition-all shadow-md group shrink-0 cursor-pointer"
-            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-          >
-            {theme === 'dark' ? (
-              <Sun size={15} className="text-[#F59E0B] animate-spin" style={{ animationDuration: '10s' }} />
-            ) : (
-              <Moon size={15} className="text-[#7c3aed]" />
-            )}
-          </button>
 
           {/* Back to Dashboard Button positioned at the very right */}
           <Link 

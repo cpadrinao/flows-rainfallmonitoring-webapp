@@ -3,14 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Lock, User, ShieldAlert, ArrowLeft, Radio, AlertCircle, Sun, Moon } from 'lucide-react';
+import { Lock, User, ShieldAlert, ArrowLeft, Radio, AlertCircle } from 'lucide-react';
 
 export default function AdminLoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const [theme] = useState<'dark'>('dark');
   const router = useRouter();
 
   // Redirect if already logged in
@@ -23,22 +23,13 @@ export default function AdminLoginPage() {
 
   // Load and apply theme from local storage
   useEffect(() => {
-    const savedTheme = localStorage.getItem('theme') as 'dark' | 'light';
-    if (savedTheme) {
-      setTheme(savedTheme);
-    }
+    // Light mode feature completely removed. Focus only on dark mode.
   }, []);
 
   // Apply theme to html element so CSS selectors [data-theme="light"] work globally
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
-
-  const toggleTheme = () => {
-    const nextTheme = theme === 'dark' ? 'light' : 'dark';
-    setTheme(nextTheme);
-    localStorage.setItem('theme', nextTheme);
-  };
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,19 +66,11 @@ export default function AdminLoginPage() {
       {/* Main card */}
       <div className="w-full max-w-md bg-[#1F2937]/90 border border-[#374151] rounded-3xl p-8 shadow-2xl backdrop-blur-md relative z-10 weather-glow-blue animate-fade-in">
         
-        {/* Header Row with Back Link and Theme Toggle */}
+        {/* Header Row with Back Link */}
         <div className="flex items-center justify-between mb-6">
           <Link href="/" className="inline-flex items-center gap-1.5 text-xs text-[#9CA3AF] hover:text-[#60A5FA] transition-colors">
             <span>Back to Resident App</span>
           </Link>
-
-          <button
-            onClick={toggleTheme}
-            className="p-2 bg-[#111827]/40 border border-[#374151]/50 rounded-xl text-[#9CA3AF] hover:text-white transition-all cursor-pointer"
-            title="Toggle Light/Dark Theme"
-          >
-            {theme === 'dark' ? <Sun size={14} className="text-[#F59E0B]" /> : <Moon size={14} className="text-[#7c3aed]" />}
-          </button>
         </div>
 
         {/* Logo and branding */}

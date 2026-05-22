@@ -2,8 +2,11 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "F.L.O.W.S. | Rainfall Monitoring System",
+  title: "F.L.O.W.S. | Rainfall",
   description: "Flood and Local Observatory Warning System (F.L.O.W.S.) - Real-time rainfall telemetry and emergency alerts for Barangay Rizal.",
+  icons: {
+    icon: "/flowsnoname.png",
+  },
 };
 
 export default function RootLayout({

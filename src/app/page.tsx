@@ -8,7 +8,6 @@ import {
   CloudDrizzle,
   Cloud,
   Sun,
-  Moon,
   Droplets, 
   Timer, 
   Activity, 
@@ -139,8 +138,8 @@ const ZONES_DATABASE: Record<string, ZoneData> = {
 };
 
 export default function FLOWSApp() {
-  // Theme state
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  // Theme state locked to dark
+  const [theme] = useState<'dark'>('dark');
 
   // Portal vs Dashboard view mode selector
   const [viewMode, setViewMode] = useState<'gateway' | 'dashboard'>('gateway');
@@ -155,6 +154,29 @@ export default function FLOWSApp() {
   const [phTime, setPhTime] = useState<string>('');
   const [phDate, setPhDate] = useState<string>('');
   const [countdownTime, setCountdownTime] = useState<string>('');
+
+  // Typing animation states for description
+  const [displayedText, setDisplayedText] = useState<string>('');
+  const [typingComplete, setTypingComplete] = useState<boolean>(false);
+
+  useEffect(() => {
+    const fullText = "F.L.O.W.S. is your direct source for real-time weather updates in Barangay Rizal. Our automated system tracks heavy rainfall across different local zones, giving you the clear, reliable information you need to stay safe and prepare early.";
+    let index = 0;
+    setDisplayedText('');
+    setTypingComplete(false);
+    
+    const interval = setInterval(() => {
+      if (index < fullText.length) {
+        setDisplayedText(fullText.slice(0, index + 1));
+        index++;
+      } else {
+        clearInterval(interval);
+        setTypingComplete(true);
+      }
+    }, 160); // Slower, highly-readable typing speed (160ms)
+    
+    return () => clearInterval(interval);
+  }, []);
 
   // Handle URL query parameter synchronization
   useEffect(() => {
@@ -198,24 +220,13 @@ export default function FLOWSApp() {
     }
   };
 
-  // Load and apply theme from local storage
+  // Enforce dark mode globally
   useEffect(() => {
-    const savedTheme = localStorage.getItem('theme') as 'dark' | 'light';
-    if (savedTheme) {
-      setTheme(savedTheme);
-    }
+    document.documentElement.setAttribute('data-theme', 'dark');
+    document.documentElement.classList.add('dark');
   }, []);
 
-  // Apply theme to html element so CSS selectors [data-theme="light"] work globally
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-  }, [theme]);
 
-  const toggleTheme = () => {
-    const nextTheme = theme === 'dark' ? 'light' : 'dark';
-    setTheme(nextTheme);
-    localStorage.setItem('theme', nextTheme);
-  };
 
   // Synchronize Live Time
   useEffect(() => {
@@ -366,31 +377,33 @@ export default function FLOWSApp() {
           GATEWAY SCREEN (Clean welcome page with two choices)
           ======================================================= */}
       {viewMode === 'gateway' && (
-        <div className="relative flex-1 w-full max-w-xl mx-auto px-4 py-8 flex flex-col justify-center items-center z-10 animate-fade-in min-h-[80vh]">
+        <div className="relative flex-1 w-full max-w-xl mx-auto px-4 py-8 flex flex-col justify-center items-center z-10 animate-fade-in min-h-[85vh]">
           {/* Minimalist Landing */}
-          <div className="w-full max-w-lg p-8 sm:p-12 relative z-10 flex flex-col items-center space-y-12">
+          <div className="w-full max-w-lg p-6 sm:p-10 relative z-10 flex flex-col items-center space-y-6 sm:space-y-8">
             
-            {/* Logo Section - Completely Borderless and blended */}
-            <div className="relative group flex justify-center items-center">
-              <img 
-                src="/flowsnoname.png" 
-                alt="FLOWS Logo" 
-                className="w-32 h-32 sm:w-40 sm:h-40 object-contain drop-shadow-2xl group-hover:scale-105 transition-transform duration-500" 
-              />
+            {/* Brand Title Group - Centered and balanced */}
+            <div className="flex flex-col items-center w-full space-y-4">
+              {/* Typography Section */}
+              <div className="text-center space-y-3">
+                <h1 className="text-5xl sm:text-6xl md:text-7xl font-black text-white tracking-tight leading-none flex items-center justify-center gap-2">
+                  F.L.O.W.S.
+                  <span className="relative flex h-3 w-3 sm:h-4 sm:w-4 -mt-2 sm:-mt-3">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 sm:h-4 sm:w-4 bg-teal-500"></span>
+                  </span>
+                </h1>
+                {/* Tagline: design-aligned slate color instead of blue */}
+                <p className="text-[10px] sm:text-xs font-black text-slate-400 max-w-sm mx-auto leading-relaxed uppercase tracking-[0.2em] select-none mt-2">
+                  Flood Level Observation and Warning System
+                </p>
+              </div>
             </div>
 
-            {/* Typography Section */}
-            <div className="text-center space-y-3">
-              <h1 className="text-5xl sm:text-7xl font-black text-slate-800 dark:text-white tracking-tight flex items-center justify-center gap-2">
-                F.L.O.W.S.
-                <span className="relative flex h-3 w-3 sm:h-4 sm:w-4 -mt-4 sm:-mt-6">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-3 w-3 sm:h-4 sm:w-4 bg-teal-500"></span>
-                </span>
-              </h1>
-              {/* Tagline: design-aligned slate color instead of blue */}
-              <p className="text-xs sm:text-sm font-bold text-slate-500 dark:text-slate-400 max-w-sm mx-auto leading-relaxed uppercase tracking-[0.15em] select-none">
-                Flood Level Observation and Warning System
+            {/* Restored Mini Description with Typing Animation - Enlarged text & Dots looping removed */}
+            <div className="pt-2 w-full max-w-md mx-auto space-y-3 text-center">
+              <div className="w-16 h-0.5 bg-gradient-to-r from-transparent via-slate-700 to-transparent mx-auto" />
+              <p className="text-lg sm:text-xl md:text-[22px] text-slate-200 leading-relaxed font-normal select-none min-h-[160px] sm:min-h-[120px] md:min-h-[100px] transition-all duration-300">
+                {displayedText}
               </p>
             </div>
 
@@ -400,10 +413,10 @@ export default function FLOWSApp() {
               {/* Choice 1: Resident Dashboard */}
               <button 
                 onClick={enterDashboard}
-                className="flex-1 bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 rounded-2xl py-4 px-6 text-center transition-all duration-300 shadow-xl group flex items-center justify-center gap-3 cursor-pointer"
+                className="flex-1 bg-[#4F7CAC] hover:bg-[#3B628A] rounded-2xl py-4 px-6 text-center transition-all duration-300 shadow-xl group flex items-center justify-center gap-3 cursor-pointer"
               >
-                <CloudRain size={20} className="group-hover:scale-110 transition-transform duration-200" />
-                <span className="text-sm font-black leading-tight">
+                <CloudRain size={20} className="group-hover:scale-110 transition-transform duration-200 text-slate-950" />
+                <span className="text-sm font-black leading-tight select-none text-slate-950">
                   View Dashboard
                 </span>
               </button>
@@ -411,9 +424,9 @@ export default function FLOWSApp() {
               {/* Choice 2: Login System */}
               <Link 
                 href="/admin/login"
-                className="flex-1 bg-white dark:bg-slate-900 text-slate-800 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-2xl py-4 px-6 text-center transition-all duration-300 shadow-sm hover:shadow-md group flex items-center justify-center gap-3 cursor-pointer"
+                className="flex-1 bg-[#1E2229] hover:bg-slate-800 border border-slate-800 rounded-2xl py-4 px-6 text-center transition-all duration-300 shadow-sm hover:shadow-md group flex items-center justify-center gap-3 cursor-pointer"
               >
-                <Lock size={20} className="text-slate-500 dark:text-slate-400 group-hover:scale-110 transition-transform duration-200" />
+                <Lock size={20} className="text-slate-400 group-hover:scale-110 transition-transform duration-200" />
                 <span className="text-sm font-bold leading-tight">
                   Admin Login
                 </span>
@@ -450,13 +463,6 @@ export default function FLOWSApp() {
 
               {/* Mobile Right Quick Controls */}
               <div className="flex md:hidden items-center gap-1.5">
-                <button
-                  onClick={toggleTheme}
-                  className="p-1.5 bg-[#1F2937] border border-[#374151] rounded-lg text-[#9CA3AF] hover:text-white cursor-pointer"
-                  title="Toggle Theme"
-                >
-                  {theme === 'dark' ? <Sun size={13} className="text-[#F59E0B]" /> : <Moon size={13} className="text-[#7c3aed]" />}
-                </button>
                 <button 
                   onClick={enterGateway}
                   className="p-1.5 bg-[#1F2937] border border-[#374151] rounded-lg text-[#9CA3AF] hover:text-white flex items-center justify-center cursor-pointer"
@@ -534,19 +540,6 @@ export default function FLOWSApp() {
                 </div>
               </div>
 
-              {/* Sun/Moon Theme Toggle Trigger */}
-              <button
-                onClick={toggleTheme}
-                className="p-2 bg-[#1F2937]/80 hover:bg-[#253245] border border-[#374151] hover:border-[#60A5FA]/40 rounded-xl text-[#9CA3AF] hover:text-white transition-all shadow-md group shrink-0 cursor-pointer"
-                title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-              >
-                {theme === 'dark' ? (
-                  <Sun size={15} className="text-[#F59E0B] animate-spin" style={{ animationDuration: '10s' }} />
-                ) : (
-                  <Moon size={15} className="text-[#7c3aed]" />
-                )}
-              </button>
-
               {/* Back to Landing Page Button positioned at the very right */}
               <button 
                 onClick={enterGateway}
@@ -596,8 +589,19 @@ export default function FLOWSApp() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
                 <span className="text-[10px] font-bold text-[#60A5FA] uppercase tracking-wider block">Observer Dashboard</span>
-                <h2 className="text-2xl font-black text-white tracking-tight flex items-center gap-2">
-                  Rainfall Forecast as of today
+                <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2">
+                  <span>
+                    {activeTab === 'emergency' 
+                      ? 'Emergency Portal & Shelter Status' 
+                      : activeTab === 'alerts' 
+                      ? 'System Guidelines & Reference' 
+                      : 'Rainfall Forecast as of Today'}
+                  </span>
+                  {phDate && (
+                    <span className="text-xs sm:text-sm font-normal text-slate-400 border-t sm:border-t-0 sm:border-l border-slate-700 pt-1 sm:pt-0 sm:pl-2.5">
+                      {phDate}
+                    </span>
+                  )}
                 </h2>
               </div>
 
