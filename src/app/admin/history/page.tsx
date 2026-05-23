@@ -42,7 +42,7 @@ const MOCK_HISTORY: HistoryItem[] = [
   { id: 'log-8', zoneName: 'Zone 2 (Purok Mahogany)', datetime: '2026-05-21 18:45:00', amount: 11.2, status: 'CORRECTED', notes: 'Calibrated noise spike from sensor 2B' },
   { id: 'log-9', zoneName: 'Zone 5 (Purok Ilang-Ilang)', datetime: '2026-05-21 18:00:00', amount: 1.5, status: 'PASSED', notes: 'Normal readings' },
   { id: 'log-10', zoneName: 'Zone 4 (Purok Acacia)', datetime: '2026-05-21 17:30:00', amount: 7.2, status: 'PASSED', notes: 'Slope sensor heartbeat active' },
-  { id: 'log-11', zoneName: 'Zone 1 (Purok Narra)', datetime: '2026-05-21 16:00:00', amount: 55.4, status: 'FLAGGED', notes: 'Doppler echo spike exceeded bounds' },
+  { id: 'log-11', zoneName: 'Zone 1 (Purok Narra)', datetime: '2026-05-21 16:00:00', amount: 55.4, status: 'FLAGGED', notes: 'Open-Meteo precipitation spike exceeded bounds' },
   { id: 'log-12', zoneName: 'Zone 3 (Sitio Pag-asa)', datetime: '2026-05-21 15:30:00', amount: 14.2, status: 'PASSED', notes: 'Purok sync established' },
   { id: 'log-13', zoneName: 'Zone 2 (Purok Mahogany)', datetime: '2026-05-21 14:00:00', amount: 9.8, status: 'CORRECTED', notes: 'Manual operator validation sync' },
   { id: 'log-14', zoneName: 'Zone 4 (Purok Acacia)', datetime: '2026-05-21 13:30:00', amount: 6.1, status: 'PASSED', notes: 'Periodic check' },

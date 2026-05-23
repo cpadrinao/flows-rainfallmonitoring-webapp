@@ -154,14 +154,6 @@ export default function AdminLoginPage() {
 
         </form>
 
-        {/* Demo Credentials Box */}
-        <div className="mt-6 bg-[#111827]/40 border border-[#374151]/30 rounded-xl p-3 text-center">
-          <p className="text-[10px] font-mono text-[#9CA3AF] leading-relaxed">
-            DEMO ACCESS:<br />
-            Username: <code className="text-[#60A5FA] bg-[#111827] px-1 py-0.5 rounded font-mono font-bold">admin</code><br />
-            Password: <code className="text-[#60A5FA] bg-[#111827] px-1 py-0.5 rounded font-mono font-bold">admin123</code>
-          </p>
-        </div>
 
         {/* Footer note */}
         <div className="mt-6 text-center border-t border-[#374151]/50 pt-4 flex items-center justify-center gap-1.5">

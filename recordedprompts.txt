@@ -231,3 +231,65 @@ In official Telemetry Warning, the description is in bold style and upon testing
 
 Upon checking the font style its still not Roboto Mono. Change the font style across the webapp and ensure that its Roboto Mono.
 
+
+-------------------------------------------------------------
+
+[PROMPT 17]
+From now on continue adding the prompts I made to recordedprompts.txt.
+
+For this, refer to D:\Programming\AppDev-FLOWS\flows-rainfallmonitoring-webapp\backend_setup_guide.txt
+
+I finished setting up the supabase and here's the link:
+API URL: https://lmngsktqvtmqglsopgag.supabase.co/rest/v1/
+
+anon public key:
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxtbmdza3RxdnRtcWdsc29wZ2FnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1MzA4ODQsImV4cCI6MjA5NTEwNjg4NH0.yi86OOynYMTNVl5MyFM7rammxA0hkoTV7hyMaIe-wGQ
+
+Service Role Key:
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxtbmdza3RxdnRtcWdsc29wZ2FnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3OTUzMDg4NCwiZXhwIjoyMDk1MTA2ODg0fQ.q4_3Y4x_k6CR7XmFzEqcCljYfQLiq3ytg5fCI4T1iBE
+
+Python is already installed, so you don't have to worry.
+
+Let's do this one by one, do this first then ask me what you need next.
+
+-------------------------------------------------------------
+
+[PROMPT 18]
+Okay, you can proceed whenever you are ready. Here are the latitude longitude of 5 zones in order:
+13.561273, 123.142923
+13.564380, 123.145173
+13.563990, 123.145736
+13.563060, 123.144900
+13.562074, 123.145277
+
+Do you need the actual code from open-mateo or I need to implement it? Base on the RECOMMENDED HOURLY VARIABLES in backend_setup.txt.
+
+-------------------------------------------------------------
+
+[PROMPT 19]
+I already created the tables with the RLS policies and triggers you've mentioned. Which is next step? Step 9 to 12?
+
+-------------------------------------------------------------
+
+[PROMPT 20]
+i believed we lost connection. Continue working on steps 9-12, track your progress and check what you've finished and not finished.
+
+-------------------------------------------------------------
+
+[PROMPT 21]
+There's a bug where when I first open the Resident Dashboard there's a slight show of our data dummy dashboard. Replace that and make it like "loading forecast" or something.
+
+Also remove the demo access part in admin login page where it exposes the username and password of the admin.
+
+-------------------------------------------------------------
+
+[PROMPT 22]
+Use our logo as the loading animation.
+
+Add a section on the Weather page that displays the last forecast date and time.
+
+Also review the Admin DOOPLER API Heartbeat and Health Logs. Make sure all labels correctly reference Open-Meteo and remove or replace any remaining dummy data. Verify that the system is actually tracking the Open-Meteo API status and not just displaying placeholder values.
+
+Ensure that the “Next Forecast” API time is accurate and synchronized with the hourly rainfall data retrieval schedule from the API.
+
+

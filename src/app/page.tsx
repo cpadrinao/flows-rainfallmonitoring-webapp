@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { fetchWeatherSummary, ZoneData } from './lib/api';
 import Link from 'next/link';
 import { 
   CloudRain, 
@@ -35,26 +36,10 @@ import {
   Home
 } from 'lucide-react';
 
-// Define TS Interfaces for Zone Weather Data
-interface ZoneData {
-  id: string;
-  name: string;
-  purok: string;
-  status: 'Heavy Rain' | 'Moderate Rain' | 'Light Rain' | 'Cloudy' | 'Clear';
-  alertLevel: 'Red' | 'Orange' | 'Yellow' | 'Green';
-  alertText: string;
-  advisoryText: string;
-  amount: number; // in mm
-  amountTrend: string; // "+5.2 mm vs last hr"
-  duration: string; // "1h 45m"
-  humidity: number; // in %
-  trend: number[]; // 12 numbers for 24-hr (2-hr intervals)
-  riskLevel: 'Critical' | 'Warning' | 'Monitor' | 'Safe';
-  evacuationRecommended: boolean;
-}
+// ZoneData interface is imported from ./lib/api
 
-// Custom mock data mapped by Zone
-const ZONES_DATABASE: Record<string, ZoneData> = {
+// Fallback mock data — shown while the API loads or if unreachable
+const FALLBACK_ZONES: Record<string, ZoneData> = {
   'zone-1': {
     id: 'zone-1',
     name: 'Zone 1',
@@ -137,6 +122,9 @@ const ZONES_DATABASE: Record<string, ZoneData> = {
   }
 };
 
+// Stable zone key list for the dropdown — maps old slug keys to fallback data
+const FALLBACK_ZONE_KEYS = ['zone-1', 'zone-2', 'zone-3', 'zone-4', 'zone-5'];
+
 export default function FLOWSApp() {
   // Theme state locked to dark
   const [theme] = useState<'dark'>('dark');
@@ -145,6 +133,12 @@ export default function FLOWSApp() {
   const [viewMode, setViewMode] = useState<'gateway' | 'dashboard'>('gateway');
   const [activeTab, setActiveTab] = useState<'weather' | 'zones' | 'alerts' | 'emergency'>('weather');
   const [selectedZone, setSelectedZone] = useState<string>('zone-1');
+
+  // Live data state — starts with fallback, replaced by API data when available
+  const [zonesData, setZonesData] = useState<Record<string, ZoneData>>(FALLBACK_ZONES);
+  const [isLiveData, setIsLiveData] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [liveZoneKeys, setLiveZoneKeys] = useState<string[]>(FALLBACK_ZONE_KEYS);
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
   
   // Active Shelter Center inside the emergency view
@@ -226,6 +220,42 @@ export default function FLOWSApp() {
     document.documentElement.classList.add('dark');
   }, []);
 
+  // Fetch live data from FastAPI backend
+  const loadLiveData = useCallback(async () => {
+    const startTime = Date.now();
+    try {
+      const liveData = await fetchWeatherSummary();
+      if (Object.keys(liveData).length > 0) {
+        setZonesData(liveData);
+        const keys = Object.keys(liveData);
+        setLiveZoneKeys(keys);
+        // Select first zone if current selectedZone is a slug (fallback) key
+        setSelectedZone(prev => liveData[prev] ? prev : keys[0]);
+        setIsLiveData(true);
+      }
+    } catch {
+      // Silently keep fallback mock data — API may not be running yet
+      console.warn('[F.L.O.W.S.] Backend unreachable, using fallback mock data.');
+    } finally {
+      // Ensure the premium loader stays visible for at least 800ms to prevent ugly UI flashes
+      const elapsed = Date.now() - startTime;
+      const minDelay = 800;
+      const remaining = Math.max(0, minDelay - elapsed);
+      if (remaining > 0) {
+        setTimeout(() => setIsLoading(false), remaining);
+      } else {
+        setIsLoading(false);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    loadLiveData();
+    // Refresh every 5 minutes
+    const interval = setInterval(loadLiveData, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [loadLiveData]);
+
 
 
   // Synchronize Live Time
@@ -255,12 +285,34 @@ export default function FLOWSApp() {
     return () => clearInterval(interval);
   }, []);
 
-  // Synchronize Countdown Timer (resets every hour boundary starting from exactly 1 hour)
+  // Synchronize Countdown Timer with hourly rainfall data retrieval schedule
   useEffect(() => {
     const updateCountdown = () => {
+      let lastFetch = null;
+      if (isLiveData && zonesData) {
+        // Find the latest fetchedAt from live data
+        const dates = Object.values(zonesData)
+          .map(z => z.fetchedAt ? new Date(z.fetchedAt).getTime() : 0)
+          .filter(t => t > 0);
+        if (dates.length > 0) {
+          lastFetch = new Date(Math.max(...dates));
+        }
+      }
+      
       const now = new Date();
-      const nextHour = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours() + 1, 0, 0, 0);
-      const diffSec = Math.floor((nextHour.getTime() - now.getTime()) / 1000);
+      let targetTime;
+      if (lastFetch) {
+        // Next run is exactly 60 minutes after the last fetch
+        targetTime = new Date(lastFetch.getTime() + 60 * 60 * 1000);
+      } else {
+        // Fallback to top-of-the-hour boundary
+        targetTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours() + 1, 0, 0, 0);
+      }
+      
+      let diffSec = Math.floor((targetTime.getTime() - now.getTime()) / 1000);
+      if (diffSec < 0) {
+        diffSec = 0;
+      }
       
       const hours = Math.floor(diffSec / 3600);
       const minutes = Math.floor((diffSec % 3600) / 60);
@@ -272,9 +324,9 @@ export default function FLOWSApp() {
     updateCountdown();
     const interval = setInterval(updateCountdown, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [isLiveData, zonesData]);
 
-  const activeZoneData = ZONES_DATABASE[selectedZone];
+  const activeZoneData = zonesData[selectedZone] || Object.values(zonesData)[0] || FALLBACK_ZONES['zone-1'];
 
   // Helper: return background glow class based on warning level
   const getGlowClass = (level: 'Red' | 'Orange' | 'Yellow' | 'Green') => {
@@ -457,7 +509,12 @@ export default function FLOWSApp() {
                     F.L.O.W.S.
                     <span className="w-1.5 h-1.5 bg-[#EF4444] rounded-full animate-ping"></span>
                   </h1>
-                  <p className="text-[8px] text-[#9CA3AF] font-bold uppercase tracking-wider mt-0.5">Flood Level Observation and Warning System</p>
+                  <p className="text-[8px] text-[#9CA3AF] font-bold uppercase tracking-wider mt-0.5">
+                    Flood Level Observation and Warning System
+                    {isLiveData && (
+                      <span className="ml-1.5 text-[#4ADE80] bg-[#4ADE80]/10 px-1 rounded" title="Connected to live backend">● LIVE</span>
+                    )}
+                  </p>
                 </div>
               </div>
 
@@ -583,7 +640,44 @@ export default function FLOWSApp() {
           </header>
 
           {/* MAIN WEB DASHBOARD GRID */}
-          <main className="flex-1 w-full max-w-6xl mx-auto px-4 py-6 sm:px-6 space-y-6 z-10 pb-24 md:pb-12">
+          {isLoading ? (
+            <div className="flex-1 flex flex-col items-center justify-center py-20 px-4 min-h-[60vh] animate-fade-in relative">
+              {/* Tech glow background */}
+              <div className="absolute w-72 h-72 rounded-full bg-[#60A5FA] blur-[120px] opacity-10 pointer-events-none" />
+              
+              <div className="w-full max-w-md bg-[#1F2937]/45 border border-[#374151]/60 rounded-3xl p-8 shadow-2xl backdrop-blur-md relative z-10 text-center space-y-6 weather-glow-blue">
+                {/* Dynamic Animated Radar Grid / Spinner */}
+                <div className="relative w-24 h-24 mx-auto flex items-center justify-center">
+                  {/* Outer rotating pulse ring */}
+                  <div className="absolute inset-0 rounded-full border border-dashed border-[#60A5FA]/30 animate-spin" style={{ animationDuration: '8s' }} />
+                  {/* Inner pulsing aura */}
+                  <div className="absolute w-16 h-16 rounded-full bg-[#60A5FA]/10 border border-[#60A5FA]/20 animate-pulse" />
+                  {/* Center logo icon with waves */}
+                  <div className="relative bg-[#111827] p-3 rounded-2xl border border-[#374151] shadow-xl w-14 h-14 flex items-center justify-center animate-bounce" style={{ animationDuration: '3s' }}>
+                    <img src="/flowsnoname.png" alt="FLOWS Logo" className="w-full h-full object-contain animate-pulse" />
+                  </div>
+                </div>
+                
+                {/* Typography */}
+                <div className="space-y-2">
+                  <h3 className="text-sm font-black text-white uppercase tracking-[0.2em]">
+                    Loading Forecast...
+                  </h3>
+                  <p className="text-[10px] font-mono text-[#9CA3AF] uppercase tracking-wider flex items-center justify-center gap-1.5 animate-pulse">
+                    <span className="w-1.5 h-1.5 bg-[#4ADE80] rounded-full animate-ping" />
+                    Synchronizing Live Telemetry
+                  </p>
+                </div>
+
+                {/* Decorative skeleton layout representation to show "forecast is mapping" */}
+                <div className="pt-4 border-t border-[#374151]/40 space-y-2">
+                  <div className="h-1.5 w-3/4 bg-[#111827] rounded mx-auto animate-pulse" />
+                  <div className="h-1.5 w-1/2 bg-[#111827] rounded mx-auto animate-pulse" style={{ animationDelay: '200ms' }} />
+                </div>
+              </div>
+            </div>
+          ) : (
+            <main className="flex-1 w-full max-w-6xl mx-auto px-4 py-6 sm:px-6 space-y-6 z-10 pb-24 md:pb-12">
             
             {/* Header section with zone selector */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -645,7 +739,7 @@ export default function FLOWSApp() {
                       <div className="fixed inset-0 z-10" onClick={() => setShowDropdown(false)}></div>
                       <div className="absolute right-0 left-0 mt-2 bg-[#1F2937] border border-[#374151] rounded-xl shadow-2xl overflow-hidden z-20">
                         <div className="py-1 max-h-60 overflow-y-auto">
-                          {Object.values(ZONES_DATABASE).map((zone) => (
+                          {liveZoneKeys.map((key) => { const zone = zonesData[key]; if (!zone) return null; return (
                             <button
                               key={zone.id}
                               onClick={() => {
@@ -665,7 +759,7 @@ export default function FLOWSApp() {
                               </div>
                               <div className="text-right font-mono text-xs font-bold text-white">{zone.amount} mm</div>
                             </button>
-                          ))}
+                          ); })}
                         </div>
                       </div>
                     </>
@@ -707,14 +801,25 @@ export default function FLOWSApp() {
                     </div>
                   </div>
 
-                  <div className="mt-6 pt-4 border-t border-[#374151]/50 flex items-center justify-between text-xs">
+                  <div className="mt-6 pt-4 border-t border-[#374151]/50 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs">
                     <div className="flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full animate-ping" style={{ backgroundColor: getAlertColor(activeZoneData.alertLevel) }} />
                       <span className="font-extrabold text-[12px]" style={{ color: getAlertColor(activeZoneData.alertLevel) }}>
                         {activeZoneData.alertText}
                       </span>
                     </div>
-                    <span className="text-[10px] text-[#9CA3AF] font-bold">Synchronized 1m ago</span>
+                    {activeZoneData.forecastTime && (
+                      <div className="text-right flex flex-col items-end gap-0.5">
+                        <span className="text-[9px] text-[#60A5FA] font-bold uppercase tracking-wider bg-[#60A5FA]/10 border border-[#60A5FA]/20 px-2 py-0.5 rounded" title="Timestamp of the latest Open-Meteo hourly forecast log">
+                          Last Forecast: {new Date(activeZoneData.forecastTime).toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                        </span>
+                        {activeZoneData.fetchedAt && (
+                          <span className="text-[8px] text-[#9CA3AF] font-medium uppercase tracking-wider">
+                            Synced: {new Date(activeZoneData.fetchedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -931,7 +1036,7 @@ export default function FLOWSApp() {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                  {Object.values(ZONES_DATABASE).map((zone) => {
+                  {liveZoneKeys.map((key) => { const zone = zonesData[key]; if (!zone) return null;
                     const isSelected = zone.id === selectedZone;
                     return (
                       <div 
@@ -1373,13 +1478,14 @@ export default function FLOWSApp() {
               </div>
             )}
 
-          </main>
+            </main>
+          )}
 
         </div>
       )}
 
       {/* DOCK-STABLE BOTTOM NAVIGATION BAR ON MOBILE DEVICES (Hidden on Desktop) */}
-      {viewMode === 'dashboard' && (
+      {viewMode === 'dashboard' && !isLoading && (
         <div className="flows-fixed-nav pb-[env(safe-area-inset-bottom)] bg-[#111827]/95 border-t border-[#374151]/80 backdrop-blur-lg shadow-2xl">
           <nav className="flex justify-around items-center px-2 py-2">
             
