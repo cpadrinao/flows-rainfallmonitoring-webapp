@@ -219,19 +219,43 @@ export interface SystemHealth {
 }
 
 export async function fetchSystemHealth(): Promise<SystemHealth> {
-  const res = await fetch(`${API_BASE}/health`, {
-    next: { revalidate: 0 },
-    cache: 'no-store',
-  });
-  if (!res.ok) throw new Error(`API error ${res.status}`);
-  return res.json();
+  try {
+    const res = await fetch(`${API_BASE}/health`, {
+      next: { revalidate: 0 },
+      cache: 'no-store',
+    });
+    if (!res.ok) {
+      return {
+        status: 'degraded',
+        open_meteo: {
+          status: 'unreachable',
+          latency_ms: null,
+          endpoint: 'https://api.open-meteo.com/v1/forecast'
+        }
+      };
+    }
+    return await res.json();
+  } catch (err) {
+    return {
+      status: 'offline',
+      open_meteo: {
+        status: 'unreachable',
+        latency_ms: null,
+        endpoint: 'https://api.open-meteo.com/v1/forecast'
+      }
+    };
+  }
 }
 
 export async function fetchWeatherLogs(limit = 20): Promise<ApiWeatherLog[]> {
-  const res = await fetch(`${API_BASE}/weather/logs?limit=${limit}`, {
-    next: { revalidate: 0 },
-    cache: 'no-store',
-  });
-  if (!res.ok) throw new Error(`API error ${res.status}`);
-  return res.json();
+  try {
+    const res = await fetch(`${API_BASE}/weather/logs?limit=${limit}`, {
+      next: { revalidate: 0 },
+      cache: 'no-store',
+    });
+    if (!res.ok) return [];
+    return await res.json();
+  } catch (err) {
+    return [];
+  }
 }

@@ -30,18 +30,31 @@ async def get_weather_summary():
 
         summary = []
         for zone in zones:
-            # Fetch last 24 hourly logs (ascending = oldest first → trend array)
+            # Fetch the 24 hourly logs from the most recent fetch cycle, sorted chronologically
             logs_res = await client.get(
                 "/weather_logs",
                 params={
                     "zone_id": f"eq.{zone['id']}",
-                    "order": "forecast_time.asc",
+                    "order": "fetched_at.desc,forecast_time.asc",
                     "limit": 24,
                 },
             )
             logs = logs_res.json() if logs_res.status_code == 200 else []
 
-            latest = logs[-1] if logs else None
+            # Find the log corresponding to the current/active hour (closest to now)
+            from datetime import datetime, timezone
+            now = datetime.now(timezone.utc)
+            latest = None
+            if logs:
+                try:
+                    # Find the record whose forecast_time is closest to the current UTC time
+                    latest = min(
+                        logs,
+                        key=lambda log: abs((datetime.fromisoformat(log["forecast_time"].replace("Z", "+00:00")) - now).total_seconds())
+                    )
+                except Exception as e:
+                    print(f"[Weather Summary] Error finding closest forecast log: {e}")
+                    latest = logs[-1]
             hourly_precip = [round(log.get("precipitation_mm") or 0, 2) for log in logs]
 
             summary.append({

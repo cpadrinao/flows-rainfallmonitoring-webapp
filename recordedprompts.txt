@@ -330,9 +330,30 @@ Can I confirm from the backend that the alert levels will change according to it
 
 Also tehe 24hour cumulative precipitation timeline, it will populate if incoming rains is coming? Currently its empty since the forecast for tomorrow is not rainy.
 
+-------------------------------------------------------------
 
+[PROMPT 28]
+So still issue, backend unreachable
+[browser] [F.L.O.W.S.] Backend unreachable, using fallback mock data. (src/app/page.tsx:242:15)
 
+I tried clicking retry sync and it kept showing that error.
 
+-------------------------------------------------------------
 
+[PROMPT 29]
+I believe we didn't finish the last prompt. Please continue working on it.
 
+-------------------------------------------------------------
 
+[PROMPT 30]
+There are still some time that it shows the dummy datas upon redirecting to other page, ensure that the loading icon shows whenever that happens.
+
+The Health Logs bugs, there are times that it shows the latest pull which is this time but then it returns to 1:20am log and the API Next Forecast bugs also, there are times that when I restart the page it shows the latest pull with different forecast time then it returns to original and resets the time.
+
+When I closed the server it prompted this error:
+Call Stack
+2
+fetchSystemHealth
+file:///D:/Programming/AppDev-FLOWS/flows-rainfallmonitoring-webapp/.next/dev/static/chunks/src_app_0iy-97.._.js (168:23)
+AdminDashboard.useEffect.loadHealthAndLogs
+file:///D:/Programming/AppDev-FLOWS/flows-rainfallmonitoring-webapp/.next/dev/static/chunks/src_app_0iy-97.._.js (343:199)

@@ -291,33 +291,11 @@ export default function FLOWSApp() {
   }, []);
 
   // Synchronize Countdown Timer with hourly rainfall data retrieval schedule
+  // Synchronize Countdown Timer with hourly rainfall data retrieval schedule (next hour boundary)
   useEffect(() => {
     const updateCountdown = () => {
-      let lastFetch = null;
-      if (isLiveData && zonesData) {
-        // Find the latest fetchedAt from live data
-        const dates = Object.values(zonesData)
-          .map(z => z.fetchedAt ? new Date(z.fetchedAt).getTime() : 0)
-          .filter(t => t > 0);
-        if (dates.length > 0) {
-          lastFetch = new Date(Math.max(...dates));
-        }
-      }
-      
       const now = new Date();
-      let targetTime;
-      if (lastFetch) {
-        // Find the next future target hour boundary based on lastFetch
-        const intervalMs = 60 * 60 * 1000;
-        let nextTarget = lastFetch.getTime() + intervalMs;
-        while (nextTarget < now.getTime()) {
-          nextTarget += intervalMs;
-        }
-        targetTime = new Date(nextTarget);
-      } else {
-        // Fallback to top-of-the-hour boundary
-        targetTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours() + 1, 0, 0, 0);
-      }
+      const targetTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours() + 1, 0, 0, 0);
       
       let diffSec = Math.floor((targetTime.getTime() - now.getTime()) / 1000);
       if (diffSec < 0) {
@@ -334,7 +312,7 @@ export default function FLOWSApp() {
     updateCountdown();
     const interval = setInterval(updateCountdown, 1000);
     return () => clearInterval(interval);
-  }, [isLiveData, zonesData]);
+  }, []);
 
   const activeZoneData = zonesData[selectedZone] || Object.values(zonesData)[0] || FALLBACK_ZONES['zone-1'];
 

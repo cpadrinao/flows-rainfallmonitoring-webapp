@@ -119,15 +119,44 @@ async def process_alert_for_zone(zone_id: str, precipitation_mm: float | None) -
 async def process_alerts_for_all_zones(weather_records: list[dict]) -> None:
     """
     Process alert logic for all weather records fetched in a single cycle.
-    Uses the LATEST record per zone (highest precipitation in current fetch).
+    Uses the record matching the CURRENT hour per zone to ensure alert levels
+    dynamically update according to the active forecasted hour.
     """
-    # Group by zone_id, find max precipitation per zone
-    zone_max: dict[str, float | None] = {}
+    from datetime import datetime, timezone, timedelta
+    
+    # Manila is always UTC+8 (no daylight saving time)
+    manila_offset = timedelta(hours=8)
+    now_manila = datetime.now(timezone.utc).astimezone(timezone(manila_offset))
+
+    # Group by zone_id, find the record closest to the current hour
+    zone_current_record = {}
     for record in weather_records:
         zone_id = record["zone_id"]
-        precip = record.get("precipitation_mm")
-        if zone_id not in zone_max or (precip is not None and (zone_max[zone_id] is None or precip > zone_max[zone_id])):
-            zone_max[zone_id] = precip
+        forecast_time_str = record["forecast_time"]
+        
+        try:
+            # Parse forecast_time
+            if "T" in forecast_time_str:
+                # If there's an offset/timezone, parse it and convert to UTC+8
+                if "+" in forecast_time_str or forecast_time_str.endswith("Z"):
+                    dt = datetime.fromisoformat(forecast_time_str.replace("Z", "+00:00")).astimezone(timezone(manila_offset))
+                else:
+                    # Naive timestamp from Open-Meteo in Asia/Manila timezone
+                    dt = datetime.fromisoformat(forecast_time_str).replace(tzinfo=timezone(manila_offset))
+            else:
+                dt = datetime.fromisoformat(forecast_time_str).replace(tzinfo=timezone(manila_offset))
+            
+            diff = abs((dt - now_manila).total_seconds())
+        except Exception as e:
+            print(f"[Alert Engine] Error parsing forecast time '{forecast_time_str}': {e}")
+            diff = 9999999.0
+            
+        if zone_id not in zone_current_record:
+            zone_current_record[zone_id] = (record, diff)
+        else:
+            if diff < zone_current_record[zone_id][1]:
+                zone_current_record[zone_id] = (record, diff)
 
-    for zone_id, max_precip in zone_max.items():
-        await process_alert_for_zone(zone_id, max_precip)
+    for zone_id, (record, _) in zone_current_record.items():
+        precip = record.get("precipitation_mm")
+        await process_alert_for_zone(zone_id, precip)

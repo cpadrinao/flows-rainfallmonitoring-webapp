@@ -90,28 +90,11 @@ export default function AdminDashboard() {
     return () => clearInterval(interval);
   }, []);
 
-  // Synchronize Countdown Timer with latest weather logs fetched_at timestamp
+  // Synchronize Countdown Timer with top-of-the-hour boundary (next hour boundary)
   useEffect(() => {
     const updateCountdown = () => {
-      let lastFetch = null;
-      if (logs.length > 0 && logs[0].fetched_at) {
-        lastFetch = new Date(logs[0].fetched_at);
-      }
-      
       const now = new Date();
-      let targetTime;
-      if (lastFetch) {
-        // Find the next future target hour boundary based on lastFetch
-        const intervalMs = 60 * 60 * 1000;
-        let nextTarget = lastFetch.getTime() + intervalMs;
-        while (nextTarget < now.getTime()) {
-          nextTarget += intervalMs;
-        }
-        targetTime = new Date(nextTarget);
-      } else {
-        // Fallback to top-of-the-hour boundary
-        targetTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours() + 1, 0, 0, 0);
-      }
+      const targetTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours() + 1, 0, 0, 0);
       
       let diffSec = Math.floor((targetTime.getTime() - now.getTime()) / 1000);
       if (diffSec < 0) {
@@ -128,7 +111,7 @@ export default function AdminDashboard() {
     updateCountdown();
     const interval = setInterval(updateCountdown, 1000);
     return () => clearInterval(interval);
-  }, [logs]);
+  }, []);
 
   // Load live health and weather logs from backend
   useEffect(() => {
@@ -184,6 +167,25 @@ export default function AdminDashboard() {
         <div className="flex flex-col items-center gap-3">
           <span className="w-8 h-8 border-4 border-[#60A5FA] border-t-transparent rounded-full animate-spin"></span>
           <p className="text-xs text-[#9CA3AF] font-bold uppercase tracking-wider">Verifying Session Security...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isHealthLoading) {
+    return (
+      <div className="bg-[#0b0f19] min-h-screen w-full flex items-center justify-center text-white">
+        <div className="flex flex-col items-center gap-4 text-center">
+          <div className="relative w-16 h-16 flex items-center justify-center">
+            <div className="absolute inset-0 rounded-full border border-dashed border-[#60A5FA]/40 animate-spin" style={{ animationDuration: '6s' }} />
+            <div className="w-10 h-10 rounded-xl bg-[#1F2937] border border-[#374151] flex items-center justify-center shadow-lg p-1 shrink-0">
+              <img src="/flowsnoname.png" alt="FLOWS Logo" className="w-full h-full object-contain animate-pulse" />
+            </div>
+          </div>
+          <div className="space-y-1">
+            <p className="text-xs text-white font-black uppercase tracking-[0.2em]">Synchronizing Admin Console...</p>
+            <p className="text-[10px] text-[#9CA3AF] font-mono uppercase tracking-wider animate-pulse">Loading live telemetry and health logs</p>
+          </div>
         </div>
       </div>
     );

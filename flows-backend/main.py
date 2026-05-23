@@ -17,7 +17,15 @@ async def lifespan(app: FastAPI):
     print(f"[F.L.O.W.S.] Backend starting up...")
     print(f"[F.L.O.W.S.] Supabase URL: {settings.SUPABASE_URL}")
     print(f"[F.L.O.W.S.] Fetch interval: every {settings.FETCH_INTERVAL_MINUTES} min")
+    
+    # Start scheduler
     scheduler = start_scheduler()
+    
+    # Trigger an immediate weather data fetch on startup in the background
+    import asyncio
+    from scheduler import run_pipeline
+    asyncio.create_task(run_pipeline())
+    
     yield
     # Shutdown
     scheduler.shutdown()
@@ -34,7 +42,20 @@ app = FastAPI(
 # CORS — allow frontend (update origin when deploying)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "http://localhost:3002",
+        "http://localhost:3003",
+        "http://localhost:3004",
+        "http://localhost:3005",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:3001",
+        "http://127.0.0.1:3002",
+        "http://127.0.0.1:3003",
+        "http://127.0.0.1:3004",
+        "http://127.0.0.1:3005",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
