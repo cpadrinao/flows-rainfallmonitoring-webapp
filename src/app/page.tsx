@@ -33,7 +33,8 @@ import {
   Calendar,
   Clock,
   Compass,
-  Home
+  Home,
+  RefreshCw
 } from 'lucide-react';
 
 // ZoneData interface is imported from ./lib/api
@@ -138,6 +139,7 @@ export default function FLOWSApp() {
   const [zonesData, setZonesData] = useState<Record<string, ZoneData>>(FALLBACK_ZONES);
   const [isLiveData, setIsLiveData] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isBackendOffline, setIsBackendOffline] = useState(false);
   const [liveZoneKeys, setLiveZoneKeys] = useState<string[]>(FALLBACK_ZONE_KEYS);
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
   
@@ -223,6 +225,7 @@ export default function FLOWSApp() {
   // Fetch live data from FastAPI backend
   const loadLiveData = useCallback(async () => {
     const startTime = Date.now();
+    setIsBackendOffline(false);
     try {
       const liveData = await fetchWeatherSummary();
       if (Object.keys(liveData).length > 0) {
@@ -232,10 +235,12 @@ export default function FLOWSApp() {
         // Select first zone if current selectedZone is a slug (fallback) key
         setSelectedZone(prev => liveData[prev] ? prev : keys[0]);
         setIsLiveData(true);
+        setIsBackendOffline(false);
       }
     } catch {
       // Silently keep fallback mock data — API may not be running yet
       console.warn('[F.L.O.W.S.] Backend unreachable, using fallback mock data.');
+      setIsBackendOffline(true);
     } finally {
       // Ensure the premium loader stays visible for at least 800ms to prevent ugly UI flashes
       const elapsed = Date.now() - startTime;
@@ -302,8 +307,13 @@ export default function FLOWSApp() {
       const now = new Date();
       let targetTime;
       if (lastFetch) {
-        // Next run is exactly 60 minutes after the last fetch
-        targetTime = new Date(lastFetch.getTime() + 60 * 60 * 1000);
+        // Find the next future target hour boundary based on lastFetch
+        const intervalMs = 60 * 60 * 1000;
+        let nextTarget = lastFetch.getTime() + intervalMs;
+        while (nextTarget < now.getTime()) {
+          nextTarget += intervalMs;
+        }
+        targetTime = new Date(nextTarget);
       } else {
         // Fallback to top-of-the-hour boundary
         targetTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours() + 1, 0, 0, 0);
@@ -676,6 +686,59 @@ export default function FLOWSApp() {
                 </div>
               </div>
             </div>
+          ) : isBackendOffline ? (
+            <div className="flex-1 flex flex-col items-center justify-center py-16 px-4 min-h-[60vh] animate-fade-in relative z-10">
+              {/* Tech glow background */}
+              <div className="absolute w-72 h-72 rounded-full bg-[#EF4444] blur-[120px] opacity-5 pointer-events-none" />
+              
+              <div className="w-full max-w-md bg-[#1F2937]/45 border border-red-500/20 rounded-3xl p-8 shadow-2xl backdrop-blur-md text-center space-y-6 weather-glow-red">
+                {/* Warning Icon */}
+                <div className="relative w-20 h-20 mx-auto flex items-center justify-center">
+                  <div className="absolute inset-0 rounded-full border border-dashed border-red-500/30 animate-spin" style={{ animationDuration: '12s' }} />
+                  <div className="absolute w-12 h-12 rounded-full bg-red-500/10 border border-red-500/20 animate-pulse" />
+                  <div className="relative text-red-500 animate-bounce" style={{ animationDuration: '3s' }}>
+                    <AlertTriangle size={32} />
+                  </div>
+                </div>
+
+                {/* Typography */}
+                <div className="space-y-2">
+                  <h3 className="text-sm font-black text-white uppercase tracking-[0.2em]">
+                    System Under Maintenance
+                  </h3>
+                  <p className="text-[10px] font-mono text-red-400 uppercase tracking-wider flex items-center justify-center gap-1.5 font-bold animate-pulse">
+                    <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-ping" />
+                    Telemetry Stream Offline
+                  </p>
+                </div>
+
+                <p className="text-xs text-[#9CA3AF] leading-relaxed max-w-xs mx-auto">
+                  The Barangay Rizal telemetry servers are currently undergoing scheduled network maintenance. Active sensor updates are temporarily unavailable.
+                </p>
+
+                {/* Action Buttons */}
+                <div className="pt-2 flex flex-col sm:flex-row gap-3">
+                  <button 
+                    onClick={() => {
+                      setIsLoading(true);
+                      loadLiveData();
+                    }}
+                    className="flex-1 py-3 bg-[#EF4444] hover:bg-[#EF4444]/90 text-white font-black text-xs tracking-wider uppercase rounded-xl transition-all duration-150 flex items-center justify-center gap-1.5 shadow-lg shadow-red-500/15 cursor-pointer"
+                  >
+                    <RefreshCw size={13} />
+                    <span>Retry Sync</span>
+                  </button>
+                  
+                  <button 
+                    onClick={enterGateway}
+                    className="flex-1 py-3 bg-[#111827] hover:bg-slate-800 border border-[#374151] text-slate-300 font-bold text-xs tracking-wider uppercase rounded-xl transition-all duration-150 flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <Home size={13} />
+                    <span>Go Back</span>
+                  </button>
+                </div>
+              </div>
+            </div>
           ) : (
             <main className="flex-1 w-full max-w-6xl mx-auto px-4 py-6 sm:px-6 space-y-6 z-10 pb-24 md:pb-12">
             
@@ -811,7 +874,7 @@ export default function FLOWSApp() {
                     {activeZoneData.forecastTime && (
                       <div className="text-right flex flex-col items-end gap-0.5">
                         <span className="text-[9px] text-[#60A5FA] font-bold uppercase tracking-wider bg-[#60A5FA]/10 border border-[#60A5FA]/20 px-2 py-0.5 rounded" title="Timestamp of the latest Open-Meteo hourly forecast log">
-                          Last Forecast: {new Date(activeZoneData.forecastTime).toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                          Forecast Target: {new Date(activeZoneData.forecastTime).toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                         </span>
                         {activeZoneData.fetchedAt && (
                           <span className="text-[8px] text-[#9CA3AF] font-medium uppercase tracking-wider">

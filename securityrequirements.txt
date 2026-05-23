@@ -1,0 +1,96 @@
+================================================================================
+F.L.O.W.S. — SECURITY, AUTHENTICATION, AUTHORIZATION & COMPLIANCE SPECIFICATION
+================================================================================
+
+This document details the security model, authentication mechanisms, authorization
+privileges, and compliance protocols implemented in the F.L.O.W.S. (Flood Level
+Observation and Warning System) rainfall monitoring web application.
+
+--------------------------------------------------------------------------------
+1. AUTHENTICATION (AUTHENTICITY & IDENTIFICATION)
+--------------------------------------------------------------------------------
+F.L.O.W.S. employs a multi-tiered entry architecture designed to isolate public
+information views from administrative console utilities.
+
+* Public/Resident Access:
+  - Zero-Auth Entry: Residents can access live weather summaries, sector reports,
+    evacuation checklists, and shelter coordinates without registering or logging in.
+  - Objective: Ensures rapid, frictionless access to life-saving telemetry during
+    flood crises, preventing bottleneck failures caused by authentication servers.
+
+* Administrative Console Access:
+  - Portal Isolation: Admin console management is isolated behind a dedicated login
+    endpoint (/admin/login).
+  - Credential Protection: In production, administrators authenticate using a local
+    session token. Mock credential exposure has been strictly removed from the UI.
+  - Secure Local Session: Authentication checks are performed via reactive Next.js
+    lifecycle triggers. Successful logins generate an isolated 'flows_admin_logged_in'
+    token stored in local storage, along with the login timestamp and username.
+  - Automatic Session Lifetimes: Sessions can be logged out cleanly using the 
+    Control Console header button, which automatically purges credential tokens.
+
+--------------------------------------------------------------------------------
+2. AUTHORIZATION (ACCESS CONTROL & ROLE-BASED ACTION)
+--------------------------------------------------------------------------------
+Authorization privileges strictly follow the Principle of Least Privilege (PoLP) to
+prevent unauthorized configuration tampering.
+
+* Public/Resident Role (Read-Only):
+  - Read access to weather logs, zones parameters, and alerts advisories.
+  - Zero permissions to invoke POST, PUT, or DELETE commands on database schema.
+
+* Disaster Management Administrator (Read-Write/Control):
+  - Full write/update capabilities on zones metadata, rainfall parameters, and 
+    warning thresholds.
+  - Exclusive access to the FastAPI background pipeline manual triggers (/pipeline/trigger).
+  - Ability to calibrate and adjust anomalous rain telemetry data points.
+
+* Database-Level Security (Supabase):
+  - Row Level Security (RLS) is active across all tables (`zones`, `weather_logs`, `alerts`).
+  - Public anonymous access is restricted using anon public keys, governed by RLS select-only policies.
+  - Database schema alterations, seeder pipelines, and automated writes require service role keys
+    or verified trigger execution.
+  - Column Check Constraints: Database check constraints enforce that zone risk levels 
+    and alert levels strictly match mixed-case enums ('Green', 'Yellow', 'Orange', 'Red'),
+    preventing arbitrary write attempts.
+
+--------------------------------------------------------------------------------
+3. TELEMETRY INTEGRITY & DATA VALIDATION
+--------------------------------------------------------------------------------
+To comply with local disaster response accuracy, the pipeline incorporates data integrity
+shields at the API boundary:
+
+* Telemetric Filtering:
+  - The Open-Meteo hourly pipeline validates retrieved values (`precipitation_mm`, 
+    `relative_humidity`) to verify they fall within physically possible meteorological bounds.
+  - Sensor Spikes: Precipitation rates exceeding anomalous thresholds (e.g. 50+ mm/hr)
+    are flagged inside the audit logs with a "FLAGGED" validation status, alert status WARN,
+    and cataloged for human supervisor calibration.
+
+--------------------------------------------------------------------------------
+4. COMPLIANCE & AUDITING PROTOCOLS
+--------------------------------------------------------------------------------
+F.L.O.W.S. operates under strict compliance requirements to support administrative audits:
+
+* Telemetry Ledger:
+  - All parameter modifications, manual calibrations of historical logs, and threshold overrides
+    are automatically cataloged with operator timestamps.
+  - The Admin Control Panel includes a "Doppler API Heartbeat & Health Logs" terminal, which
+    polls the FastAPI backend `/health` endpoint to verify live Open-Meteo API connection
+    stability and logs live query latencies.
+  - Historical PDF Generation: Admin consoles feature cryptographic-style printable history ledgers.
+    The console permits downloading log parameters as secure PDF files for archiving.
+
+--------------------------------------------------------------------------------
+5. INFRASTRUCTURE & NETWORK SECURITY
+--------------------------------------------------------------------------------
+* CORS (Cross-Origin Resource Sharing):
+  - FastAPI implements custom middleware restricting endpoint consumption. In production,
+    endpoints are locked strictly to the frontend Vercel deployment URL.
+* Environment Isolation:
+  - Database service role tokens and anon keys are kept strictly in .env files on the 
+    hosting server, never exposed to client-side code compilations.
+* SSL Encryption:
+  - All network traffic between Next.js, FastAPI, and Supabase is encrypted in transit 
+    using HTTPS/TLS protocols powered by Railway and Vercel proxy proxies.
+================================================================================

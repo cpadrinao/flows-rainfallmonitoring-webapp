@@ -292,4 +292,47 @@ Also review the Admin DOOPLER API Heartbeat and Health Logs. Make sure all label
 
 Ensure that the “Next Forecast” API time is accurate and synchronized with the hourly rainfall data retrieval schedule from the API.
 
+-------------------------------------------------------------
+
+[PROMPT 23]
+It prompted this error in the terminal:
+[browser] [F.L.O.W.S.] Backend unreachable, using fallback mock data. (src/app/page.tsx:238:15)
+
+Create a page where if backend is unreachable use a error.tsx saying that the webapp is currently under maintenance.
+
+Also check why it cant reach backend. FInd the reason and fix it and say it to me. Also create the backup tsx just in case this happens.
+
+-------------------------------------------------------------
+
+[PROMPT 24]
+can I confirm that I wont encounter cannot reach backend problems again?Also there's a problem in page.tsx, it said Cannot find name 'RefreshCw'.
+
+-------------------------------------------------------------
+
+[PROMPT 25]
+create a text file named securityrequirements.txt and input there the 
+Security Requirements
+Auth, authorization,
+compliance
+of the webapp that we're working.
+
+-------------------------------------------------------------
+
+[PROMPT 26]
+Check API Next Forecast since its bugging, its time is currently 00:00:00. Also the last forecast is bugged, it said last forecast is SUN, MAy 24, 7:00 am when its currently 12am here. 
+
+Can I get a confirmation that that's the prediction for 7am or nah? Maybe I,m wrong
+
+-------------------------------------------------------------
+
+[PROMPT 27]
+Can I confirm from the backend that the alert levels will change according to its forecasted date?
+
+Also tehe 24hour cumulative precipitation timeline, it will populate if incoming rains is coming? Currently its empty since the forecast for tomorrow is not rainy.
+
+
+
+
+
+
 

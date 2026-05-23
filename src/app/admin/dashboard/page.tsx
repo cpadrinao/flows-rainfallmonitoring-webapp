@@ -101,8 +101,13 @@ export default function AdminDashboard() {
       const now = new Date();
       let targetTime;
       if (lastFetch) {
-        // Next run is exactly 60 minutes after the last fetch
-        targetTime = new Date(lastFetch.getTime() + 60 * 60 * 1000);
+        // Find the next future target hour boundary based on lastFetch
+        const intervalMs = 60 * 60 * 1000;
+        let nextTarget = lastFetch.getTime() + intervalMs;
+        while (nextTarget < now.getTime()) {
+          nextTarget += intervalMs;
+        }
+        targetTime = new Date(nextTarget);
       } else {
         // Fallback to top-of-the-hour boundary
         targetTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours() + 1, 0, 0, 0);
