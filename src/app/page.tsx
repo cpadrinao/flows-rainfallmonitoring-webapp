@@ -608,7 +608,7 @@ export default function FLOWSApp() {
               </div>
             </div>
           ) : isBackendOffline ? (
-            <div className="flex-1 flex flex-col items-center justify-center pt-[180px] pb-16 px-4 min-h-[60vh] animate-fade-in relative z-10">
+            <div className="fixed inset-0 bg-[#0b0f19] flex items-center justify-center p-4 overflow-hidden z-[9995] animate-fade-in">
               {/* Tech glow background */}
               <div className="absolute w-72 h-72 rounded-full bg-[#EF4444] blur-[120px] opacity-5 pointer-events-none" />
               
