@@ -223,158 +223,158 @@ export default function AdminDashboard() {
 
   return (
     <div data-theme={theme} className="bg-[#0b0f19] min-h-screen w-full text-[#F9FAFB] font-sans flex flex-col justify-between relative overflow-x-hidden transition-colors duration-500">
+
+      {/* CORE ADMIN NAVIGATION HEADER — outside animate-fade-in so sticky positioning is viewport-relative */}
+      <header className="flows-fixed-top-nav bg-[#111827]/95 border-b border-[#374151]/70 px-4 sm:px-6 py-3 flex flex-col md:flex-row justify-between items-center gap-3 backdrop-blur-md shadow-lg transition-all duration-300">
       
+      {/* Branding Logo */}
+      <div className="flex items-center justify-between w-full md:w-auto">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-[#1F2937] border border-[#374151] overflow-hidden flex items-center justify-center shrink-0 p-1">
+            <img src="/flowsnoname.png" alt="FLOWS Logo" className="w-full h-full object-contain" />
+          </div>
+          <div>
+            <h1 className="text-base font-black tracking-tight text-white flex items-center gap-1.5 leading-none">
+              F.L.O.W.S. CONTROL
+              <span className="text-[9px] bg-[#60A5FA]/10 text-[#60A5FA] border border-[#60A5FA]/30 px-1.5 py-0.5 rounded font-black tracking-widest uppercase">Console</span>
+            </h1>
+            <p className="text-[8px] text-[#9CA3AF] font-bold uppercase tracking-wider mt-0.5">Barangay Rizal Rainfall System</p>
+          </div>
+        </div>
+
+        {/* Mobile Right Quick Controls */}
+        <div className="flex md:hidden items-center gap-1.5">
+          <button 
+            onClick={handleLogout}
+            className="p-1.5 bg-[#EF4444]/10 border border-[#EF4444]/30 rounded-lg text-[#EF4444] hover:bg-[#EF4444]/20 flex items-center justify-center cursor-pointer"
+            title="Logout"
+          >
+            <LogOut size={13} />
+          </button>
+        </div>
+      </div>
+
+      {/* Live Right-side controls (Desktop/Tablet) */}
+      <div className="hidden md:flex items-center gap-2 shrink-0">
+        
+        {/* API Health Status Badge */}
+        {health && health.status !== 'offline' && health.open_meteo?.status === 'healthy' ? (
+          <div className="flex items-center gap-2 bg-[#065F46]/20 border border-[#059669]/30 hover:border-[#059669]/50 px-3 py-1.5 rounded-xl shadow-inner select-none transition-all duration-300 cursor-help" title={`API Sync Healthy. Latency: ${health.open_meteo.latency_ms ?? 0}ms`}>
+            <div className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#10B981] opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#10B981]"></span>
+            </div>
+            <div className="text-left leading-none">
+              <span className="text-[8px] font-black text-[#10B981] tracking-wider uppercase block mb-0.5">API STATUS</span>
+              <span className="text-[10px] font-black text-[#4ADE80] uppercase tracking-wider">API HEALTHY</span>
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 bg-[#7F1D1D]/20 border border-[#B91C1C]/30 hover:border-[#B91C1C]/50 px-3 py-1.5 rounded-xl shadow-inner select-none transition-all duration-300 cursor-help" title="API Gateway Unreachable">
+            <div className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#EF4444] opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#EF4444]"></span>
+            </div>
+            <div className="text-left leading-none">
+              <span className="text-[8px] font-black text-[#EF4444] tracking-wider uppercase block mb-0.5">API STATUS</span>
+              <span className="text-[10px] font-black text-[#F87171] uppercase tracking-wider">GATEWAY OFFLINE</span>
+            </div>
+          </div>
+        )}
+
+        {/* Countdown Card (API Next Forecast) */}
+        <div className="flex items-center gap-2 bg-[#1F2937]/55 border border-[#374151]/60 px-3 py-1.5 rounded-xl shadow-inner select-none shrink-0">
+          <Clock size={14} className="text-[#60A5FA] animate-pulse" />
+          <div className="text-left leading-none">
+            <span className="text-[8px] font-black text-[#60A5FA] tracking-wider uppercase block mb-0.5">API NEXT FORECAST</span>
+            <span className="text-xs font-black font-mono tracking-tight text-white">{countdownTime || '00:59:59'}</span>
+          </div>
+        </div>
+
+        {/* Date & Time Card with Aligned Philippine Flag */}
+        <div className="flex items-center gap-2.5 bg-[#1F2937]/55 border border-[#374151]/60 px-3 py-1.5 rounded-xl shadow-inner select-none shrink-0 justify-center">
+          <div className="text-left leading-none space-y-1">
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs font-black font-mono tracking-tight text-white">{phTime || '10:27:00 PM'}</span>
+              <span className="text-[8px] font-black text-[#60A5FA] tracking-wider uppercase bg-[#60A5FA]/10 px-1.5 py-0.5 rounded flex items-center gap-1 select-none">
+                PH <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 9" className="w-4 h-2 shadow-sm rounded-[1px] inline-block align-middle select-none">
+                  <rect width="18" height="9" fill="#FCD116" />
+                  <rect width="18" height="4.5" fill="#0038A8" />
+                  <rect y="4.5" width="18" height="4.5" fill="#CE1126" />
+                  <polygon points="0,0 0,9 7.79,4.5" fill="#FFFFFF" />
+                  <circle cx="2.5" cy="4.5" r="0.9" fill="#FCD116" />
+                </svg>
+              </span>
+            </div>
+            <div className="text-[9px] text-[#9CA3AF] font-bold tracking-wide">{phDate || 'Thursday, May 21, 2026'}</div>
+          </div>
+        </div>
+
+        {/* User profile indicator */}
+        <div className="flex items-center gap-2 text-xs font-bold text-[#9CA3AF] bg-[#1F2937]/50 border border-[#374151]/50 py-1.5 px-3 rounded-xl select-none">
+          <User size={12} className="text-[#60A5FA]" />
+          <span className="capitalize text-white">{currentUser}</span>
+        </div>
+
+        {/* Logout Button positioned at the very right */}
+        <button 
+          onClick={handleLogout}
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-[#EF4444]/10 hover:bg-[#EF4444]/20 border border-[#EF4444]/30 hover:border-[#EF4444]/50 rounded-xl text-xs font-black text-[#EF4444] transition-all shadow-md group shrink-0 cursor-pointer"
+          title="Logout and Close Console Session"
+        >
+          <span>Logout</span>
+          <LogOut size={12} className="transform group-hover:translate-x-0.5 transition-transform" />
+        </button>
+
+      </div>
+
+      {/* Mobile Header Row for Time, Countdown & API Status */}
+      <div className="flex md:hidden items-center justify-between w-full gap-1.5 border-t border-[#374151]/30 pt-2 select-none">
+        
+        {/* API Status Card */}
+        <div className="flex items-center gap-1.5 bg-[#1F2937]/55 border border-[#374151]/60 px-2 py-1.5 rounded-lg shadow-inner flex-1 justify-center h-[36px] min-w-0 mobile-header-card">
+          <span className="relative flex h-2 w-2 shrink-0">
+            <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${health && health.status !== 'offline' && health.open_meteo?.status === 'healthy' ? 'bg-[#10B981]' : 'bg-[#EF4444]'}`}></span>
+            <span className={`relative inline-flex rounded-full h-2 w-2 ${health && health.status !== 'offline' && health.open_meteo?.status === 'healthy' ? 'bg-[#10B981]' : 'bg-[#EF4444]'}`}></span>
+          </span>
+          <div className="text-left leading-none min-w-0 pl-1">
+            <span className="text-[6.5px] font-black text-[#9CA3AF] tracking-wider uppercase block">API STATUS</span>
+            <span className={`text-[8.5px] font-black uppercase truncate block mt-0.5 ${health && health.status !== 'offline' && health.open_meteo?.status === 'healthy' ? 'text-[#4ADE80]' : 'text-[#EF4444]'}`}>
+              {health && health.status !== 'offline' && health.open_meteo?.status === 'healthy' ? 'ONLINE' : 'OFFLINE'}
+            </span>
+          </div>
+        </div>
+
+        {/* Countdown Card */}
+        <div className="flex items-center gap-1 bg-[#1F2937]/55 border border-[#374151]/60 px-2 py-1.5 rounded-lg shadow-inner flex-1 justify-center h-[36px] min-w-0 mobile-header-card">
+          <Clock size={11} className="text-[#60A5FA] shrink-0" />
+          <div className="text-left leading-none min-w-0 pl-1">
+            <span className="text-[6.5px] font-black text-[#60A5FA] tracking-wider uppercase block">NEXT SYNC</span>
+            <span className="text-[9px] font-bold font-mono tracking-tight text-white block mt-0.5 truncate">{countdownTime || '00:59:59'}</span>
+          </div>
+        </div>
+
+        {/* Date & Time Card */}
+        <div className="flex items-center gap-1 bg-[#1F2937]/55 border border-[#374151]/60 px-2 py-1.5 rounded-lg shadow-inner flex-1 justify-center h-[36px] min-w-0 mobile-header-card">
+          <Radio size={11} className="text-[#A78BFA] shrink-0" />
+          <div className="text-left leading-none min-w-0 pl-1">
+            <span className="text-[6.5px] font-black text-[#A78BFA] tracking-wider uppercase block">PH TIME</span>
+            <span className="text-[9px] font-bold font-mono tracking-tight text-white block mt-0.5 truncate">
+              {phTime ? phTime.replace(/:\d+\s/, ' ') : '10:27 PM'}
+            </span>
+          </div>
+        </div>
+
+      </div>
+
+    </header>
+
       {/* Visual Content Wrapper with premium fade-in animation (declared separately to keep fixed viewport modals accurate) */}
-      <div className="flex-1 flex flex-col animate-fade-in relative">
+      <div className="flex-1 flex flex-col animate-fade-in relative pt-[116px] md:pt-0">
         
         {/* Dynamic Background Glows */}
         <div className="absolute w-[500px] h-[500px] rounded-full bg-[#60A5FA] blur-[150px] opacity-5 pointer-events-none -translate-y-20 left-10" />
         <div className="absolute w-[450px] h-[450px] rounded-full bg-[#4ADE80] blur-[150px] opacity-5 pointer-events-none -translate-y-20 right-10" />
-
-        {/* CORE ADMIN NAVIGATION HEADER */}
-        <header className="bg-[#111827]/95 border-b border-[#374151]/70 sticky top-0 z-30 px-4 sm:px-6 py-3 flex flex-col md:flex-row justify-between items-center gap-3 backdrop-blur-md shadow-lg transition-all duration-300">
-        
-        {/* Branding Logo */}
-        <div className="flex items-center justify-between w-full md:w-auto">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-[#1F2937] border border-[#374151] overflow-hidden flex items-center justify-center shrink-0 p-1">
-              <img src="/flowsnoname.png" alt="FLOWS Logo" className="w-full h-full object-contain" />
-            </div>
-            <div>
-              <h1 className="text-base font-black tracking-tight text-white flex items-center gap-1.5 leading-none">
-                F.L.O.W.S. CONTROL
-                <span className="text-[9px] bg-[#60A5FA]/10 text-[#60A5FA] border border-[#60A5FA]/30 px-1.5 py-0.5 rounded font-black tracking-widest uppercase">Console</span>
-              </h1>
-              <p className="text-[8px] text-[#9CA3AF] font-bold uppercase tracking-wider mt-0.5">Barangay Rizal Rainfall System</p>
-            </div>
-          </div>
-
-          {/* Mobile Right Quick Controls */}
-          <div className="flex md:hidden items-center gap-1.5">
-            <button 
-              onClick={handleLogout}
-              className="p-1.5 bg-[#EF4444]/10 border border-[#EF4444]/30 rounded-lg text-[#EF4444] hover:bg-[#EF4444]/20 flex items-center justify-center cursor-pointer"
-              title="Logout"
-            >
-              <LogOut size={13} />
-            </button>
-          </div>
-        </div>
-
-        {/* Live Right-side controls (Desktop/Tablet) */}
-        <div className="hidden md:flex items-center gap-2 shrink-0">
-          
-          {/* API Health Status Badge */}
-          {health && health.status !== 'offline' && health.open_meteo?.status === 'healthy' ? (
-            <div className="flex items-center gap-2 bg-[#065F46]/20 border border-[#059669]/30 hover:border-[#059669]/50 px-3 py-1.5 rounded-xl shadow-inner select-none transition-all duration-300 cursor-help" title={`API Sync Healthy. Latency: ${health.open_meteo.latency_ms ?? 0}ms`}>
-              <div className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#10B981] opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#10B981]"></span>
-              </div>
-              <div className="text-left leading-none">
-                <span className="text-[8px] font-black text-[#10B981] tracking-wider uppercase block mb-0.5">API STATUS</span>
-                <span className="text-[10px] font-black text-[#4ADE80] uppercase tracking-wider">API HEALTHY</span>
-              </div>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2 bg-[#7F1D1D]/20 border border-[#B91C1C]/30 hover:border-[#B91C1C]/50 px-3 py-1.5 rounded-xl shadow-inner select-none transition-all duration-300 cursor-help" title="API Gateway Unreachable">
-              <div className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#EF4444] opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#EF4444]"></span>
-              </div>
-              <div className="text-left leading-none">
-                <span className="text-[8px] font-black text-[#EF4444] tracking-wider uppercase block mb-0.5">API STATUS</span>
-                <span className="text-[10px] font-black text-[#F87171] uppercase tracking-wider">GATEWAY OFFLINE</span>
-              </div>
-            </div>
-          )}
-
-          {/* Countdown Card (API Next Forecast) */}
-          <div className="flex items-center gap-2 bg-[#1F2937]/55 border border-[#374151]/60 px-3 py-1.5 rounded-xl shadow-inner select-none shrink-0">
-            <Clock size={14} className="text-[#60A5FA] animate-pulse" />
-            <div className="text-left leading-none">
-              <span className="text-[8px] font-black text-[#60A5FA] tracking-wider uppercase block mb-0.5">API NEXT FORECAST</span>
-              <span className="text-xs font-black font-mono tracking-tight text-white">{countdownTime || '00:59:59'}</span>
-            </div>
-          </div>
-
-          {/* Date & Time Card with Aligned Philippine Flag */}
-          <div className="flex items-center gap-2.5 bg-[#1F2937]/55 border border-[#374151]/60 px-3 py-1.5 rounded-xl shadow-inner select-none shrink-0 justify-center">
-            <div className="text-left leading-none space-y-1">
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs font-black font-mono tracking-tight text-white">{phTime || '10:27:00 PM'}</span>
-                <span className="text-[8px] font-black text-[#60A5FA] tracking-wider uppercase bg-[#60A5FA]/10 px-1.5 py-0.5 rounded flex items-center gap-1 select-none">
-                  PH <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 9" className="w-4 h-2 shadow-sm rounded-[1px] inline-block align-middle select-none">
-                    <rect width="18" height="9" fill="#FCD116" />
-                    <rect width="18" height="4.5" fill="#0038A8" />
-                    <rect y="4.5" width="18" height="4.5" fill="#CE1126" />
-                    <polygon points="0,0 0,9 7.79,4.5" fill="#FFFFFF" />
-                    <circle cx="2.5" cy="4.5" r="0.9" fill="#FCD116" />
-                  </svg>
-                </span>
-              </div>
-              <div className="text-[9px] text-[#9CA3AF] font-bold tracking-wide">{phDate || 'Thursday, May 21, 2026'}</div>
-            </div>
-          </div>
-
-          {/* User profile indicator */}
-          <div className="flex items-center gap-2 text-xs font-bold text-[#9CA3AF] bg-[#1F2937]/50 border border-[#374151]/50 py-1.5 px-3 rounded-xl select-none">
-            <User size={12} className="text-[#60A5FA]" />
-            <span className="capitalize text-white">{currentUser}</span>
-          </div>
-
-          {/* Logout Button positioned at the very right */}
-          <button 
-            onClick={handleLogout}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#EF4444]/10 hover:bg-[#EF4444]/20 border border-[#EF4444]/30 hover:border-[#EF4444]/50 rounded-xl text-xs font-black text-[#EF4444] transition-all shadow-md group shrink-0 cursor-pointer"
-            title="Logout and Close Console Session"
-          >
-            <span>Logout</span>
-            <LogOut size={12} className="transform group-hover:translate-x-0.5 transition-transform" />
-          </button>
-
-        </div>
-
-        {/* Mobile Header Row for Time, Countdown & API Status */}
-        <div className="flex md:hidden items-center justify-between w-full gap-1.5 border-t border-[#374151]/30 pt-2 select-none">
-          
-          {/* API Status Card */}
-          <div className="flex items-center gap-1.5 bg-[#1F2937]/55 border border-[#374151]/60 px-2 py-1.5 rounded-lg shadow-inner flex-1 justify-center h-[36px] min-w-0 mobile-header-card">
-            <span className="relative flex h-2 w-2 shrink-0">
-              <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${health && health.status !== 'offline' && health.open_meteo?.status === 'healthy' ? 'bg-[#10B981]' : 'bg-[#EF4444]'}`}></span>
-              <span className={`relative inline-flex rounded-full h-2 w-2 ${health && health.status !== 'offline' && health.open_meteo?.status === 'healthy' ? 'bg-[#10B981]' : 'bg-[#EF4444]'}`}></span>
-            </span>
-            <div className="text-left leading-none min-w-0 pl-1">
-              <span className="text-[6.5px] font-black text-[#9CA3AF] tracking-wider uppercase block">API STATUS</span>
-              <span className={`text-[8.5px] font-black uppercase truncate block mt-0.5 ${health && health.status !== 'offline' && health.open_meteo?.status === 'healthy' ? 'text-[#4ADE80]' : 'text-[#EF4444]'}`}>
-                {health && health.status !== 'offline' && health.open_meteo?.status === 'healthy' ? 'ONLINE' : 'OFFLINE'}
-              </span>
-            </div>
-          </div>
-
-          {/* Countdown Card */}
-          <div className="flex items-center gap-1 bg-[#1F2937]/55 border border-[#374151]/60 px-2 py-1.5 rounded-lg shadow-inner flex-1 justify-center h-[36px] min-w-0 mobile-header-card">
-            <Clock size={11} className="text-[#60A5FA] shrink-0" />
-            <div className="text-left leading-none min-w-0 pl-1">
-              <span className="text-[6.5px] font-black text-[#60A5FA] tracking-wider uppercase block">NEXT SYNC</span>
-              <span className="text-[9px] font-bold font-mono tracking-tight text-white block mt-0.5 truncate">{countdownTime || '00:59:59'}</span>
-            </div>
-          </div>
-
-          {/* Date & Time Card */}
-          <div className="flex items-center gap-1 bg-[#1F2937]/55 border border-[#374151]/60 px-2 py-1.5 rounded-lg shadow-inner flex-1 justify-center h-[36px] min-w-0 mobile-header-card">
-            <Radio size={11} className="text-[#A78BFA] shrink-0" />
-            <div className="text-left leading-none min-w-0 pl-1">
-              <span className="text-[6.5px] font-black text-[#A78BFA] tracking-wider uppercase block">PH TIME</span>
-              <span className="text-[9px] font-bold font-mono tracking-tight text-white block mt-0.5 truncate">
-                {phTime ? phTime.replace(/:\d+\s/, ' ') : '10:27 PM'}
-              </span>
-            </div>
-          </div>
-
-        </div>
-
-      </header>
 
       {/* MAIN CONTAINER */}
       <main className="flex-1 w-full max-w-6xl mx-auto px-4 py-6 sm:px-6 space-y-6 z-10">
@@ -676,22 +676,6 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
-
-      {/* FLOATING TELEMETRY WIDGET BUBBLE (Mobile / Tablet Only) */}
-      <button
-        onClick={() => setShowTelemetryModal(true)}
-        className="block md:hidden fixed bottom-6 right-6 z-40 bg-[#1F2937]/90 backdrop-blur-md border border-[#60A5FA]/30 text-white rounded-full p-4 shadow-2xl hover:scale-105 active:scale-95 transition-all cursor-pointer weather-glow-blue animate-pulse-slow"
-        title="Open Telemetry Console & Logs"
-      >
-        <div className="relative flex items-center justify-center">
-          <Activity size={22} className="text-[#60A5FA]" />
-          {/* Pulsing indicator dot */}
-          <span className="absolute -top-1 -right-1 flex h-2 w-2">
-            <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${health && health.status !== 'offline' && health.open_meteo?.status === 'healthy' ? 'bg-[#10B981]' : 'bg-[#EF4444]'}`}></span>
-            <span className={`relative inline-flex rounded-full h-2 w-2 ${health && health.status !== 'offline' && health.open_meteo?.status === 'healthy' ? 'bg-[#10B981]' : 'bg-[#EF4444]'}`}></span>
-          </span>
-        </div>
-      </button>
 
       {/* MOBILE TELEMETRY CONSOLE & LOGS OVERLAY MODAL */}
       {showTelemetryModal && (

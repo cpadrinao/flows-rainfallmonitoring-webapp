@@ -97,7 +97,7 @@ export default function EmergencyPage() {
       <div className="absolute w-[600px] h-[600px] rounded-full bg-[#EF4444] blur-[160px] opacity-10 pointer-events-none left-1/2 -translate-x-1/2 -top-[100px]" />
 
       {/* TOP NAVBAR (Gives smooth desktop integration and dynamic time/flag indicators) */}
-      <header className="bg-[#111827]/95 border-b border-[#374151]/70 sticky top-0 z-30 px-4 sm:px-6 py-3 flex flex-col md:flex-row justify-between items-center gap-3 backdrop-blur-md shadow-lg transition-all duration-300">
+      <header className="flows-fixed-top-nav bg-[#111827]/95 border-b border-[#374151]/70 px-4 sm:px-6 py-3 flex flex-col md:flex-row justify-between items-center gap-3 backdrop-blur-md shadow-lg transition-all duration-300">
         
         {/* Branding Logo */}
         <div className="flex items-center justify-between w-full md:w-auto">
@@ -225,7 +225,7 @@ export default function EmergencyPage() {
       </header>
 
       {/* MAIN CONTAINER */}
-      <main className="flex-1 w-full max-w-6xl mx-auto px-4 py-6 sm:px-6 z-10 space-y-6 pb-24 md:pb-12">
+      <main className="flex-1 w-full max-w-6xl mx-auto px-4 pt-[128px] pb-24 sm:px-6 z-10 space-y-6 md:pt-6 md:pb-12">
         
         {/* Title description */}
         <div>

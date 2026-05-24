@@ -298,13 +298,11 @@ export default function RainfallHistory() {
   }
 
   return (
-    <div data-theme={theme} className="bg-[#0b0f19] min-h-screen w-full text-[#F9FAFB] font-sans flex flex-col justify-between relative overflow-x-hidden animate-fade-in transition-colors duration-500">
+    <div data-theme={theme} className="bg-[#0b0f19] min-h-screen w-full text-[#F9FAFB] font-sans flex flex-col justify-between relative overflow-x-hidden transition-colors duration-500">
       
-      {/* Background glow */}
-      <div className="absolute w-[500px] h-[500px] rounded-full bg-[#4ADE80] blur-[150px] opacity-5 pointer-events-none -translate-y-20 left-10" />
 
       {/* CORE ADMIN NAVIGATION HEADER */}
-      <header className="bg-[#111827]/95 border-b border-[#374151]/70 sticky top-0 z-30 px-4 sm:px-6 py-3 flex flex-col md:flex-row justify-between items-center gap-3 backdrop-blur-md shadow-lg transition-all duration-300">
+      <header className="flows-fixed-top-nav bg-[#111827]/95 border-b border-[#374151]/70 px-4 sm:px-6 py-3 flex flex-col md:flex-row justify-between items-center gap-3 backdrop-blur-md shadow-lg transition-all duration-300">
         
         {/* Branding Logo */}
         <div className="flex items-center justify-between w-full md:w-auto">
@@ -428,6 +426,12 @@ export default function RainfallHistory() {
         </div>
 
       </header>
+
+      {/* Content wrapper with fade-in — outside header so sticky works */}
+      <div className="flex-1 flex flex-col animate-fade-in relative pt-[116px] md:pt-0">
+        
+        {/* Background glow */}
+        <div className="absolute w-[500px] h-[500px] rounded-full bg-[#4ADE80] blur-[150px] opacity-5 pointer-events-none -translate-y-20 left-10" />
 
       {/* MAIN CONTAINER */}
       <main className="flex-1 w-full max-w-6xl mx-auto px-4 py-6 sm:px-6 z-10 space-y-6">
@@ -722,6 +726,7 @@ export default function RainfallHistory() {
           © 2026 F.L.O.W.S. AUDIT CONSOLE • RECENT PRECIPITATION HISTORICAL LOGS
         </p>
       </footer>
+      </div>
 
     </div>
   );

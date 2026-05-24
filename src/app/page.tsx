@@ -407,7 +407,7 @@ export default function FLOWSApp() {
         <div className="flex-1 flex flex-col animate-fade-in">
           
           {/* TOP NAVBAR (Gives smooth desktop integration and dynamic time/flag indicators) */}
-          <header className="bg-[#111827]/95 border-b border-[#374151]/70 sticky top-0 z-30 px-4 sm:px-6 py-3 flex flex-col md:flex-row justify-between items-center gap-3 backdrop-blur-md shadow-lg transition-all duration-300">
+          <header className="flows-fixed-top-nav bg-[#111827]/95 border-b border-[#374151]/70 px-4 sm:px-6 py-3 flex flex-col md:flex-row justify-between items-center gap-3 backdrop-blur-md shadow-lg transition-all duration-300">
             
             {/* Branding Logo */}
             <div className="flex items-center justify-between w-full md:w-auto">
@@ -550,7 +550,7 @@ export default function FLOWSApp() {
 
           {/* MAIN WEB DASHBOARD GRID */}
           {isLoading ? (
-            <div className="flex-1 flex flex-col items-center justify-center py-20 px-4 min-h-[60vh] animate-fade-in relative">
+            <div className="flex-1 flex flex-col items-center justify-center pt-[180px] pb-20 px-4 min-h-[60vh] animate-fade-in relative">
               {/* Tech glow background */}
               <div className="absolute w-72 h-72 rounded-full bg-[#60A5FA] blur-[120px] opacity-10 pointer-events-none" />
               
@@ -586,7 +586,7 @@ export default function FLOWSApp() {
               </div>
             </div>
           ) : isBackendOffline ? (
-            <div className="flex-1 flex flex-col items-center justify-center py-16 px-4 min-h-[60vh] animate-fade-in relative z-10">
+            <div className="flex-1 flex flex-col items-center justify-center pt-[180px] pb-16 px-4 min-h-[60vh] animate-fade-in relative z-10">
               {/* Tech glow background */}
               <div className="absolute w-72 h-72 rounded-full bg-[#EF4444] blur-[120px] opacity-5 pointer-events-none" />
               
@@ -639,7 +639,7 @@ export default function FLOWSApp() {
               </div>
             </div>
           ) : (
-            <main className="flex-1 w-full max-w-6xl mx-auto px-4 py-6 sm:px-6 space-y-6 z-10 pb-24 md:pb-12">
+            <main className="flex-1 w-full max-w-6xl mx-auto px-4 pt-[128px] pb-24 sm:px-6 space-y-6 z-10 md:pt-6 md:pb-12">
             
             {/* Header section with zone selector */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">

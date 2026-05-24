@@ -382,14 +382,9 @@ export default function ZoneManagement() {
   }
   return (
     <div data-theme={theme} className="bg-[#0b0f19] min-h-screen w-full text-[#F9FAFB] font-sans flex flex-col justify-between relative overflow-x-hidden transition-colors duration-500">
-      
-      {/* Visual Content Wrapper with premium fade-in animation (declared separately to keep fixed viewport modals accurate) */}
-      <div className="flex-1 flex flex-col animate-fade-in relative">
-      {/* Background glow */}
-      <div className="absolute w-[500px] h-[500px] rounded-full bg-[#60A5FA] blur-[150px] opacity-5 pointer-events-none -translate-y-20 left-10" />
 
-      {/* CORE ADMIN NAVIGATION HEADER */}
-      <header className="bg-[#111827]/95 border-b border-[#374151]/70 sticky top-0 z-30 px-4 sm:px-6 py-3 flex flex-col md:flex-row justify-between items-center gap-3 backdrop-blur-md shadow-lg transition-all duration-300">
+      {/* CORE ADMIN NAVIGATION HEADER — outside animate-fade-in so sticky positioning is viewport-relative */}
+      <header className="flows-fixed-top-nav bg-[#111827]/95 border-b border-[#374151]/70 px-4 sm:px-6 py-3 flex flex-col md:flex-row justify-between items-center gap-3 backdrop-blur-md shadow-lg transition-all duration-300">
         
         {/* Branding Logo */}
         <div className="flex items-center justify-between w-full md:w-auto">
@@ -513,6 +508,11 @@ export default function ZoneManagement() {
         </div>
 
       </header>
+
+      {/* Visual Content Wrapper with premium fade-in animation (declared separately to keep fixed viewport modals accurate) */}
+      <div className="flex-1 flex flex-col animate-fade-in relative pt-[116px] md:pt-0">
+      {/* Background glow */}
+      <div className="absolute w-[500px] h-[500px] rounded-full bg-[#60A5FA] blur-[150px] opacity-5 pointer-events-none -translate-y-20 left-10" />
 
       {/* MAIN CONTAINER */}
       <main className="flex-1 w-full max-w-6xl mx-auto px-4 py-6 sm:px-6 z-10 space-y-6">
