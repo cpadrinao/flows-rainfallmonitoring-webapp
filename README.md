@@ -102,58 +102,34 @@ flows-rainfallmonitoring-webapp/
 
 ### Prerequisites
 *   Node.js 18+ and npm
-*   Python 3.10+ (for backend services)
+*   Python 3.10+ (with virtual environment configured at `flows-backend/venv`)
 
-### Setup Instructions
+### Setup & Run Instructions
 
-#### 1. Setup Backend (flows-backend)
-1. Navigate into the backend folder:
-   ```bash
-   cd flows-backend
-   ```
-2. Create a virtual environment and activate it:
-   ```bash
-   # On Windows (PowerShell):
-   python -m venv venv
-   .\venv\Scripts\Activate.ps1
-   ```
-3. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-4. Create a `.env` file in the `flows-backend` directory and add your Supabase credentials:
-   ```env
-   SUPABASE_URL=your_supabase_project_url
-   SUPABASE_ANON_KEY=your_supabase_anon_key
-   SUPABASE_SERVICE_KEY=your_supabase_service_role_key
-   OPEN_METEO_LAT=14.0860
-   OPEN_METEO_LON=121.1000
-   TIMEZONE=Asia/Manila
-   FETCH_INTERVAL_MINUTES=60
-   ```
-5. Run the database seed script to populate default zones:
-   ```bash
-   python seed_zones.py
-   ```
-6. Start the FastAPI development server:
-   ```bash
-   uvicorn main:app --reload
-   ```
+1. **Configure Environment Variables**:
+   - Create a `.env` file in the `flows-backend` directory and add your Supabase credentials:
+     ```env
+     SUPABASE_URL=your_supabase_project_url
+     SUPABASE_ANON_KEY=your_supabase_anon_key
+     SUPABASE_SERVICE_KEY=your_supabase_service_role_key
+     OPEN_METEO_LAT=14.0860
+     OPEN_METEO_LON=121.1000
+     TIMEZONE=Asia/Manila
+     FETCH_INTERVAL_MINUTES=60
+     ```
+   - Create a `.env.local` file in the root directory:
+     ```env
+     NEXT_PUBLIC_API_URL=http://localhost:8000
+     ```
 
-#### 2. Setup Frontend
-1. Navigate back to the root folder:
-   ```bash
-   cd ..
-   ```
-2. Create a `.env.local` file in the root directory:
-   ```env
-   NEXT_PUBLIC_API_URL=http://localhost:8000
-   ```
-3. Install dependencies:
+2. **Install Project Dependencies**:
+   From the root folder, install npm packages:
    ```bash
    npm install
    ```
-4. Start the local development web server:
+
+3. **Run Both Systems Concurrently**:
+   Start the integrated dev server which concurrently boots the Python FastAPI backend and the Next.js React frontend with a single command:
    ```bash
    npm run dev
    ```
