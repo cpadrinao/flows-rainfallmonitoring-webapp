@@ -102,40 +102,25 @@ flows-rainfallmonitoring-webapp/
 
 ### Prerequisites
 *   Node.js 18+ and npm
-*   Python 3.10+ (with virtual environment configured at `flows-backend/venv`)
+*   Python 3.10+
 
 ### Setup & Run Instructions
 
-1. **Configure Environment Variables**:
-   - Create a `.env` file in the `flows-backend` directory and add your Supabase credentials:
-     ```env
-     SUPABASE_URL=your_supabase_project_url
-     SUPABASE_ANON_KEY=your_supabase_anon_key
-     SUPABASE_SERVICE_KEY=your_supabase_service_role_key
-     OPEN_METEO_LAT=14.0860
-     OPEN_METEO_LON=121.1000
-     TIMEZONE=Asia/Manila
-     FETCH_INTERVAL_MINUTES=60
-     ```
-   - Create a `.env.local` file in the root directory:
-     ```env
-     NEXT_PUBLIC_API_URL=http://localhost:8000
-     ```
+Everything (including the backend Supabase configuration and frontend API client settings) is already pre-configured out-of-the-box. There is no need to set up a new database client or manually create `.env` files.
 
-2. **Install Project Dependencies**:
-   From the root folder, install npm packages:
+1. **Install Dependencies**:
+   From the root folder, install the project's npm packages:
    ```bash
    npm install
    ```
 
-3. **Run Both Systems Concurrently**:
-   Start the integrated dev server which concurrently boots the Python FastAPI backend and the Next.js React frontend with a single command:
+2. **Run the Full Stack Concurrently**:
+   Start the integrated development server with a single command. This will concurrently compile the frontend, activate the Python virtual environment, boot the FastAPI server, and run the hourly weather scheduler:
    ```bash
    npm run dev
    ```
 
 Open [http://localhost:3000](http://localhost:3000) in your browser to view the Resident Weather Observatory, or navigate to [http://localhost:3000/admin/login](http://localhost:3000/admin/login) to access the administrative dashboard.
-
 
 ---
 
