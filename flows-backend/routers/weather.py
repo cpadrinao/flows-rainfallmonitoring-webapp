@@ -77,7 +77,7 @@ async def get_weather_logs(
         res = await client.get(
             "/weather_logs",
             params={
-                "order": "fetched_at.desc",
+                "order": "forecast_time.desc,fetched_at.desc",
                 "limit": limit,
                 "offset": offset,
             },

@@ -109,7 +109,7 @@ export default function AdminLoginPage() {
               </span>
               <input 
                 type="text"
-                placeholder="admin"
+                placeholder="input username here..."
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 className="w-full bg-[#111827] border border-[#374151] focus:border-[#60A5FA] rounded-xl py-2.5 pl-10 pr-4 text-xs text-white placeholder-[#4B5563] focus:outline-none transition-colors"
@@ -128,7 +128,7 @@ export default function AdminLoginPage() {
               </span>
               <input 
                 type="password"
-                placeholder="••••••••"
+                placeholder="input password here..."
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full bg-[#111827] border border-[#374151] focus:border-[#60A5FA] rounded-xl py-2.5 pl-10 pr-4 text-xs text-white placeholder-[#4B5563] focus:outline-none transition-colors"

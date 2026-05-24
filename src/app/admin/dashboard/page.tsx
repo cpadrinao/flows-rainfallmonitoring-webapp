@@ -43,6 +43,7 @@ export default function AdminDashboard() {
   const [health, setHealth] = useState<SystemHealth | null>(null);
   const [logs, setLogs] = useState<ApiWeatherLog[]>([]);
   const [isHealthLoading, setIsHealthLoading] = useState(true);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   // Verify authorization
   useEffect(() => {
@@ -156,6 +157,10 @@ export default function AdminDashboard() {
   }, []);
 
   const handleLogout = () => {
+    setShowLogoutModal(true);
+  };
+
+  const confirmLogout = () => {
     sessionStorage.removeItem('flows_admin_logged_in');
     sessionStorage.removeItem('flows_admin_user');
     router.push('/admin/login');
@@ -192,14 +197,17 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div data-theme={theme} className="bg-[#0b0f19] min-h-screen w-full text-[#F9FAFB] font-sans flex flex-col justify-between relative overflow-x-hidden transition-colors duration-500 animate-fade-in">
+    <div data-theme={theme} className="bg-[#0b0f19] min-h-screen w-full text-[#F9FAFB] font-sans flex flex-col justify-between relative overflow-x-hidden transition-colors duration-500">
       
-      {/* Dynamic Background Glows */}
-      <div className="absolute w-[500px] h-[500px] rounded-full bg-[#60A5FA] blur-[150px] opacity-5 pointer-events-none -translate-y-20 left-10" />
-      <div className="absolute w-[450px] h-[450px] rounded-full bg-[#4ADE80] blur-[150px] opacity-5 pointer-events-none -translate-y-20 right-10" />
+      {/* Visual Content Wrapper with premium fade-in animation (declared separately to keep fixed viewport modals accurate) */}
+      <div className="flex-1 flex flex-col animate-fade-in relative">
+        
+        {/* Dynamic Background Glows */}
+        <div className="absolute w-[500px] h-[500px] rounded-full bg-[#60A5FA] blur-[150px] opacity-5 pointer-events-none -translate-y-20 left-10" />
+        <div className="absolute w-[450px] h-[450px] rounded-full bg-[#4ADE80] blur-[150px] opacity-5 pointer-events-none -translate-y-20 right-10" />
 
-      {/* CORE ADMIN NAVIGATION HEADER */}
-      <header className="bg-[#111827]/95 border-b border-[#374151]/70 sticky top-0 z-30 px-4 sm:px-6 py-3 flex flex-col md:flex-row justify-between items-center gap-3 backdrop-blur-md shadow-lg transition-all duration-300">
+        {/* CORE ADMIN NAVIGATION HEADER */}
+        <header className="bg-[#111827]/95 border-b border-[#374151]/70 sticky top-0 z-30 px-4 sm:px-6 py-3 flex flex-col md:flex-row justify-between items-center gap-3 backdrop-blur-md shadow-lg transition-all duration-300">
         
         {/* Branding Logo */}
         <div className="flex items-center justify-between w-full md:w-auto">
@@ -229,7 +237,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Live Right-side controls (Desktop/Tablet) */}
-        <div className="hidden sm:flex items-center gap-2 shrink-0">
+        <div className="hidden md:flex items-center gap-2 shrink-0">
           
           {/* API Health Status Badge */}
           {health && health.status !== 'offline' && health.open_meteo?.status === 'healthy' ? (
@@ -303,28 +311,26 @@ export default function AdminDashboard() {
         </div>
 
         {/* Mobile Header Row for Time & Countdown */}
-        <div className="flex sm:hidden items-center justify-between w-full gap-2 border-t border-[#374151]/30 pt-2 select-none">
+        <div className="flex md:hidden items-center justify-between w-full gap-2 border-t border-[#374151]/30 pt-2 select-none">
           {/* Countdown Card */}
-          <div className="flex items-center gap-1.5 bg-[#1F2937]/55 border border-[#374151]/60 px-2.5 py-1 rounded-lg shadow-inner flex-1 justify-center">
-            <Clock size={11} className="text-[#60A5FA]" />
-            <div className="text-left leading-none">
+          <div className="flex items-center gap-1.5 bg-[#1F2937]/55 border border-[#374151]/60 px-2.5 py-1.5 rounded-lg shadow-inner flex-1 justify-center h-[36px] min-w-0 mobile-header-card">
+            <Clock size={11} className="text-[#60A5FA] shrink-0" />
+            <div className="text-left leading-none min-w-0">
               <span className="text-[7px] font-black text-[#60A5FA] tracking-wider uppercase block">NEXT FORECAST</span>
-              <span className="text-[10px] font-bold font-mono tracking-tight text-white">{countdownTime || '00:59:59'}</span>
+              <span className="text-[10px] font-bold font-mono tracking-tight text-white block mt-0.5">{countdownTime || '00:59:59'}</span>
             </div>
           </div>
           {/* Date & Time Card */}
-          <div className="flex items-center gap-1.5 bg-[#1F2937]/55 border border-[#374151]/60 px-2.5 py-1 rounded-lg shadow-inner flex-1 justify-center">
-            <div className="text-center leading-none">
-              <div className="flex items-center justify-center gap-1">
-                <span className="text-[10px] font-bold font-mono tracking-tight text-white">{phTime ? phTime.replace(/:\d+\s/, ' ') : '10:27 PM'}</span>
-                <span className="text-[7px] font-black text-[#60A5FA] tracking-wider uppercase bg-[#60A5FA]/10 px-1 rounded flex items-center gap-0.5">
-                  PH <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 9" className="w-3.5 h-1.5 shadow-sm rounded-[1px] inline-block align-middle select-none">
-                    <rect width="18" height="9" fill="#FCD116" />
-                    <rect width="18" height="4.5" fill="#0038A8" />
-                    <rect y="4.5" width="18" height="4.5" fill="#CE1126" />
-                    <polygon points="0,0 0,9 7.79,4.5" fill="#FFFFFF" />
-                    <circle cx="2.5" cy="4.5" r="0.9" fill="#FCD116" />
-                  </svg>
+          <div className="flex items-center gap-1.5 bg-[#1F2937]/55 border border-[#374151]/60 px-2.5 py-1.5 rounded-lg shadow-inner flex-1 justify-center h-[36px] min-w-0 mobile-header-card">
+            <Radio size={11} className="text-[#60A5FA] animate-pulse shrink-0" />
+            <div className="text-left leading-none min-w-0">
+              <span className="text-[7px] font-black text-[#60A5FA] tracking-wider uppercase block">PH TIME</span>
+              <div className="flex items-center gap-1 mt-0.5">
+                <span className="text-[10px] font-bold font-mono tracking-tight text-white block truncate">
+                  {phTime ? phTime.replace(/:\d+\s/, ' ') : '10:27 PM'}
+                </span>
+                <span className="text-[6px] font-black text-[#60A5FA] bg-[#60A5FA]/10 px-0.5 rounded inline-flex items-center shrink-0">
+                  PH
                 </span>
               </div>
             </div>
@@ -346,7 +352,7 @@ export default function AdminDashboard() {
           </div>
           
           {/* Mobile Online status badge */}
-          <div className="flex sm:hidden items-center gap-2 px-3 py-1.5 rounded-full bg-[#1F2937] border border-[#374151]">
+          <div className="flex md:hidden items-center gap-2 px-3 py-1.5 rounded-full bg-[#1F2937] border border-[#374151]">
             <span className="w-1.5 h-1.5 bg-[#4ADE80] rounded-full animate-ping" />
             <span className="text-[9px] font-bold text-[#4ADE80] tracking-wider uppercase">Telemetry Established</span>
           </div>
@@ -583,6 +589,53 @@ export default function AdminDashboard() {
           © 2026 F.L.O.W.S. ADMIN PORTAL • BARANGAY RIZAL LOCAL RESCUE TELEMETRY BRANCH
         </p>
       </footer>
+
+      {/* Closing Content Wrapper */}
+      </div>
+
+      {/* CUSTOM LOGOUT CONFIRMATION MODAL (Placed outside containment blocks for true viewport fixed positioning) */}
+      {showLogoutModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in">
+          {/* Backdrop */}
+          <div className="fixed inset-0 bg-black/75 backdrop-blur-sm" onClick={() => setShowLogoutModal(false)} />
+          
+          {/* Modal Card */}
+          <div className="bg-[#1F2937] border border-[#374151] w-full max-w-sm rounded-3xl shadow-2xl p-6 relative z-10 text-center space-y-5 weather-glow-red animate-scale-in">
+            
+            {/* Warning Circle Icon */}
+            <div className="w-14 h-14 rounded-full bg-[#EF4444]/10 border border-[#EF4444]/20 flex items-center justify-center text-[#EF4444] mx-auto animate-pulse">
+              <LogOut size={26} />
+            </div>
+
+            {/* Modal Heading & Text */}
+            <div className="space-y-1.5">
+              <h3 className="text-sm font-black text-white uppercase tracking-wider">
+                Confirm Console Logout
+              </h3>
+              <p className="text-[11px] text-[#9CA3AF] leading-relaxed">
+                Are you sure you want to end your administration session? You will be returned to the secure gateway login page.
+              </p>
+            </div>
+
+            {/* Row of Action Buttons */}
+            <div className="flex gap-2.5 pt-2 border-t border-[#374151]/55">
+              <button 
+                onClick={() => setShowLogoutModal(false)}
+                className="flex-1 py-2.5 bg-[#111827] hover:bg-[#111827]/70 border border-[#374151] hover:border-[#9CA3AF] text-[#9CA3AF] hover:text-white rounded-xl font-bold uppercase tracking-wider transition-all duration-150 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={confirmLogout}
+                className="flex-1 py-2.5 bg-[#EF4444] hover:bg-[#EF4444]/90 text-white font-black uppercase tracking-wider rounded-xl transition-all duration-150 shadow-md shadow-red-500/10 cursor-pointer"
+              >
+                Logout
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
 
     </div>
   );

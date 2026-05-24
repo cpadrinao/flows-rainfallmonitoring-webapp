@@ -205,3 +205,12 @@ body {
 .animate-float-fast {
   animation: float-fast 9s ease-in-out infinite;
 }
+
+/* Force equal heights and alignment on small phone sizes (e.g. 414px) for the header cards */
+@media (max-width: 450px) {
+  .mobile-header-card {
+    height: 42px !important;
+    max-height: 42px !important;
+  }
+}
+

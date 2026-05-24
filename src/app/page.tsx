@@ -478,7 +478,7 @@ export default function FLOWSApp() {
             </nav>
 
             {/* Live Right-side controls (Desktop/Tablet) */}
-            <div className="hidden sm:flex items-center gap-2 shrink-0">
+            <div className="hidden md:flex items-center gap-2 shrink-0">
               
               {/* Countdown Card (API Next Forecast) */}
               <div className="flex items-center gap-2 bg-[#1F2937]/55 border border-[#374151]/60 px-3 py-1.5 rounded-xl shadow-inner select-none shrink-0">
@@ -520,28 +520,26 @@ export default function FLOWSApp() {
             </div>
 
             {/* Mobile Header Row for Time & Countdown */}
-            <div className="flex sm:hidden items-center justify-between w-full gap-2 border-t border-[#374151]/30 pt-2 select-none">
+            <div className="flex md:hidden items-center justify-between w-full gap-2 border-t border-[#374151]/30 pt-2 select-none">
               {/* Countdown Card */}
-              <div className="flex items-center gap-1.5 bg-[#1F2937]/55 border border-[#374151]/60 px-2.5 py-1 rounded-lg shadow-inner flex-1 justify-center">
-                <Clock size={11} className="text-[#60A5FA]" />
-                <div className="text-left leading-none">
+              <div className="flex items-center gap-1.5 bg-[#1F2937]/55 border border-[#374151]/60 px-2.5 py-1.5 rounded-lg shadow-inner flex-1 justify-center h-[38px] max-h-[38px] min-w-0 mobile-header-card">
+                <Clock size={11} className="text-[#60A5FA] shrink-0" />
+                <div className="text-left leading-none min-w-0">
                   <span className="text-[7px] font-black text-[#60A5FA] tracking-wider uppercase block">NEXT FORECAST</span>
-                  <span className="text-[10px] font-bold font-mono tracking-tight text-white">{countdownTime || '00:59:59'}</span>
+                  <span className="text-[10px] font-bold font-mono tracking-tight text-white block mt-0.5">{countdownTime || '00:59:59'}</span>
                 </div>
               </div>
               {/* Date & Time Card */}
-              <div className="flex items-center gap-1.5 bg-[#1F2937]/55 border border-[#374151]/60 px-2.5 py-1 rounded-lg shadow-inner flex-1 justify-center">
-                <div className="text-center leading-none">
-                  <div className="flex items-center justify-center gap-1">
-                    <span className="text-[10px] font-bold font-mono tracking-tight text-white">{phTime ? phTime.replace(/:\d+\s/, ' ') : '10:27 PM'}</span>
-                    <span className="text-[7px] font-black text-[#60A5FA] tracking-wider uppercase bg-[#60A5FA]/10 px-1 rounded flex items-center gap-0.5">
-                      PH <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 9" className="w-3.5 h-1.5 shadow-sm rounded-[1px] inline-block align-middle select-none">
-                        <rect width="18" height="9" fill="#FCD116" />
-                        <rect width="18" height="4.5" fill="#0038A8" />
-                        <rect y="4.5" width="18" height="4.5" fill="#CE1126" />
-                        <polygon points="0,0 0,9 7.79,4.5" fill="#FFFFFF" />
-                        <circle cx="2.5" cy="4.5" r="0.9" fill="#FCD116" />
-                      </svg>
+              <div className="flex items-center gap-1.5 bg-[#1F2937]/55 border border-[#374151]/60 px-2.5 py-1.5 rounded-lg shadow-inner flex-1 justify-center h-[38px] max-h-[38px] min-w-0 mobile-header-card">
+                <Radio size={11} className="text-[#60A5FA] animate-pulse shrink-0" />
+                <div className="text-left leading-none min-w-0">
+                  <span className="text-[7px] font-black text-[#60A5FA] tracking-wider uppercase block">PH TIME</span>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <span className="text-[10px] font-bold font-mono tracking-tight text-white block truncate">
+                      {phTime ? phTime.replace(/:\d+\s/, ' ') : '10:27 PM'}
+                    </span>
+                    <span className="text-[6px] font-black text-[#60A5FA] bg-[#60A5FA]/10 px-0.5 rounded inline-flex items-center shrink-0">
+                      PH
                     </span>
                   </div>
                 </div>

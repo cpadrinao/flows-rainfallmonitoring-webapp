@@ -100,7 +100,6 @@ export default function RainfallHistory() {
   }, []);
   
   // Filtering & Pagination state
-  const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [currentPage, setCurrentPage] = useState<number>(1);
   const itemsPerPage = 5;
@@ -137,11 +136,24 @@ export default function RainfallHistory() {
         });
         setZoneNames(mapping);
 
-        // 3. Fetch chronological weather logs
+        // 3. Fetch weather logs
         const logsData = await fetchWeatherLogs(100);
         if (!active) return;
 
-        const mapped: HistoryItem[] = logsData.map((log, idx) => {
+        // Sort weather logs: latest forecast_time first, then latest fetched_at first
+        const sortedLogs = [...logsData].sort((a, b) => {
+          const timeA = a.forecast_time ? new Date(a.forecast_time).getTime() : 0;
+          const timeB = b.forecast_time ? new Date(b.forecast_time).getTime() : 0;
+          if (timeB !== timeA) return timeB - timeA;
+          
+          const fetchA = a.fetched_at ? new Date(a.fetched_at).getTime() : 0;
+          const fetchB = b.fetched_at ? new Date(b.fetched_at).getTime() : 0;
+          if (fetchB !== fetchA) return fetchB - fetchA;
+          
+          return (a.zone_id || '').localeCompare(b.zone_id || '');
+        });
+
+        const mapped: HistoryItem[] = sortedLogs.map((log, idx) => {
           const idStr = log.id ? log.id.slice(0, 8).toUpperCase() : `LOG-${idx + 1}`;
           const zoneName = mapping[log.zone_id] || log.zone_id || 'Unknown Zone';
           
@@ -210,13 +222,12 @@ export default function RainfallHistory() {
     doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 30);
 
     // Prepare table data
-    const tableColumn = ["Log ID", "Zone Territory", "Date & Time", "Rainfall (mm)", "Status", "Notes"];
+    const tableColumn = ["Log ID", "Zone Territory", "Date & Time", "Rainfall (mm)", "Notes"];
     const tableRows = filteredHistory.map(log => [
       log.id,
       log.zoneName,
       log.datetime,
       log.amount.toString(),
-      log.status,
       log.notes
     ]);
 
@@ -234,12 +245,11 @@ export default function RainfallHistory() {
     doc.save('FLOWS_Rainfall_Logs.pdf');
   };
 
-  // Filter history logs based on search query & status dropdown
+  // Filter history logs based on search query
   const filteredHistory = history.filter(item => {
-    const matchesStatus = statusFilter === 'ALL' || item.status === statusFilter;
     const matchesSearch = item.zoneName.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           item.notes.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesStatus && matchesSearch;
+    return matchesSearch;
   });
 
   // Calculate pagination bounds
@@ -255,19 +265,6 @@ export default function RainfallHistory() {
 
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedLogs = filteredHistory.slice(startIndex, startIndex + itemsPerPage);
-
-  const getStatusBadgeStyles = (status: 'PASSED' | 'FLAGGED' | 'CORRECTED') => {
-    switch (status) {
-      case 'PASSED':
-        return 'bg-[#4ADE80]/10 text-[#4ADE80] border-[#4ADE80]/30';
-      case 'FLAGGED':
-        return 'bg-[#EF4444]/10 text-[#EF4444] border-[#EF4444]/30';
-      case 'CORRECTED':
-        return 'bg-[#60A5FA]/10 text-[#60A5FA] border-[#60A5FA]/30';
-      default:
-        return 'bg-gray-500/10 text-gray-400 border-gray-500/30';
-    }
-  };
 
   if (!authorized || isLoading || !health || health.status === 'offline' || health.open_meteo?.status === 'unreachable') {
     return (
@@ -319,13 +316,13 @@ export default function RainfallHistory() {
               className="p-1.5 bg-[#1F2937] border border-[#374151] rounded-lg text-[#9CA3AF] hover:text-white flex items-center justify-center cursor-pointer"
               title="Back to Dashboard"
             >
-              <Home size={13} />
+              <ArrowLeft size={13} />
             </Link>
           </div>
         </div>
 
         {/* Live Right-side controls (Desktop/Tablet) */}
-        <div className="hidden sm:flex items-center gap-2 shrink-0">
+        <div className="hidden md:flex items-center gap-2 shrink-0">
           
           {/* API Health Status Badge */}
           {health && health.status !== 'offline' && health.open_meteo?.status === 'healthy' ? (
@@ -392,28 +389,26 @@ export default function RainfallHistory() {
         </div>
 
         {/* Mobile Header Row for Time & Countdown */}
-        <div className="flex sm:hidden items-center justify-between w-full gap-2 border-t border-[#374151]/30 pt-2 select-none">
+        <div className="flex md:hidden items-center justify-between w-full gap-2 border-t border-[#374151]/30 pt-2 select-none">
           {/* Countdown Card */}
-          <div className="flex items-center gap-1.5 bg-[#1F2937]/55 border border-[#374151]/60 px-2.5 py-1 rounded-lg shadow-inner flex-1 justify-center">
-            <Clock size={11} className="text-[#60A5FA]" />
-            <div className="text-left leading-none">
+          <div className="flex items-center gap-1.5 bg-[#1F2937]/55 border border-[#374151]/60 px-2.5 py-1.5 rounded-lg shadow-inner flex-1 justify-center h-[36px] min-w-0 mobile-header-card">
+            <Clock size={11} className="text-[#60A5FA] shrink-0" />
+            <div className="text-left leading-none min-w-0">
               <span className="text-[7px] font-black text-[#60A5FA] tracking-wider uppercase block">NEXT FORECAST</span>
-              <span className="text-[10px] font-bold font-mono tracking-tight text-white">{countdownTime || '00:59:59'}</span>
+              <span className="text-[10px] font-bold font-mono tracking-tight text-white block mt-0.5">{countdownTime || '00:59:59'}</span>
             </div>
           </div>
           {/* Date & Time Card */}
-          <div className="flex items-center gap-1.5 bg-[#1F2937]/55 border border-[#374151]/60 px-2.5 py-1 rounded-lg shadow-inner flex-1 justify-center">
-            <div className="text-center leading-none">
-              <div className="flex items-center justify-center gap-1">
-                <span className="text-[10px] font-bold font-mono tracking-tight text-white">{phTime ? phTime.replace(/:\d+\s/, ' ') : '10:27 PM'}</span>
-                <span className="text-[7px] font-black text-[#60A5FA] tracking-wider uppercase bg-[#60A5FA]/10 px-1 rounded flex items-center gap-0.5">
-                  PH <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 9" className="w-3.5 h-1.5 shadow-sm rounded-[1px] inline-block align-middle select-none">
-                    <rect width="18" height="9" fill="#FCD116" />
-                    <rect width="18" height="4.5" fill="#0038A8" />
-                    <rect y="4.5" width="18" height="4.5" fill="#CE1126" />
-                    <polygon points="0,0 0,9 7.79,4.5" fill="#FFFFFF" />
-                    <circle cx="2.5" cy="4.5" r="0.9" fill="#FCD116" />
-                  </svg>
+          <div className="flex items-center gap-1.5 bg-[#1F2937]/55 border border-[#374151]/60 px-2.5 py-1.5 rounded-lg shadow-inner flex-1 justify-center h-[36px] min-w-0 mobile-header-card">
+            <Radio size={11} className="text-[#60A5FA] animate-pulse shrink-0" />
+            <div className="text-left leading-none min-w-0">
+              <span className="text-[7px] font-black text-[#60A5FA] tracking-wider uppercase block">PH TIME</span>
+              <div className="flex items-center gap-1 mt-0.5">
+                <span className="text-[10px] font-bold font-mono tracking-tight text-white block truncate">
+                  {phTime ? phTime.replace(/:\d+\s/, ' ') : '10:27 PM'}
+                </span>
+                <span className="text-[6px] font-black text-[#60A5FA] bg-[#60A5FA]/10 px-0.5 rounded inline-flex items-center shrink-0">
+                  PH
                 </span>
               </div>
             </div>
@@ -449,31 +444,15 @@ export default function RainfallHistory() {
             />
           </div>
 
-          {/* Filters Select & Export */}
-          <div className="flex w-full md:w-auto items-center gap-3">
-            <div className="flex items-center gap-2 text-xs text-[#9CA3AF] font-bold whitespace-nowrap">
-              <Filter size={14} className="text-[#60A5FA]" />
-              <span className="hidden sm:inline">Filter Status:</span>
-            </div>
-            
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full md:w-40 bg-[#111827] border border-[#374151] focus:border-[#60A5FA] rounded-xl p-2 text-xs text-white focus:outline-none"
-            >
-              <option value="ALL">All Validations</option>
-              <option value="PASSED">Passed Only</option>
-              <option value="FLAGGED">Flagged Only</option>
-              <option value="CORRECTED">Corrected Only</option>
-            </select>
-
+          {/* Export Action */}
+          <div className="flex w-full md:w-auto items-center gap-3 justify-end">
             <button
               onClick={exportToPDF}
-              className="flex items-center justify-center gap-2 bg-[#10B981]/10 hover:bg-[#10B981]/20 border border-[#10B981]/30 hover:border-[#10B981]/50 text-[#10B981] rounded-xl p-2 px-4 transition-all duration-300 font-bold text-xs"
+              className="flex items-center justify-center gap-2 bg-[#10B981]/10 hover:bg-[#10B981]/20 border border-[#10B981]/30 hover:border-[#10B981]/50 text-[#10B981] rounded-xl p-2.5 px-5 transition-all duration-300 font-bold text-xs cursor-pointer shadow-md group shrink-0"
               title="Export as PDF"
             >
-              <FileDown size={14} />
-              <span className="hidden sm:inline">Export</span>
+              <FileDown size={14} className="transform group-hover:translate-y-0.5 transition-transform" />
+              <span>Export logs to PDF</span>
             </button>
           </div>
 
@@ -507,7 +486,6 @@ export default function RainfallHistory() {
                     <th className="p-4">Zone Territory</th>
                     <th className="p-4">Date & Time</th>
                     <th className="p-4">Rainfall (mm)</th>
-                    <th className="p-4">Validation Status</th>
                     <th className="p-4">Log Notes</th>
                     <th className="p-4 pr-6 text-right">Actions</th>
                   </tr>
@@ -531,16 +509,6 @@ export default function RainfallHistory() {
 
                       {/* Rainfall Amount */}
                       <td className="p-4 font-mono font-black text-white">{log.amount} mm</td>
-
-                      {/* Validation Status Badge */}
-                      <td className="p-4">
-                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-black uppercase border ${getStatusBadgeStyles(log.status)}`}>
-                          {log.status === 'PASSED' && <CheckCircle2 size={10} />}
-                          {log.status === 'FLAGGED' && <AlertTriangle size={10} className="animate-pulse" />}
-                          {log.status === 'CORRECTED' && <RefreshCw size={10} />}
-                          {log.status}
-                        </span>
-                      </td>
 
                       {/* Notes */}
                       <td className="p-4 text-[#9CA3AF] italic max-w-xs truncate" title={log.notes}>
@@ -639,25 +607,12 @@ export default function RainfallHistory() {
             <div className="space-y-4 text-xs">
               
               {/* Core Details Grid */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 
                 {/* Zone Territory */}
                 <div className="bg-[#111827] border border-[#374151]/55 rounded-2xl p-3.5 space-y-1">
                   <span className="text-[9px] font-black text-[#9CA3AF] uppercase tracking-wider block">Zone Territory</span>
                   <span className="font-extrabold text-white text-[13px]">{selectedLog.zoneName}</span>
-                </div>
-
-                {/* Validation Status */}
-                <div className="bg-[#111827] border border-[#374151]/55 rounded-2xl p-3.5 space-y-1">
-                  <span className="text-[9px] font-black text-[#9CA3AF] uppercase tracking-wider block">Validation Status</span>
-                  <div>
-                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[10px] font-black uppercase border ${getStatusBadgeStyles(selectedLog.status)}`}>
-                      {selectedLog.status === 'PASSED' && <CheckCircle2 size={11} />}
-                      {selectedLog.status === 'FLAGGED' && <AlertTriangle size={11} className="animate-pulse" />}
-                      {selectedLog.status === 'CORRECTED' && <RefreshCw size={11} />}
-                      {selectedLog.status}
-                    </span>
-                  </div>
                 </div>
 
                 {/* Datetime (Forecast Time) */}
