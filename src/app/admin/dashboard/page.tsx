@@ -204,8 +204,8 @@ export default function AdminDashboard() {
 
   if (isHealthLoading || !health || health.status === 'offline' || health.open_meteo?.status === 'unreachable') {
     return (
-      <div className="bg-[#0b0f19] min-h-screen w-full flex items-center justify-center text-white">
-        <div className="flex flex-col items-center gap-4 text-center">
+      <div className="fixed inset-0 bg-[#0b0f19] flex items-center justify-center text-white p-4 overflow-hidden z-50">
+        <div className="flex flex-col items-center gap-4 text-center max-w-sm w-full">
           <div className="relative w-16 h-16 flex items-center justify-center">
             <div className="absolute inset-0 rounded-full border border-dashed border-[#60A5FA]/40 animate-spin" style={{ animationDuration: '6s' }} />
             <div className="w-10 h-10 rounded-xl bg-[#1F2937] border border-[#374151] flex items-center justify-center shadow-lg p-1 shrink-0">
@@ -335,31 +335,43 @@ export default function AdminDashboard() {
 
         </div>
 
-        {/* Mobile Header Row for Time & Countdown */}
-        <div className="flex md:hidden items-center justify-between w-full gap-2 border-t border-[#374151]/30 pt-2 select-none">
+        {/* Mobile Header Row for Time, Countdown & API Status */}
+        <div className="flex md:hidden items-center justify-between w-full gap-1.5 border-t border-[#374151]/30 pt-2 select-none">
+          
+          {/* API Status Card */}
+          <div className="flex items-center gap-1.5 bg-[#1F2937]/55 border border-[#374151]/60 px-2 py-1.5 rounded-lg shadow-inner flex-1 justify-center h-[36px] min-w-0 mobile-header-card">
+            <span className="relative flex h-2 w-2 shrink-0">
+              <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${health && health.status !== 'offline' && health.open_meteo?.status === 'healthy' ? 'bg-[#10B981]' : 'bg-[#EF4444]'}`}></span>
+              <span className={`relative inline-flex rounded-full h-2 w-2 ${health && health.status !== 'offline' && health.open_meteo?.status === 'healthy' ? 'bg-[#10B981]' : 'bg-[#EF4444]'}`}></span>
+            </span>
+            <div className="text-left leading-none min-w-0 pl-1">
+              <span className="text-[6.5px] font-black text-[#9CA3AF] tracking-wider uppercase block">API STATUS</span>
+              <span className={`text-[8.5px] font-black uppercase truncate block mt-0.5 ${health && health.status !== 'offline' && health.open_meteo?.status === 'healthy' ? 'text-[#4ADE80]' : 'text-[#EF4444]'}`}>
+                {health && health.status !== 'offline' && health.open_meteo?.status === 'healthy' ? 'ONLINE' : 'OFFLINE'}
+              </span>
+            </div>
+          </div>
+
           {/* Countdown Card */}
-          <div className="flex items-center gap-1.5 bg-[#1F2937]/55 border border-[#374151]/60 px-2.5 py-1.5 rounded-lg shadow-inner flex-1 justify-center h-[36px] min-w-0 mobile-header-card">
+          <div className="flex items-center gap-1 bg-[#1F2937]/55 border border-[#374151]/60 px-2 py-1.5 rounded-lg shadow-inner flex-1 justify-center h-[36px] min-w-0 mobile-header-card">
             <Clock size={11} className="text-[#60A5FA] shrink-0" />
-            <div className="text-left leading-none min-w-0">
-              <span className="text-[7px] font-black text-[#60A5FA] tracking-wider uppercase block">NEXT FORECAST</span>
-              <span className="text-[10px] font-bold font-mono tracking-tight text-white block mt-0.5">{countdownTime || '00:59:59'}</span>
+            <div className="text-left leading-none min-w-0 pl-1">
+              <span className="text-[6.5px] font-black text-[#60A5FA] tracking-wider uppercase block">NEXT SYNC</span>
+              <span className="text-[9px] font-bold font-mono tracking-tight text-white block mt-0.5 truncate">{countdownTime || '00:59:59'}</span>
             </div>
           </div>
+
           {/* Date & Time Card */}
-          <div className="flex items-center gap-1.5 bg-[#1F2937]/55 border border-[#374151]/60 px-2.5 py-1.5 rounded-lg shadow-inner flex-1 justify-center h-[36px] min-w-0 mobile-header-card">
-            <Radio size={11} className="text-[#60A5FA] animate-pulse shrink-0" />
-            <div className="text-left leading-none min-w-0">
-              <span className="text-[7px] font-black text-[#60A5FA] tracking-wider uppercase block">PH TIME</span>
-              <div className="flex items-center gap-1 mt-0.5">
-                <span className="text-[10px] font-bold font-mono tracking-tight text-white block truncate">
-                  {phTime ? phTime.replace(/:\d+\s/, ' ') : '10:27 PM'}
-                </span>
-                <span className="text-[6px] font-black text-[#60A5FA] bg-[#60A5FA]/10 px-0.5 rounded inline-flex items-center shrink-0">
-                  PH
-                </span>
-              </div>
+          <div className="flex items-center gap-1 bg-[#1F2937]/55 border border-[#374151]/60 px-2 py-1.5 rounded-lg shadow-inner flex-1 justify-center h-[36px] min-w-0 mobile-header-card">
+            <Radio size={11} className="text-[#A78BFA] shrink-0" />
+            <div className="text-left leading-none min-w-0 pl-1">
+              <span className="text-[6.5px] font-black text-[#A78BFA] tracking-wider uppercase block">PH TIME</span>
+              <span className="text-[9px] font-bold font-mono tracking-tight text-white block mt-0.5 truncate">
+                {phTime ? phTime.replace(/:\d+\s/, ' ') : '10:27 PM'}
+              </span>
             </div>
           </div>
+
         </div>
 
       </header>
@@ -523,83 +535,86 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* OPEN-METEO API HEARTBEAT / HEALTH LOGS TERMINAL */}
+        {/* HEARTBEAT LOGS SECTION */}
         <div className="space-y-3.5">
-          <h3 className="text-xs font-black uppercase text-[#9CA3AF] tracking-wider ml-1">
-            Open-Meteo API Heartbeat &amp; Health Logs
-          </h3>
+          <div className="flex items-center gap-2.5">
+            <Activity size={16} className="text-[#60A5FA] shrink-0 animate-pulse" />
+            <h3 className="text-sm font-black text-white uppercase tracking-wider">Heartbeat Logs</h3>
+            <span className="text-[9px] bg-[#60A5FA]/10 text-[#60A5FA] border border-[#60A5FA]/30 px-1.5 py-0.5 rounded font-black tracking-widest uppercase">Live</span>
+          </div>
 
           <div className="bg-[#111827] border border-[#374151] rounded-2xl overflow-hidden shadow-2xl">
-            
+
             {/* Terminal Header Bar */}
-            <div className="flex items-center justify-between px-5 py-3 bg-[#0b0f19] border-b border-[#374151]/60">
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-1.5">
+            <div className="flex items-center justify-between px-4 sm:px-5 py-3 bg-[#0b0f19] border-b border-[#374151]/60">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="flex items-center gap-1.5 shrink-0">
                   <span className="w-2.5 h-2.5 rounded-full bg-[#EF4444]" />
                   <span className="w-2.5 h-2.5 rounded-full bg-[#F59E0B]" />
                   <span className="w-2.5 h-2.5 rounded-full bg-[#4ADE80]" />
                 </div>
-                <span className="text-[10px] font-mono font-bold text-[#9CA3AF] tracking-widest uppercase">FLOWS-OPENMETEO-STREAM v2.4.1 — Live API Monitor</span>
+                <span className="text-[9px] sm:text-[10px] font-mono font-bold text-[#9CA3AF] tracking-wider sm:tracking-widest uppercase truncate max-w-[200px] sm:max-w-none">Live API Monitor Console</span>
               </div>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 shrink-0 select-none">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#4ADE80] animate-ping" />
-                <span className="text-[9px] font-bold text-[#4ADE80] uppercase tracking-wider">STREAM ACTIVE</span>
+                <span className="text-[8px] sm:text-[9px] font-bold text-[#4ADE80] uppercase tracking-wider">STREAM ACTIVE</span>
               </div>
             </div>
 
             {/* Terminal Log Lines */}
-            <div className="p-5 font-mono text-[11px] space-y-1.5 max-h-72 overflow-y-auto select-text">
+            <div className="p-4 sm:p-5 font-mono text-[10px] sm:text-[11px] space-y-1.5 max-h-72 overflow-y-auto select-text leading-relaxed">
               {logs.length > 0 ? (
                 logs.map((log, idx) => {
                   const zoneName = ZONE_NAMES[log.zone_id] || log.zone_id || 'Unknown Zone';
-                  const dateStr = log.fetched_at 
-                    ? new Date(log.fetched_at).toLocaleString('en-US', { hour12: false }).replace(',', '') 
+                  const dateStr = log.fetched_at
+                    ? new Date(log.fetched_at).toLocaleString('en-US', { hour12: false }).replace(',', '')
                     : new Date().toLocaleString('en-US', { hour12: false }).replace(',', '');
                   const status = log.validation_status || 'OK';
                   const statusColor = status === 'PASSED' || status === 'OK' ? 'text-[#4ADE80]' : 'text-[#F59E0B]';
                   const statusTag = status === 'PASSED' || status === 'OK' ? '[ OK ]' : '[WARN]';
-                  
+
                   return (
-                    <div key={log.id || idx} className="flex items-start gap-3">
+                    <div key={log.id || idx} className="flex items-start gap-2 sm:gap-3 leading-normal sm:leading-relaxed">
                       <span className={`${statusColor} font-black shrink-0`}>{statusTag}</span>
-                      <span className="text-[#9CA3AF]">
-                        <span className="text-[#374151]">{dateStr}</span> — {zoneName} Open-Meteo telemetry pull: {log.precipitation_mm ?? 0} mm/hr. Record committed.
+                      <span className="text-[#9CA3AF] break-all sm:break-normal">
+                        <span className="text-[#4B5563]">{dateStr.includes(',') ? dateStr.split(',')[1]?.trim() : dateStr}</span> — {zoneName.split(' - ')[0]} Open-Meteo pull: <span className="text-white font-bold">{log.precipitation_mm ?? 0} mm</span>.
                       </span>
                     </div>
                   );
                 })
               ) : (
-                /* Telemetry stream offline warning - No mock logs shown to prevent administrative confusion */
+                /* Telemetry stream offline - show meaningful offline state */
                 <>
                   <div className="flex items-start gap-3">
                     <span className="text-[#EF4444] font-black shrink-0">[FAIL]</span>
-                    <span className="text-[#EF4444] font-bold"><span className="text-[#374151]">{phDate} {phTime}</span> — Connection to telemetry gateway failed. Stream offline.</span>
+                    <span className="text-[#EF4444] font-bold break-all sm:break-normal"><span className="text-[#4B5563]">{phDate} {phTime}</span> — Connection to telemetry gateway failed. Stream offline.</span>
                   </div>
                   <div className="flex items-start gap-3">
                     <span className="text-[#F59E0B] font-black shrink-0">[WARN]</span>
-                    <span className="text-[#9CA3AF]"><span className="text-[#374151]">{phDate} {phTime}</span> — Database telemetry synchronization paused. Waiting for gateway reconnection.</span>
+                    <span className="text-[#9CA3AF] break-all sm:break-normal"><span className="text-[#4B5563]">{phDate} {phTime}</span> — Database telemetry synchronization paused. Waiting for gateway reconnection.</span>
                   </div>
                   <div className="flex items-start gap-3">
                     <span className="text-[#60A5FA] font-black shrink-0">[INFO]</span>
-                    <span className="text-[#9CA3AF]"><span className="text-[#374151]">{phDate} {phTime}</span> — System standing by in offline safe mode. Please verify the FastAPI backend server is active.</span>
+                    <span className="text-[#9CA3AF] break-all sm:break-normal"><span className="text-[#4B5563]">{phDate} {phTime}</span> — System standing by in offline safe mode. Please verify the FastAPI backend server is active.</span>
                   </div>
                 </>
               )}
               {/* Blinking cursor line */}
-              <div className="flex items-center gap-3 mt-2">
+              <div className="flex items-center gap-3 mt-2 select-none">
                 <span className="text-[#60A5FA] font-black shrink-0 animate-pulse">[ &gt;&gt; ]</span>
-                <span className="text-[#60A5FA] font-mono text-[11px]">Waiting for next API cycle...<span className="inline-block w-1.5 h-3 bg-[#60A5FA] ml-0.5 animate-pulse align-middle" /></span>
+                <span className="text-[#60A5FA] font-mono text-[9px] sm:text-[10px]">Waiting for next API cycle...<span className="inline-block w-1.5 h-3 bg-[#60A5FA] ml-0.5 animate-pulse align-middle" /></span>
               </div>
             </div>
 
             {/* Terminal footer stats row */}
-            <div className="bg-[#0b0f19] border-t border-[#374151]/60 px-5 py-2.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-[9px] font-mono">
-              <div className="flex items-center gap-4">
+            <div className="bg-[#0b0f19] border-t border-[#374151]/60 px-4 sm:px-5 py-2.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-[9px] font-mono">
+              <div className="flex items-center gap-4 select-none shrink-0">
                 <span className="text-[#4ADE80] font-bold">✓ {logs.length || 5} OK</span>
-                <span className="text-[#A78BFA] font-bold">ℹ API status: {health?.open_meteo?.status?.toUpperCase() || 'ONLINE'}</span>
+                <span className="text-[#A78BFA] font-bold">ℹ API: {health?.open_meteo?.status?.toUpperCase() || 'ONLINE'}</span>
               </div>
-              <div className="text-[#9CA3AF]">
-                API Endpoint: <span className="text-[#60A5FA]">{health?.open_meteo?.endpoint || 'https://api.open-meteo.com/v1/forecast'}</span> · Latency: <span className="text-[#4ADE80]">{health?.open_meteo?.latency_ms ? `${health.open_meteo.latency_ms}ms` : '32ms'}</span>
+              <div className="text-[#9CA3AF] truncate max-w-full">
+                <span className="hidden sm:inline">Endpoint: <span className="text-[#60A5FA]">{health?.open_meteo?.endpoint?.replace('https://', '') || 'api.open-meteo.com'}</span> · </span>
+                Latency: <span className="text-[#4ADE80]">{health?.open_meteo?.latency_ms ? `${health.open_meteo.latency_ms}ms` : '32ms'}</span>
               </div>
             </div>
 

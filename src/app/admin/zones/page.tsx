@@ -364,8 +364,8 @@ export default function ZoneManagement() {
 
   if (!authorized || !health || health.status === 'offline' || health.open_meteo?.status === 'unreachable') {
     return (
-      <div className="bg-[#0b0f19] min-h-screen w-full flex items-center justify-center text-white">
-        <div className="flex flex-col items-center gap-4 text-center">
+      <div className="fixed inset-0 bg-[#0b0f19] flex items-center justify-center text-white p-4 overflow-hidden z-50">
+        <div className="flex flex-col items-center gap-4 text-center max-w-sm w-full">
           <div className="relative w-16 h-16 flex items-center justify-center">
             <div className="absolute inset-0 rounded-full border border-dashed border-[#60A5FA]/40 animate-spin" style={{ animationDuration: '6s' }} />
             <div className="w-10 h-10 rounded-xl bg-[#1F2937] border border-[#374151] flex items-center justify-center shadow-lg p-1 shrink-0">
