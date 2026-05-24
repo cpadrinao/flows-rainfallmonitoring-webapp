@@ -45,13 +45,13 @@ This system serves as the frontend client portal for the **Barangay Rizal Flood 
 
 ## Folder & Repository Structure
 
-The project is structured as a component-based Next.js web application:
+The project is structured as a unified monorepo comprising a Next.js frontend client and a Python FastAPI backend server:
 
 ```
 flows-rainfallmonitoring-webapp/
 ├── src/                                # Next.js React Frontend
 │   ├── app/                            # Next.js App Router Structure
-│   │   ├── page.tsx                    # Resident Landing Observatory
+│   │   ├── page.tsx                    # Resident Landing Observatory & Dashboard
 │   │   ├── error.tsx                   # Client-side Error Boundary
 │   │   ├── lib/                        # API Clients & Types
 │   │   │   └── api.ts                  # Httpx Telemetry Sync Client
@@ -60,8 +60,22 @@ flows-rainfallmonitoring-webapp/
 │   │       ├── dashboard/              # Console Home & Heartbeat Terminal
 │   │       ├── zones/                  # Monitored Purok Array CRUD
 │   │       └── history/                # Chronological Audit & PDF Generator
+├── flows-backend/                      # Python FastAPI Backend
+│   ├── main.py                         # FastAPI Application Entry Point
+│   ├── config.py                       # Settings & Environment Variables
+│   ├── scheduler.py                    # APScheduler Ingestion Cron Pipeline
+│   ├── seed_zones.py                   # Initial Supabase Purok Seeding Script
+│   ├── requirements.txt                # Python Dependencies List
+│   ├── services/                       # Application Services
+│   │   ├── alert_engine.py             # Precipitation Threshold Alert Engine
+│   │   ├── open_meteo.py               # Weather Data Fetch Service
+│   │   └── supabase_client.py          # Direct HTTPX Supabase Client
+│   └── routers/                        # API Router Modules
+│       ├── zones.py                    # Monitored Purok CRUD endpoints
+│       ├── weather.py                  # Log listing & summary endpoints
+│       └── alerts.py                   # Evacuation status endpoints
 ├── package.json                        # Node Script & Dependencies
-└── .env.local                          # Environment Variables
+└── .env.local                          # Frontend Environment Variables
 ```
 
 ---
@@ -76,23 +90,66 @@ flows-rainfallmonitoring-webapp/
 *   **PDF Exporter:** jsPDF & jspdf-autotable (Generates downloadable clean administrative reports)
 *   **Authorization:** Client-side secure sessionStorage session management.
 
+### 🐍 Backend & Ingestion Layer
+*   **Framework:** FastAPI 0.136+ (High-performance ASGI python backend)
+*   **Database:** Supabase REST API (Direct HTTPX client communication)
+*   **Cron Scheduler:** APScheduler 3.11+ (Hourly active weather pipeline)
+*   **API Data Provider:** Open-Meteo Weather Forecasting API (Coordinates-matched queries)
+
 ---
 
 ## Local Development & Setup
 
 ### Prerequisites
 *   Node.js 18+ and npm
+*   Python 3.10+ (for backend services)
 
 ### Setup Instructions
-1. Clone the repository and navigate into the root directory:
+
+#### 1. Setup Backend (flows-backend)
+1. Navigate into the backend folder:
    ```bash
-   cd flows-rainfallmonitoring-webapp
+   cd flows-backend
    ```
-2. Create a `.env.local` file in the root directory and specify the URL of your telemetry API server:
+2. Create a virtual environment and activate it:
+   ```bash
+   # On Windows (PowerShell):
+   python -m venv venv
+   .\venv\Scripts\Activate.ps1
+   ```
+3. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+4. Create a `.env` file in the `flows-backend` directory and add your Supabase credentials:
+   ```env
+   SUPABASE_URL=your_supabase_project_url
+   SUPABASE_ANON_KEY=your_supabase_anon_key
+   SUPABASE_SERVICE_KEY=your_supabase_service_role_key
+   OPEN_METEO_LAT=14.0860
+   OPEN_METEO_LON=121.1000
+   TIMEZONE=Asia/Manila
+   FETCH_INTERVAL_MINUTES=60
+   ```
+5. Run the database seed script to populate default zones:
+   ```bash
+   python seed_zones.py
+   ```
+6. Start the FastAPI development server:
+   ```bash
+   uvicorn main:app --reload
+   ```
+
+#### 2. Setup Frontend
+1. Navigate back to the root folder:
+   ```bash
+   cd ..
+   ```
+2. Create a `.env.local` file in the root directory:
    ```env
    NEXT_PUBLIC_API_URL=http://localhost:8000
    ```
-3. Install the node package dependencies:
+3. Install dependencies:
    ```bash
    npm install
    ```
@@ -102,6 +159,7 @@ flows-rainfallmonitoring-webapp/
    ```
 
 Open [http://localhost:3000](http://localhost:3000) in your browser to view the Resident Weather Observatory, or navigate to [http://localhost:3000/admin/login](http://localhost:3000/admin/login) to access the administrative dashboard.
+
 
 ---
 
