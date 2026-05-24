@@ -60,6 +60,12 @@ export interface ZoneData {
   evacuationRecommended: boolean;
   fetchedAt?: string | null;
   forecastTime?: string | null;
+  precipProb: number;
+  tempC: number;
+  windSpeed: number;
+  windDir: number;
+  cloudCover: number;
+  visibility: number;
 }
 
 // ─── Mapping Helpers ──────────────────────────────────────────────────────────
@@ -187,6 +193,12 @@ export function mapSummaryToZoneData(
     evacuationRecommended: alertLevel === 'Red',
     fetchedAt: latest_log?.fetched_at || null,
     forecastTime: latest_log?.forecast_time || null,
+    precipProb: latest_log?.precipitation_prob ?? 0,
+    tempC: latest_log?.temperature_c ?? 27.5,
+    windSpeed: latest_log?.wind_speed_kmh ?? 0,
+    windDir: latest_log?.wind_direction_deg ?? 0,
+    cloudCover: latest_log?.cloud_cover_pct ?? 0,
+    visibility: latest_log?.visibility_m ?? 10000,
   };
 
   // Use UUID as key for live data so zone selects work

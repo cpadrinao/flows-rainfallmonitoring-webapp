@@ -15,7 +15,7 @@ export default function AdminLoginPage() {
 
   // Redirect if already logged in
   useEffect(() => {
-    const isLoggedIn = localStorage.getItem('flows_admin_logged_in');
+    const isLoggedIn = sessionStorage.getItem('flows_admin_logged_in');
     if (isLoggedIn === 'true') {
       router.push('/admin/dashboard');
     }
@@ -45,9 +45,9 @@ export default function AdminLoginPage() {
     // Simulate server latency
     setTimeout(() => {
       if (username === 'admin' && password === 'admin123') {
-        localStorage.setItem('flows_admin_logged_in', 'true');
-        localStorage.setItem('flows_admin_user', username);
-        localStorage.setItem('flows_last_login', new Date().toLocaleString());
+        sessionStorage.setItem('flows_admin_logged_in', 'true');
+        sessionStorage.setItem('flows_admin_user', username);
+        sessionStorage.setItem('flows_last_login', new Date().toLocaleString());
         router.push('/admin/dashboard');
       } else {
         setError('Invalid username or password. Please try again.');

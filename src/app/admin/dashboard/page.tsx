@@ -46,8 +46,8 @@ export default function AdminDashboard() {
 
   // Verify authorization
   useEffect(() => {
-    const isLoggedIn = localStorage.getItem('flows_admin_logged_in');
-    const user = localStorage.getItem('flows_admin_user');
+    const isLoggedIn = sessionStorage.getItem('flows_admin_logged_in');
+    const user = sessionStorage.getItem('flows_admin_user');
     if (isLoggedIn !== 'true') {
       router.push('/admin/login');
     } else {
@@ -156,8 +156,8 @@ export default function AdminDashboard() {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('flows_admin_logged_in');
-    localStorage.removeItem('flows_admin_user');
+    sessionStorage.removeItem('flows_admin_logged_in');
+    sessionStorage.removeItem('flows_admin_user');
     router.push('/admin/login');
   };
 
@@ -172,7 +172,7 @@ export default function AdminDashboard() {
     );
   }
 
-  if (isHealthLoading) {
+  if (isHealthLoading || !health || health.status === 'offline' || health.open_meteo?.status === 'unreachable') {
     return (
       <div className="bg-[#0b0f19] min-h-screen w-full flex items-center justify-center text-white">
         <div className="flex flex-col items-center gap-4 text-center">
@@ -184,7 +184,7 @@ export default function AdminDashboard() {
           </div>
           <div className="space-y-1">
             <p className="text-xs text-white font-black uppercase tracking-[0.2em]">Synchronizing Admin Console...</p>
-            <p className="text-[10px] text-[#9CA3AF] font-mono uppercase tracking-wider animate-pulse">Loading live telemetry and health logs</p>
+            <p className="text-[10px] text-[#9CA3AF] font-mono uppercase tracking-wider animate-pulse">Establishing telemetry connection...</p>
           </div>
         </div>
       </div>
@@ -231,6 +231,31 @@ export default function AdminDashboard() {
         {/* Live Right-side controls (Desktop/Tablet) */}
         <div className="hidden sm:flex items-center gap-2 shrink-0">
           
+          {/* API Health Status Badge */}
+          {health && health.status !== 'offline' && health.open_meteo?.status === 'healthy' ? (
+            <div className="flex items-center gap-2 bg-[#065F46]/20 border border-[#059669]/30 hover:border-[#059669]/50 px-3 py-1.5 rounded-xl shadow-inner select-none transition-all duration-300 cursor-help" title={`API Sync Healthy. Latency: ${health.open_meteo.latency_ms ?? 0}ms`}>
+              <div className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#10B981] opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#10B981]"></span>
+              </div>
+              <div className="text-left leading-none">
+                <span className="text-[8px] font-black text-[#10B981] tracking-wider uppercase block mb-0.5">API STATUS</span>
+                <span className="text-[10px] font-black text-[#4ADE80] uppercase tracking-wider">API HEALTHY</span>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 bg-[#7F1D1D]/20 border border-[#B91C1C]/30 hover:border-[#B91C1C]/50 px-3 py-1.5 rounded-xl shadow-inner select-none transition-all duration-300 cursor-help" title="API Gateway Unreachable">
+              <div className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#EF4444] opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#EF4444]"></span>
+              </div>
+              <div className="text-left leading-none">
+                <span className="text-[8px] font-black text-[#EF4444] tracking-wider uppercase block mb-0.5">API STATUS</span>
+                <span className="text-[10px] font-black text-[#F87171] uppercase tracking-wider">GATEWAY OFFLINE</span>
+              </div>
+            </div>
+          )}
+
           {/* Countdown Card (API Next Forecast) */}
           <div className="flex items-center gap-2 bg-[#1F2937]/55 border border-[#374151]/60 px-3 py-1.5 rounded-xl shadow-inner select-none shrink-0">
             <Clock size={14} className="text-[#60A5FA] animate-pulse" />
@@ -513,23 +538,19 @@ export default function AdminDashboard() {
                   );
                 })
               ) : (
-                /* Fallback clean mock logs if backend offline, but fully Open-Meteo labeled */
+                /* Telemetry stream offline warning - No mock logs shown to prevent administrative confusion */
                 <>
                   <div className="flex items-start gap-3">
-                    <span className="text-[#4ADE80] font-black shrink-0">[ OK ]</span>
-                    <span className="text-[#9CA3AF]"><span className="text-[#374151]">{phDate} {phTime}</span> — Open-Meteo API connection established on secure port. Handshake successful.</span>
+                    <span className="text-[#EF4444] font-black shrink-0">[FAIL]</span>
+                    <span className="text-[#EF4444] font-bold"><span className="text-[#374151]">{phDate} {phTime}</span> — Connection to telemetry gateway failed. Stream offline.</span>
                   </div>
                   <div className="flex items-start gap-3">
-                    <span className="text-[#4ADE80] font-black shrink-0">[ OK ]</span>
-                    <span className="text-[#9CA3AF]"><span className="text-[#374151]">{phDate} {phTime}</span> — Zone 1 (Purok Narra) telemetry pull: 0.0 mm/hr. Record committed.</span>
+                    <span className="text-[#F59E0B] font-black shrink-0">[WARN]</span>
+                    <span className="text-[#9CA3AF]"><span className="text-[#374151]">{phDate} {phTime}</span> — Database telemetry synchronization paused. Waiting for gateway reconnection.</span>
                   </div>
                   <div className="flex items-start gap-3">
-                    <span className="text-[#4ADE80] font-black shrink-0">[ OK ]</span>
-                    <span className="text-[#9CA3AF]"><span className="text-[#374151]">{phDate} {phTime}</span> — Zone 2 (Purok Mahogany) telemetry pull: 0.0 mm/hr. Record committed.</span>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <span className="text-[#4ADE80] font-black shrink-0">[ OK ]</span>
-                    <span className="text-[#9CA3AF]"><span className="text-[#374151]">{phDate} {phTime}</span> — All 5 zones nominal. Next hourly API schedule pending.</span>
+                    <span className="text-[#60A5FA] font-black shrink-0">[INFO]</span>
+                    <span className="text-[#9CA3AF]"><span className="text-[#374151]">{phDate} {phTime}</span> — System standing by in offline safe mode. Please verify the FastAPI backend server is active.</span>
                   </div>
                 </>
               )}

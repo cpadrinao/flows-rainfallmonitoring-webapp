@@ -19,6 +19,7 @@ import {
   Clock,
   Home
 } from 'lucide-react';
+import { fetchSystemHealth, SystemHealth } from '../../lib/api';
 
 interface ZoneItem {
   id: string;
@@ -41,6 +42,7 @@ export default function ZoneManagement() {
   const router = useRouter();
   const [authorized, setAuthorized] = useState(false);
   const [zones, setZones] = useState<ZoneItem[]>([]);
+  const [health, setHealth] = useState<SystemHealth | null>(null);
   
   const [theme] = useState<'dark'>('dark');
   const [phTime, setPhTime] = useState<string>('');
@@ -79,6 +81,26 @@ export default function ZoneManagement() {
     return () => clearInterval(interval);
   }, []);
 
+  // Load live health status from backend
+  useEffect(() => {
+    let active = true;
+    const loadHealth = async () => {
+      try {
+        const healthData = await fetchSystemHealth();
+        if (!active) return;
+        setHealth(healthData);
+      } catch (err) {
+        console.error('[ZoneManagement] Error loading live health:', err);
+      }
+    };
+    loadHealth();
+    const interval = setInterval(loadHealth, 15 * 1000); // refresh every 15s
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, []);
+
   // Synchronize Countdown Timer (resets every hour boundary starting from exactly 1 hour)
   useEffect(() => {
     const updateCountdown = () => {
@@ -113,7 +135,7 @@ export default function ZoneManagement() {
 
   // Authentication check & database load
   useEffect(() => {
-    const isLoggedIn = localStorage.getItem('flows_admin_logged_in');
+    const isLoggedIn = sessionStorage.getItem('flows_admin_logged_in');
     if (isLoggedIn !== 'true') {
       router.push('/admin/login');
     } else {
@@ -221,10 +243,21 @@ export default function ZoneManagement() {
     }
   };
 
-  if (!authorized) {
+  if (!authorized || !health || health.status === 'offline' || health.open_meteo?.status === 'unreachable') {
     return (
       <div className="bg-[#0b0f19] min-h-screen w-full flex items-center justify-center text-white">
-        <span className="w-8 h-8 border-4 border-[#60A5FA] border-t-transparent rounded-full animate-spin"></span>
+        <div className="flex flex-col items-center gap-4 text-center">
+          <div className="relative w-16 h-16 flex items-center justify-center">
+            <div className="absolute inset-0 rounded-full border border-dashed border-[#60A5FA]/40 animate-spin" style={{ animationDuration: '6s' }} />
+            <div className="w-10 h-10 rounded-xl bg-[#1F2937] border border-[#374151] flex items-center justify-center shadow-lg p-1 shrink-0">
+              <img src="/flowsnoname.png" alt="FLOWS Logo" className="w-full h-full object-contain animate-pulse" />
+            </div>
+          </div>
+          <div className="space-y-1">
+            <p className="text-xs text-white font-black uppercase tracking-[0.2em]">Synchronizing Admin Console...</p>
+            <p className="text-[10px] text-[#9CA3AF] font-mono uppercase tracking-wider animate-pulse">Establishing telemetry connection...</p>
+          </div>
+        </div>
       </div>
     );
   }
@@ -267,6 +300,31 @@ export default function ZoneManagement() {
         {/* Live Right-side controls (Desktop/Tablet) */}
         <div className="hidden sm:flex items-center gap-2 shrink-0">
           
+          {/* API Health Status Badge */}
+          {health && health.status !== 'offline' && health.open_meteo?.status === 'healthy' ? (
+            <div className="flex items-center gap-2 bg-[#065F46]/20 border border-[#059669]/30 hover:border-[#059669]/50 px-3 py-1.5 rounded-xl shadow-inner select-none transition-all duration-300 cursor-help" title={`API Sync Healthy. Latency: ${health.open_meteo.latency_ms ?? 0}ms`}>
+              <div className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#10B981] opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#10B981]"></span>
+              </div>
+              <div className="text-left leading-none">
+                <span className="text-[8px] font-black text-[#10B981] tracking-wider uppercase block mb-0.5">API STATUS</span>
+                <span className="text-[10px] font-black text-[#4ADE80] uppercase tracking-wider">API HEALTHY</span>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 bg-[#7F1D1D]/20 border border-[#B91C1C]/30 hover:border-[#B91C1C]/50 px-3 py-1.5 rounded-xl shadow-inner select-none transition-all duration-300 cursor-help" title="API Gateway Unreachable">
+              <div className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#EF4444] opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#EF4444]"></span>
+              </div>
+              <div className="text-left leading-none">
+                <span className="text-[8px] font-black text-[#EF4444] tracking-wider uppercase block mb-0.5">API STATUS</span>
+                <span className="text-[10px] font-black text-[#F87171] uppercase tracking-wider">GATEWAY OFFLINE</span>
+              </div>
+            </div>
+          )}
+
           {/* Countdown Card (API Next Forecast) */}
           <div className="flex items-center gap-2 bg-[#1F2937]/55 border border-[#374151]/60 px-3 py-1.5 rounded-xl shadow-inner select-none shrink-0">
             <Clock size={14} className="text-[#60A5FA] animate-pulse" />

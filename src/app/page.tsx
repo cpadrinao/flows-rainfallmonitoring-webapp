@@ -34,97 +34,20 @@ import {
   Clock,
   Compass,
   Home,
-  RefreshCw
+  RefreshCw,
+  Wind,
+  Percent,
+  Thermometer
 } from 'lucide-react';
 
 // ZoneData interface is imported from ./lib/api
 
 // Fallback mock data — shown while the API loads or if unreachable
-const FALLBACK_ZONES: Record<string, ZoneData> = {
-  'zone-1': {
-    id: 'zone-1',
-    name: 'Zone 1',
-    purok: 'Purok Narra (Riverside Area)',
-    status: 'Heavy Rain',
-    alertLevel: 'Red',
-    alertText: 'Critical Flood Risk (Evacuate Now)',
-    advisoryText: 'River water level has exceeded the 4.5m critical threshold. Residents near the riverbank must proceed to the Barangay Rizal Multipurpose Gym immediately.',
-    amount: 32.8,
-    amountTrend: '+6.4 mm from last hour',
-    duration: '2h 15m',
-    humidity: 96,
-    trend: [14, 18, 20, 24, 25, 28, 30, 32, 33, 31, 32, 33],
-    riskLevel: 'Critical',
-    evacuationRecommended: true,
-  },
-  'zone-2': {
-    id: 'zone-2',
-    name: 'Zone 2',
-    purok: 'Purok Mahogany (Upper Ridge)',
-    status: 'Moderate Rain',
-    alertLevel: 'Green',
-    alertText: 'Normal (Safe Level)',
-    advisoryText: 'Moderate rainfall detected. Drainage is flowing normally. No flooding risks present. Continue monitoring local broadcasts for changes.',
-    amount: 12.4,
-    amountTrend: '-1.2 mm from last hour',
-    duration: '1h 10m',
-    humidity: 84,
-    trend: [6, 8, 10, 11, 12, 13, 14, 13, 13, 12, 11, 12],
-    riskLevel: 'Safe',
-    evacuationRecommended: false,
-  },
-  'zone-3': {
-    id: 'zone-3',
-    name: 'Zone 3',
-    purok: 'Sitio Pag-asa (Lowland Plain)',
-    status: 'Heavy Rain',
-    alertLevel: 'Orange',
-    alertText: 'High Flood Risk (Prepare Evac)',
-    advisoryText: 'Street-level flooding observed (6-10 inches) on Pag-asa Main Road. Small vehicles advised to avoid the route. Secure appliances and prepare emergency kits.',
-    amount: 22.1,
-    amountTrend: '+3.5 mm from last hour',
-    duration: '1h 55m',
-    humidity: 92,
-    trend: [8, 12, 14, 16, 18, 19, 21, 22, 22, 21, 20, 22],
-    riskLevel: 'Warning',
-    evacuationRecommended: false,
-  },
-  'zone-4': {
-    id: 'zone-4',
-    name: 'Zone 4',
-    purok: 'Purok Acacia (Slope & Foothills)',
-    status: 'Light Rain',
-    alertLevel: 'Yellow',
-    alertText: 'Landslide Monitoring Active',
-    advisoryText: 'Rainfall is minor but cumulative soil saturation is high. Residents near mountain slopes should keep watch for minor soil movements or rockfalls.',
-    amount: 8.5,
-    amountTrend: '+0.8 mm from last hour',
-    duration: '45m',
-    humidity: 88,
-    trend: [3, 4, 5, 6, 7, 8, 8, 8, 7, 7, 8, 8],
-    riskLevel: 'Monitor',
-    evacuationRecommended: false,
-  },
-  'zone-5': {
-    id: 'zone-5',
-    name: 'Zone 5',
-    purok: 'Purok Ilang-Ilang (Centro)',
-    status: 'Cloudy',
-    alertLevel: 'Green',
-    alertText: 'Normal (Safe Level)',
-    advisoryText: 'Overcast skies with light drizzle. Rainfall is minor. No flooding or landslide risk at present. Barangay center operations are active.',
-    amount: 3.2,
-    amountTrend: '-0.5 mm from last hour',
-    duration: '25m',
-    humidity: 79,
-    trend: [1, 2, 3, 3, 4, 3, 3, 3, 2, 2, 1, 3],
-    riskLevel: 'Safe',
-    evacuationRecommended: false,
-  }
+const getWindHeading = (deg: number): string => {
+  const directions = ['North (N)', 'North-East (NE)', 'East (E)', 'South-East (SE)', 'South (S)', 'South-West (SW)', 'West (W)', 'North-West (NW)'];
+  const index = Math.round(((deg % 360) / 45)) % 8;
+  return directions[index];
 };
-
-// Stable zone key list for the dropdown — maps old slug keys to fallback data
-const FALLBACK_ZONE_KEYS = ['zone-1', 'zone-2', 'zone-3', 'zone-4', 'zone-5'];
 
 export default function FLOWSApp() {
   // Theme state locked to dark
@@ -133,14 +56,14 @@ export default function FLOWSApp() {
   // Portal vs Dashboard view mode selector
   const [viewMode, setViewMode] = useState<'gateway' | 'dashboard'>('gateway');
   const [activeTab, setActiveTab] = useState<'weather' | 'zones' | 'alerts' | 'emergency'>('weather');
-  const [selectedZone, setSelectedZone] = useState<string>('zone-1');
+  const [selectedZone, setSelectedZone] = useState<string>('');
 
-  // Live data state — starts with fallback, replaced by API data when available
-  const [zonesData, setZonesData] = useState<Record<string, ZoneData>>(FALLBACK_ZONES);
+  // Live data state — starts completely empty, populated ONLY by the active database API
+  const [zonesData, setZonesData] = useState<Record<string, ZoneData>>({});
   const [isLiveData, setIsLiveData] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isBackendOffline, setIsBackendOffline] = useState(false);
-  const [liveZoneKeys, setLiveZoneKeys] = useState<string[]>(FALLBACK_ZONE_KEYS);
+  const [liveZoneKeys, setLiveZoneKeys] = useState<string[]>([]);
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
   
   // Active Shelter Center inside the emergency view
@@ -314,7 +237,7 @@ export default function FLOWSApp() {
     return () => clearInterval(interval);
   }, []);
 
-  const activeZoneData = zonesData[selectedZone] || Object.values(zonesData)[0] || FALLBACK_ZONES['zone-1'];
+  const activeZoneData = zonesData[selectedZone] || Object.values(zonesData)[0] || {} as ZoneData;
 
   // Helper: return background glow class based on warning level
   const getGlowClass = (level: 'Red' | 'Orange' | 'Yellow' | 'Green') => {
@@ -934,7 +857,7 @@ export default function FLOWSApp() {
                 {/* Bento Card 5: Saturation / Humidity (Span 1) */}
                 <div className="md:col-span-1 weather-glass rounded-2xl p-5 flex flex-col justify-between hover:border-[#A78BFA]/40 transition-colors">
                   <div className="flex justify-between items-center">
-                    <span className="text-[9px] font-bold text-[#9CA3AF] uppercase tracking-wider">ATMOSPHERIC HUMIDITY</span>
+                    <span className="text-[9px] font-bold text-[#9CA3AF] uppercase tracking-wider">AIR MOISTURE</span>
                     <Droplets size={16} className="text-[#A78BFA]" />
                   </div>
                   <div className="my-4">
@@ -945,6 +868,60 @@ export default function FLOWSApp() {
                   </div>
                   <div className="w-full bg-[#111827] rounded-full h-1.5 overflow-hidden">
                     <div className="bg-[#A78BFA] h-full rounded-full" style={{ width: `${activeZoneData.humidity}%` }} />
+                  </div>
+                </div>
+
+                {/* Bento Card 5a: Chance of Rain (Precipitation Probability) (Span 1) */}
+                <div className="md:col-span-1 weather-glass rounded-2xl p-5 flex flex-col justify-between hover:border-[#60A5FA]/40 transition-colors">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[9px] font-bold text-[#9CA3AF] uppercase tracking-wider">CHANCE OF RAIN</span>
+                    <Percent size={16} className="text-[#60A5FA]" />
+                  </div>
+                  <div className="my-4">
+                    <h4 className="text-4xl font-black text-white font-mono tracking-tight">
+                      {activeZoneData.precipProb}
+                      <span className="text-base font-bold text-[#9CA3AF] ml-1">%</span>
+                    </h4>
+                  </div>
+                  <div className="w-full bg-[#111827] rounded-full h-1.5 overflow-hidden">
+                    <div className="bg-[#60A5FA] h-full rounded-full" style={{ width: `${activeZoneData.precipProb}%` }} />
+                  </div>
+                </div>
+
+                {/* Bento Card 5b: Wind Velocity (Speed & Direction) (Span 1) */}
+                <div className="md:col-span-1 weather-glass rounded-2xl p-5 flex flex-col justify-between hover:border-[#F59E0B]/40 transition-colors">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[9px] font-bold text-[#9CA3AF] uppercase tracking-wider">WIND VELOCITY</span>
+                    <Compass size={16} className="text-[#F59E0B]" />
+                  </div>
+                  <div className="my-3">
+                    <h4 className="text-3xl font-black text-white font-mono tracking-tight">
+                      {activeZoneData.windSpeed}
+                      <span className="text-xs font-bold text-[#9CA3AF] ml-1">km/h</span>
+                    </h4>
+                    <p className="text-[9px] text-[#9CA3AF] font-bold uppercase tracking-wider mt-1 block truncate">
+                      Direction: {getWindHeading(activeZoneData.windDir)}
+                    </p>
+                  </div>
+                  <div className="text-[9px] text-[#9CA3AF] font-bold uppercase tracking-wider bg-[#111827]/40 py-1 px-2 rounded-xl text-center">
+                    Bearing: {activeZoneData.windDir}°
+                  </div>
+                </div>
+
+                {/* Bento Card 5c: Cloud blanket (Cloud Cover) (Span 1) */}
+                <div className="md:col-span-1 weather-glass rounded-2xl p-5 flex flex-col justify-between hover:border-[#A78BFA]/40 transition-colors">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[9px] font-bold text-[#9CA3AF] uppercase tracking-wider">CLOUD BLANKET</span>
+                    <Cloud size={16} className="text-[#A78BFA]" />
+                  </div>
+                  <div className="my-4">
+                    <h4 className="text-4xl font-black text-white font-mono tracking-tight">
+                      {activeZoneData.cloudCover}
+                      <span className="text-base font-bold text-[#9CA3AF] ml-1">%</span>
+                    </h4>
+                  </div>
+                  <div className="w-full bg-[#111827] rounded-full h-1.5 overflow-hidden">
+                    <div className="bg-[#A78BFA] h-full rounded-full" style={{ width: `${activeZoneData.cloudCover}%` }} />
                   </div>
                 </div>
 
@@ -1226,16 +1203,55 @@ export default function FLOWSApp() {
                         </p>
                       </div>
 
-                      {/* Card 4: Saturation */}
+                      {/* Card 4: Air Moisture */}
                       <div className="weather-glass rounded-2xl p-4 border border-[#374151]/50 space-y-2 hover:border-[#A78BFA]/30 transition-colors">
                         <div className="flex items-center gap-2.5 text-[#A78BFA]">
                           <div className="p-2 bg-[#A78BFA]/10 rounded-xl">
-                            <Activity size={18} />
+                            <Droplets size={18} />
                           </div>
-                          <span className="text-xs font-black uppercase tracking-wider text-white">Air Moisture (Humidity)</span>
+                          <span className="text-xs font-black uppercase tracking-wider text-white">Air Moisture</span>
                         </div>
                         <p className="text-[11px] text-[#9CA3AF] leading-relaxed">
-                          Checks the amount of water vapor in the atmosphere. High moisture percentages mean that dense clouds are locked in, meaning the rain will likely continue.
+                          Checks how damp or humid the air is. High percentages of moisture in the air mean that heavy rain clouds are actively forming or locked in overhead.
+                        </p>
+                      </div>
+
+                      {/* Card 4a: Chance of Rain */}
+                      <div className="weather-glass rounded-2xl p-4 border border-[#374151]/50 space-y-2 hover:border-[#60A5FA]/30 transition-colors">
+                        <div className="flex items-center gap-2.5 text-[#60A5FA]">
+                          <div className="p-2 bg-[#60A5FA]/10 rounded-xl">
+                            <Percent size={18} />
+                          </div>
+                          <span className="text-xs font-black uppercase tracking-wider text-white">Chance of Rain</span>
+                        </div>
+                        <p className="text-[11px] text-[#9CA3AF] leading-relaxed">
+                          Displays the percentage probability of rain in your area in the next hour. A higher percentage signals an extremely high likelihood of incoming downpours.
+                        </p>
+                      </div>
+
+                      {/* Card 4b: Wind Velocity */}
+                      <div className="weather-glass rounded-2xl p-4 border border-[#374151]/50 space-y-2 hover:border-[#F59E0B]/30 transition-colors">
+                        <div className="flex items-center gap-2.5 text-[#F59E0B]">
+                          <div className="p-2 bg-[#F59E0B]/10 rounded-xl">
+                            <Compass size={18} />
+                          </div>
+                          <span className="text-xs font-black uppercase tracking-wider text-white">Wind Velocity</span>
+                        </div>
+                        <p className="text-[11px] text-[#9CA3AF] leading-relaxed">
+                          Measures the speed (in km/h) and direction of the blowing wind. Tracking wind patterns is highly important to predict if storms are fast approaching your zone.
+                        </p>
+                      </div>
+
+                      {/* Card 4c: Cloud Blanket */}
+                      <div className="weather-glass rounded-2xl p-4 border border-[#374151]/50 space-y-2 hover:border-[#A78BFA]/30 transition-colors">
+                        <div className="flex items-center gap-2.5 text-[#A78BFA]">
+                          <div className="p-2 bg-[#A78BFA]/10 rounded-xl">
+                            <Cloud size={18} />
+                          </div>
+                          <span className="text-xs font-black uppercase tracking-wider text-white">Cloud Blanket</span>
+                        </div>
+                        <p className="text-[11px] text-[#9CA3AF] leading-relaxed">
+                          Tracks the percentage of the sky blocked by dense, heavy storm clouds. High cloud cover percentages strongly predict persistent rainfall.
                         </p>
                       </div>
 

@@ -17,10 +17,15 @@ import {
   Search,
   Clock,
   Home,
-  FileDown
+  FileDown,
+  Eye,
+  X
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { fetchSystemHealth, fetchWeatherLogs, fetchWeatherSummary, SystemHealth } from '../../lib/api';
+
+// HistoryItem interface matches our mapped telemetry structure
 
 interface HistoryItem {
   id: string;
@@ -31,28 +36,14 @@ interface HistoryItem {
   notes: string;
 }
 
-const MOCK_HISTORY: HistoryItem[] = [
-  { id: 'log-1', zoneName: 'Zone 1 (Purok Narra)', datetime: '2026-05-21 21:30:00', amount: 32.8, status: 'PASSED', notes: 'River sensor synced' },
-  { id: 'log-2', zoneName: 'Zone 3 (Sitio Pag-asa)', datetime: '2026-05-21 21:28:00', amount: 22.1, status: 'PASSED', notes: 'Street level rain gauged' },
-  { id: 'log-3', zoneName: 'Zone 2 (Purok Mahogany)', datetime: '2026-05-21 21:15:00', amount: 45.2, status: 'FLAGGED', notes: 'Anomalous rain rate spike detected' },
-  { id: 'log-4', zoneName: 'Zone 4 (Purok Acacia)', datetime: '2026-05-21 20:45:00', amount: 8.5, status: 'PASSED', notes: 'Slope telemetry active' },
-  { id: 'log-5', zoneName: 'Zone 5 (Purok Ilang-Ilang)', datetime: '2026-05-21 20:30:00', amount: 3.2, status: 'PASSED', notes: 'Safe overcast drizzle' },
-  { id: 'log-6', zoneName: 'Zone 1 (Purok Narra)', datetime: '2026-05-21 19:30:00', amount: 26.4, status: 'PASSED', notes: 'River level rising' },
-  { id: 'log-7', zoneName: 'Zone 3 (Sitio Pag-asa)', datetime: '2026-05-21 19:00:00', amount: 18.6, status: 'PASSED', notes: 'High precipitation rate' },
-  { id: 'log-8', zoneName: 'Zone 2 (Purok Mahogany)', datetime: '2026-05-21 18:45:00', amount: 11.2, status: 'CORRECTED', notes: 'Calibrated noise spike from sensor 2B' },
-  { id: 'log-9', zoneName: 'Zone 5 (Purok Ilang-Ilang)', datetime: '2026-05-21 18:00:00', amount: 1.5, status: 'PASSED', notes: 'Normal readings' },
-  { id: 'log-10', zoneName: 'Zone 4 (Purok Acacia)', datetime: '2026-05-21 17:30:00', amount: 7.2, status: 'PASSED', notes: 'Slope sensor heartbeat active' },
-  { id: 'log-11', zoneName: 'Zone 1 (Purok Narra)', datetime: '2026-05-21 16:00:00', amount: 55.4, status: 'FLAGGED', notes: 'Open-Meteo precipitation spike exceeded bounds' },
-  { id: 'log-12', zoneName: 'Zone 3 (Sitio Pag-asa)', datetime: '2026-05-21 15:30:00', amount: 14.2, status: 'PASSED', notes: 'Purok sync established' },
-  { id: 'log-13', zoneName: 'Zone 2 (Purok Mahogany)', datetime: '2026-05-21 14:00:00', amount: 9.8, status: 'CORRECTED', notes: 'Manual operator validation sync' },
-  { id: 'log-14', zoneName: 'Zone 4 (Purok Acacia)', datetime: '2026-05-21 13:30:00', amount: 6.1, status: 'PASSED', notes: 'Periodic check' },
-  { id: 'log-15', zoneName: 'Zone 5 (Purok Ilang-Ilang)', datetime: '2026-05-21 12:00:00', amount: 2.1, status: 'PASSED', notes: 'Telemetry active' }
-];
-
 export default function RainfallHistory() {
   const router = useRouter();
   const [authorized, setAuthorized] = useState(false);
   const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [health, setHealth] = useState<SystemHealth | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [zoneNames, setZoneNames] = useState<Record<string, string>>({});
+  const [selectedLog, setSelectedLog] = useState<HistoryItem | null>(null);
   
   const [theme] = useState<'dark'>('dark');
   const [phTime, setPhTime] = useState<string>('');
@@ -114,34 +105,95 @@ export default function RainfallHistory() {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const itemsPerPage = 5;
 
-  // Authentication check & Database load
+  // Authentication check
   useEffect(() => {
-    const isLoggedIn = localStorage.getItem('flows_admin_logged_in');
+    const isLoggedIn = sessionStorage.getItem('flows_admin_logged_in');
     if (isLoggedIn !== 'true') {
       router.push('/admin/login');
     } else {
       setAuthorized(true);
-      
-      // Load from local storage or set mock database
-      const stored = localStorage.getItem('flows_history_db');
-      if (stored) {
-        try {
-          setHistory(JSON.parse(stored));
-        } catch (e) {
-          setHistory(MOCK_HISTORY);
-          localStorage.setItem('flows_history_db', JSON.stringify(MOCK_HISTORY));
-        }
-      } else {
-        setHistory(MOCK_HISTORY);
-        localStorage.setItem('flows_history_db', JSON.stringify(MOCK_HISTORY));
-      }
     }
   }, [router]);
 
-  const saveHistoryToStorage = (updatedHistory: HistoryItem[]) => {
-    setHistory(updatedHistory);
-    localStorage.setItem('flows_history_db', JSON.stringify(updatedHistory));
-  };
+  // Load dynamic telemetry and health logs from FastAPI Supabase layer
+  useEffect(() => {
+    if (!authorized) return;
+    
+    let active = true;
+
+    const loadData = async () => {
+      try {
+        // 1. Fetch system health
+        const healthData = await fetchSystemHealth();
+        if (!active) return;
+        setHealth(healthData);
+
+        // 2. Fetch active zones summary to build ID -> Name dictionary
+        const summary = await fetchWeatherSummary();
+        if (!active) return;
+        const mapping: Record<string, string> = {};
+        Object.entries(summary).forEach(([uuid, data]) => {
+          mapping[uuid] = `${data.name} (${data.purok})`;
+        });
+        setZoneNames(mapping);
+
+        // 3. Fetch chronological weather logs
+        const logsData = await fetchWeatherLogs(100);
+        if (!active) return;
+
+        const mapped: HistoryItem[] = logsData.map((log, idx) => {
+          const idStr = log.id ? log.id.slice(0, 8).toUpperCase() : `LOG-${idx + 1}`;
+          const zoneName = mapping[log.zone_id] || log.zone_id || 'Unknown Zone';
+          
+          let formattedTime = 'N/A';
+          if (log.forecast_time) {
+            try {
+              const date = new Date(log.forecast_time);
+              formattedTime = date.toLocaleString('en-US', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+              }).replace(',', '');
+            } catch {
+              formattedTime = log.forecast_time;
+            }
+          }
+          
+          const amount = log.precipitation_mm ?? 0.0;
+          const status = (log.validation_status || 'PASSED') as 'PASSED' | 'FLAGGED' | 'CORRECTED';
+          
+          // Formulate premium forecast telemetry sub-notes from database
+          const notes = `Forecast: Temp: ${log.temperature_c ?? 27.5}°C | Rain Prob: ${log.precipitation_prob ?? 0}% | Humidity: ${log.relative_humidity ?? 0}% | Wind: ${log.wind_speed_kmh ?? 0} km/h | Clouds: ${log.cloud_cover_pct ?? 0}%`;
+
+          return {
+            id: idStr,
+            zoneName,
+            datetime: formattedTime,
+            amount,
+            status,
+            notes
+          };
+        });
+
+        setHistory(mapped);
+        setIsLoading(false);
+      } catch (err) {
+        console.error('[RainfallHistory] Error synchronizing telemetry stream:', err);
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+    const interval = setInterval(loadData, 20 * 1000); // refresh history every 20s
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, [authorized]);
 
   // Export to PDF function
   const exportToPDF = () => {
@@ -217,10 +269,21 @@ export default function RainfallHistory() {
     }
   };
 
-  if (!authorized) {
+  if (!authorized || isLoading || !health || health.status === 'offline' || health.open_meteo?.status === 'unreachable') {
     return (
       <div className="bg-[#0b0f19] min-h-screen w-full flex items-center justify-center text-white">
-        <span className="w-8 h-8 border-4 border-[#60A5FA] border-t-transparent rounded-full animate-spin"></span>
+        <div className="flex flex-col items-center gap-4 text-center">
+          <div className="relative w-16 h-16 flex items-center justify-center">
+            <div className="absolute inset-0 rounded-full border border-dashed border-[#60A5FA]/40 animate-spin" style={{ animationDuration: '6s' }} />
+            <div className="w-10 h-10 rounded-xl bg-[#1F2937] border border-[#374151] flex items-center justify-center shadow-lg p-1 shrink-0">
+              <img src="/flowsnoname.png" alt="FLOWS Logo" className="w-full h-full object-contain animate-pulse" />
+            </div>
+          </div>
+          <div className="space-y-1">
+            <p className="text-xs text-white font-black uppercase tracking-[0.2em]">Synchronizing Admin Console...</p>
+            <p className="text-[10px] text-[#9CA3AF] font-mono uppercase tracking-wider animate-pulse">Establishing telemetry connection...</p>
+          </div>
+        </div>
       </div>
     );
   }
@@ -264,6 +327,31 @@ export default function RainfallHistory() {
         {/* Live Right-side controls (Desktop/Tablet) */}
         <div className="hidden sm:flex items-center gap-2 shrink-0">
           
+          {/* API Health Status Badge */}
+          {health && health.status !== 'offline' && health.open_meteo?.status === 'healthy' ? (
+            <div className="flex items-center gap-2 bg-[#065F46]/20 border border-[#059669]/30 hover:border-[#059669]/50 px-3 py-1.5 rounded-xl shadow-inner select-none transition-all duration-300 cursor-help" title={`API Sync Healthy. Latency: ${health.open_meteo.latency_ms ?? 0}ms`}>
+              <div className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#10B981] opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#10B981]"></span>
+              </div>
+              <div className="text-left leading-none">
+                <span className="text-[8px] font-black text-[#10B981] tracking-wider uppercase block mb-0.5">API STATUS</span>
+                <span className="text-[10px] font-black text-[#4ADE80] uppercase tracking-wider">API HEALTHY</span>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 bg-[#7F1D1D]/20 border border-[#B91C1C]/30 hover:border-[#B91C1C]/50 px-3 py-1.5 rounded-xl shadow-inner select-none transition-all duration-300 cursor-help" title="API Gateway Unreachable">
+              <div className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#EF4444] opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#EF4444]"></span>
+              </div>
+              <div className="text-left leading-none">
+                <span className="text-[8px] font-black text-[#EF4444] tracking-wider uppercase block mb-0.5">API STATUS</span>
+                <span className="text-[10px] font-black text-[#F87171] uppercase tracking-wider">GATEWAY OFFLINE</span>
+              </div>
+            </div>
+          )}
+
           {/* Countdown Card (API Next Forecast) */}
           <div className="flex items-center gap-2 bg-[#1F2937]/55 border border-[#374151]/60 px-3 py-1.5 rounded-xl shadow-inner select-none shrink-0">
             <Clock size={14} className="text-[#60A5FA] animate-pulse" />
@@ -395,7 +483,15 @@ export default function RainfallHistory() {
         <div className="bg-[#1F2937] border border-[#374151] rounded-2xl overflow-hidden shadow-2xl">
           
           <div className="overflow-x-auto">
-            {paginatedLogs.length === 0 ? (
+            {isLoading ? (
+              <div className="p-12 text-center text-[#9CA3AF] space-y-4">
+                <div className="relative w-12 h-12 mx-auto flex items-center justify-center">
+                  <div className="absolute inset-0 rounded-full border-2 border-dashed border-[#60A5FA]/40 animate-spin" style={{ animationDuration: '3s' }} />
+                  <span className="w-6 h-6 border-2 border-[#60A5FA] border-t-transparent rounded-full animate-spin" />
+                </div>
+                <p className="text-xs font-bold uppercase tracking-wider animate-pulse">Syncing chronological database logs...</p>
+              </div>
+            ) : paginatedLogs.length === 0 ? (
               <div className="p-8 text-center text-[#9CA3AF] space-y-2">
                 <AlertTriangle size={28} className="mx-auto text-[#F59E0B]" />
                 <p className="text-xs font-bold uppercase">No Telemetry Logs Matched Search Bounds</p>
@@ -412,7 +508,8 @@ export default function RainfallHistory() {
                     <th className="p-4">Date & Time</th>
                     <th className="p-4">Rainfall (mm)</th>
                     <th className="p-4">Validation Status</th>
-                    <th className="p-4 pr-6">Log Notes</th>
+                    <th className="p-4">Log Notes</th>
+                    <th className="p-4 pr-6 text-right">Actions</th>
                   </tr>
                 </thead>
 
@@ -446,8 +543,20 @@ export default function RainfallHistory() {
                       </td>
 
                       {/* Notes */}
-                      <td className="p-4 pr-6 text-[#9CA3AF] italic max-w-xs truncate" title={log.notes}>
+                      <td className="p-4 text-[#9CA3AF] italic max-w-xs truncate" title={log.notes}>
                         {log.notes}
+                      </td>
+
+                      {/* Actions */}
+                      <td className="p-4 pr-6 text-right">
+                        <button
+                          onClick={() => setSelectedLog(log)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#60A5FA]/10 hover:bg-[#60A5FA]/20 border border-[#60A5FA]/30 hover:border-[#60A5FA] rounded-xl text-[#60A5FA] transition-all text-[10px] font-black uppercase tracking-wider cursor-pointer"
+                          title="View Full Telemetry Details"
+                        >
+                          <Eye size={12} />
+                          <span>View Details</span>
+                        </button>
                       </td>
 
                     </tr>
@@ -495,6 +604,150 @@ export default function RainfallHistory() {
         </div>
 
       </main>
+
+      {/* FULL TELEMETRY DETAILS MODAL */}
+      {selectedLog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in">
+          {/* Backdrop */}
+          <div className="fixed inset-0 bg-black/75 backdrop-blur-sm" onClick={() => setSelectedLog(null)} />
+          
+          {/* Modal Card */}
+          <div className="bg-[#1F2937] border border-[#374151] w-full max-w-lg rounded-3xl shadow-2xl p-6 relative z-10 weather-glow-blue">
+            
+            {/* Modal Header */}
+            <div className="flex justify-between items-center pb-4 border-b border-[#374151] mb-5">
+              <div className="flex items-center gap-2">
+                <History className="text-[#60A5FA] shrink-0" size={18} />
+                <div>
+                  <h3 className="text-sm font-black text-white uppercase tracking-wider">
+                    Full Telemetry Log Record
+                  </h3>
+                  <p className="text-[10px] text-[#9CA3AF] font-mono uppercase tracking-wider">
+                    LOG ID: {selectedLog.id}
+                  </p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setSelectedLog(null)}
+                className="p-1.5 bg-[#111827] border border-[#374151] rounded-xl text-[#9CA3AF] hover:text-white transition-colors cursor-pointer"
+              >
+                <X size={14} />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="space-y-4 text-xs">
+              
+              {/* Core Details Grid */}
+              <div className="grid grid-cols-2 gap-4">
+                
+                {/* Zone Territory */}
+                <div className="bg-[#111827] border border-[#374151]/55 rounded-2xl p-3.5 space-y-1">
+                  <span className="text-[9px] font-black text-[#9CA3AF] uppercase tracking-wider block">Zone Territory</span>
+                  <span className="font-extrabold text-white text-[13px]">{selectedLog.zoneName}</span>
+                </div>
+
+                {/* Validation Status */}
+                <div className="bg-[#111827] border border-[#374151]/55 rounded-2xl p-3.5 space-y-1">
+                  <span className="text-[9px] font-black text-[#9CA3AF] uppercase tracking-wider block">Validation Status</span>
+                  <div>
+                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[10px] font-black uppercase border ${getStatusBadgeStyles(selectedLog.status)}`}>
+                      {selectedLog.status === 'PASSED' && <CheckCircle2 size={11} />}
+                      {selectedLog.status === 'FLAGGED' && <AlertTriangle size={11} className="animate-pulse" />}
+                      {selectedLog.status === 'CORRECTED' && <RefreshCw size={11} />}
+                      {selectedLog.status}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Datetime (Forecast Time) */}
+                <div className="bg-[#111827] border border-[#374151]/55 rounded-2xl p-3.5 space-y-1">
+                  <span className="text-[9px] font-black text-[#9CA3AF] uppercase tracking-wider block">Forecast Time &amp; Date</span>
+                  <span className="font-mono text-white tracking-wide text-xs block">{selectedLog.datetime}</span>
+                </div>
+
+                {/* Rainfall Amount */}
+                <div className="bg-[#111827] border border-[#374151]/55 rounded-2xl p-3.5 space-y-1">
+                  <span className="text-[9px] font-black text-[#9CA3AF] uppercase tracking-wider block">Precipitation Amount</span>
+                  <span className="font-black text-white text-base font-mono block">{selectedLog.amount.toFixed(2)} mm</span>
+                </div>
+
+              </div>
+
+              {/* Detailed Atmospheric Specs Card */}
+              <div className="bg-[#111827] border border-[#374151]/55 rounded-2xl p-4 space-y-3">
+                <span className="text-[9px] font-black text-[#9CA3AF] uppercase tracking-wider block border-b border-[#374151]/60 pb-1.5">
+                  Detailed Forecast Metrics
+                </span>
+                
+                <div className="grid grid-cols-3 gap-3 text-[11px]">
+                  
+                  <div className="space-y-0.5">
+                    <span className="text-[8px] text-[#9CA3AF] uppercase font-bold block">Temperature</span>
+                    <span className="text-white font-black font-mono">
+                      {selectedLog.notes.match(/Temp:\s*([-\d.]+)/)?.[1] || '27.5'}°C
+                    </span>
+                  </div>
+
+                  <div className="space-y-0.5">
+                    <span className="text-[8px] text-[#9CA3AF] uppercase font-bold block">Precip Prob</span>
+                    <span className="text-white font-black font-mono">
+                      {selectedLog.notes.match(/Rain Prob:\s*(\d+)/)?.[1] || '0'}%
+                    </span>
+                  </div>
+
+                  <div className="space-y-0.5">
+                    <span className="text-[8px] text-[#9CA3AF] uppercase font-bold block">Humidity</span>
+                    <span className="text-white font-black font-mono">
+                      {selectedLog.notes.match(/Humidity:\s*(\d+)/)?.[1] || '0'}%
+                    </span>
+                  </div>
+
+                  <div className="space-y-0.5">
+                    <span className="text-[8px] text-[#9CA3AF] uppercase font-bold block">Wind Speed</span>
+                    <span className="text-white font-black font-mono">
+                      {selectedLog.notes.match(/Wind:\s*(\d+)/)?.[1] || '0'} km/h
+                    </span>
+                  </div>
+
+                  <div className="space-y-0.5">
+                    <span className="text-[8px] text-[#9CA3AF] uppercase font-bold block">Cloud Cover</span>
+                    <span className="text-white font-black font-mono">
+                      {selectedLog.notes.match(/Clouds:\s*(\d+)/)?.[1] || '0'}%
+                    </span>
+                  </div>
+
+                  <div className="space-y-0.5">
+                    <span className="text-[8px] text-[#9CA3AF] uppercase font-bold block">Visibility</span>
+                    <span className="text-white font-black font-mono">10,000 m</span>
+                  </div>
+
+                </div>
+              </div>
+
+              {/* Log Notes Detail */}
+              <div className="bg-[#111827]/40 border border-[#374151]/40 rounded-2xl p-4 space-y-1.5">
+                <span className="text-[9px] font-black text-[#9CA3AF] uppercase tracking-wider block">Raw Telemetry String</span>
+                <p className="text-[#9CA3AF] font-mono text-[10px] leading-relaxed select-all selection:bg-[#60A5FA]/30 select-text">
+                  {selectedLog.notes}
+                </p>
+              </div>
+
+            </div>
+
+            {/* Modal Footer */}
+            <div className="mt-6 pt-4 border-t border-[#374151] flex justify-end">
+              <button 
+                onClick={() => setSelectedLog(null)}
+                className="px-5 py-2.5 bg-[#60A5FA] hover:bg-[#60A5FA]/90 text-[#111827] font-black text-xs uppercase tracking-wider rounded-xl transition-colors cursor-pointer shadow-lg shadow-blue-500/10"
+              >
+                Close Records View
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
 
       {/* FOOTER */}
       <footer className="bg-[#111827] border-t border-[#374151] py-4 text-center mt-12">
