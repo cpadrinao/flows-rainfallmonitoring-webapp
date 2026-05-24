@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { fetchSystemHealth, fetchWeatherLogs, SystemHealth, ApiWeatherLog } from '../../lib/api';
+import { fetchSystemHealth, fetchWeatherLogs, fetchZones, SystemHealth, ApiWeatherLog } from '../../lib/api';
 import { 
   ShieldAlert, 
   LogOut, 
@@ -18,7 +18,8 @@ import {
   ArrowRight,
   User,
   ExternalLink,
-  ChevronRight
+  ChevronRight,
+  X
 } from 'lucide-react';
 
 const ZONE_NAMES: Record<string, string> = {
@@ -44,6 +45,8 @@ export default function AdminDashboard() {
   const [logs, setLogs] = useState<ApiWeatherLog[]>([]);
   const [isHealthLoading, setIsHealthLoading] = useState(true);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [zonesCount, setZonesCount] = useState<number>(5);
+  const [showTelemetryModal, setShowTelemetryModal] = useState(false);
 
   // Verify authorization
   useEffect(() => {
@@ -62,6 +65,18 @@ export default function AdminDashboard() {
     document.documentElement.setAttribute('data-theme', 'dark');
     document.documentElement.classList.add('dark');
   }, []);
+
+  // Disable background scrolling when any modal is active
+  useEffect(() => {
+    if (showLogoutModal || showTelemetryModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [showLogoutModal, showTelemetryModal]);
 
 
 
@@ -134,6 +149,16 @@ export default function AdminDashboard() {
         } else {
           const now = new Date();
           setLastFetchTime(now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+        }
+
+        // Fetch actual zone count from database dynamically
+        try {
+          const zonesData = await fetchZones();
+          if (active) {
+            setZonesCount(zonesData.length);
+          }
+        } catch (zErr) {
+          console.error('[AdminDashboard] Error loading zones count:', zErr);
         }
         
         setIsHealthLoading(false);
@@ -366,7 +391,7 @@ export default function AdminDashboard() {
             <div className="space-y-1.5">
               <span className="text-[10px] font-black text-[#9CA3AF] uppercase tracking-wider block">ACTIVE SENSORS / ZONES</span>
               <h3 className="text-3xl font-black text-white font-mono flex items-baseline gap-1.5">
-                5
+                {zonesCount}
                 <span className="text-xs font-bold text-[#4ADE80] bg-[#4ADE80]/10 px-1.5 py-0.5 rounded">Operational</span>
               </h3>
               <p className="text-[10px] text-[#9CA3AF] leading-tight">Barangay Rizal territories reporting rain metrics</p>
@@ -435,7 +460,7 @@ export default function AdminDashboard() {
                 </p>
               </div>
               <div className="mt-6 pt-4 border-t border-[#374151]/50 flex items-center justify-between text-xs text-[#60A5FA] font-bold">
-                <span>Manage 5 Active Zones</span>
+                <span>Manage {zonesCount} Active Zones</span>
                 <ChevronRight size={16} className="transform group-hover:translate-x-1.5 transition-transform" />
               </div>
             </Link>
@@ -630,6 +655,153 @@ export default function AdminDashboard() {
                 className="flex-1 py-2.5 bg-[#EF4444] hover:bg-[#EF4444]/90 text-white font-black uppercase tracking-wider rounded-xl transition-all duration-150 shadow-md shadow-red-500/10 cursor-pointer"
               >
                 Logout
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* FLOATING TELEMETRY WIDGET BUBBLE (Mobile / Tablet Only) */}
+      <button
+        onClick={() => setShowTelemetryModal(true)}
+        className="block md:hidden fixed bottom-6 right-6 z-40 bg-[#1F2937]/90 backdrop-blur-md border border-[#60A5FA]/30 text-white rounded-full p-4 shadow-2xl hover:scale-105 active:scale-95 transition-all cursor-pointer weather-glow-blue animate-pulse-slow"
+        title="Open Telemetry Console & Logs"
+      >
+        <div className="relative flex items-center justify-center">
+          <Activity size={22} className="text-[#60A5FA]" />
+          {/* Pulsing indicator dot */}
+          <span className="absolute -top-1 -right-1 flex h-2 w-2">
+            <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${health && health.status !== 'offline' && health.open_meteo?.status === 'healthy' ? 'bg-[#10B981]' : 'bg-[#EF4444]'}`}></span>
+            <span className={`relative inline-flex rounded-full h-2 w-2 ${health && health.status !== 'offline' && health.open_meteo?.status === 'healthy' ? 'bg-[#10B981]' : 'bg-[#EF4444]'}`}></span>
+          </span>
+        </div>
+      </button>
+
+      {/* MOBILE TELEMETRY CONSOLE & LOGS OVERLAY MODAL */}
+      {showTelemetryModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in">
+          {/* Backdrop */}
+          <div className="fixed inset-0 bg-black/75 backdrop-blur-sm" onClick={() => setShowTelemetryModal(false)} />
+          
+          {/* Modal Card */}
+          <div className="bg-[#1F2937]/95 backdrop-blur-md border border-[#374151] w-full max-w-md rounded-3xl shadow-2xl p-5 relative z-10 space-y-4 weather-glow-blue animate-scale-in text-xs max-h-[85vh] flex flex-col justify-between">
+            
+            {/* Header */}
+            <div className="flex justify-between items-center pb-3 border-b border-[#374151]/60 shrink-0">
+              <div className="flex items-center gap-2">
+                <Activity size={18} className="text-[#60A5FA] animate-pulse" />
+                <div>
+                  <h3 className="text-xs font-black text-white uppercase tracking-wider font-sans">
+                    API Telemetry & Logs
+                  </h3>
+                  <p className="text-[9px] text-[#9CA3AF] font-bold">Barangay Rizal Console Telemetry</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setShowTelemetryModal(false)}
+                className="p-1 bg-[#111827] border border-[#374151] rounded text-[#9CA3AF] hover:text-white transition-colors cursor-pointer"
+              >
+                <X size={14} />
+              </button>
+            </div>
+
+            {/* Quick Status Stats Grid */}
+            <div className="grid grid-cols-2 gap-2.5 shrink-0 select-none">
+              
+              {/* Stat 1: API Gateway Status */}
+              <div className="bg-[#111827]/60 border border-[#374151]/55 rounded-xl p-2.5 flex items-center gap-2">
+                <div className="relative flex h-2 w-2 shrink-0">
+                  <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${health && health.status !== 'offline' && health.open_meteo?.status === 'healthy' ? 'bg-[#10B981]' : 'bg-[#EF4444]'}`}></span>
+                  <span className={`relative inline-flex rounded-full h-2 w-2 ${health && health.status !== 'offline' && health.open_meteo?.status === 'healthy' ? 'bg-[#10B981]' : 'bg-[#EF4444]'}`}></span>
+                </div>
+                <div className="leading-none min-w-0">
+                  <span className="text-[7px] text-[#9CA3AF] uppercase block mb-0.5">API STATUS</span>
+                  <span className={`text-[9px] font-black uppercase truncate block ${health && health.status !== 'offline' && health.open_meteo?.status === 'healthy' ? 'text-[#4ADE80]' : 'text-[#EF4444]'}`}>
+                    {health && health.status !== 'offline' && health.open_meteo?.status === 'healthy' ? 'API HEALTHY' : 'GATEWAY OFFLINE'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Stat 2: Next Auto-Fetch Countdown */}
+              <div className="bg-[#111827]/60 border border-[#374151]/55 rounded-xl p-2.5 flex items-center gap-2">
+                <Clock size={12} className="text-[#60A5FA] shrink-0" />
+                <div className="leading-none min-w-0">
+                  <span className="text-[7px] text-[#60A5FA] uppercase block mb-0.5">NEXT FORECAST</span>
+                  <span className="text-[10px] font-black font-mono text-white truncate block">
+                    {countdownTime || '00:59:59'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Stat 3: Open-Meteo Latency */}
+              <div className="bg-[#111827]/60 border border-[#374151]/55 rounded-xl p-2.5 flex items-center gap-2">
+                <Database size={12} className="text-[#4ADE80] shrink-0" />
+                <div className="leading-none min-w-0">
+                  <span className="text-[7px] text-[#4ADE80] uppercase block mb-0.5">API LATENCY</span>
+                  <span className="text-[9px] font-black font-mono text-white truncate block">
+                    {health?.open_meteo?.latency_ms ? `${health.open_meteo.latency_ms}ms` : '32ms'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Stat 4: PH Local Time */}
+              <div className="bg-[#111827]/60 border border-[#374151]/55 rounded-xl p-2.5 flex items-center gap-2">
+                <Radio size={12} className="text-[#A78BFA] shrink-0" />
+                <div className="leading-none min-w-0">
+                  <span className="text-[7px] text-[#A78BFA] uppercase block mb-0.5">PHILIPPINE TIME</span>
+                  <span className="text-[9px] font-black font-mono text-white truncate block">
+                    {phTime ? phTime.replace(/:\d+\s/, ' ') : '10:27 PM'}
+                  </span>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Log Terminal Block */}
+            <div className="flex-1 flex flex-col min-h-0 space-y-1.5">
+              <span className="text-[8px] font-black text-[#9CA3AF] uppercase tracking-wider block">
+                Live Console Terminal Output
+              </span>
+              <div className="flex-1 bg-[#111827] border border-[#374151] rounded-2xl p-4 font-mono text-[9px] overflow-y-auto select-text space-y-2">
+                {logs.length > 0 ? (
+                  logs.map((log, idx) => {
+                    const zoneName = ZONE_NAMES[log.zone_id] || log.zone_id || 'Unknown Zone';
+                    const dateStr = log.fetched_at 
+                      ? new Date(log.fetched_at).toLocaleString('en-US', { hour12: false }).replace(',', '') 
+                      : new Date().toLocaleString('en-US', { hour12: false }).replace(',', '');
+                    const status = log.validation_status || 'OK';
+                    const statusColor = status === 'PASSED' || status === 'OK' ? 'text-[#4ADE80]' : 'text-[#F59E0B]';
+                    const statusTag = status === 'PASSED' || status === 'OK' ? '[ OK ]' : '[WARN]';
+                    
+                    return (
+                      <div key={log.id || idx} className="flex items-start gap-2 leading-normal">
+                        <span className={`${statusColor} font-black shrink-0`}>{statusTag}</span>
+                        <span className="text-[#9CA3AF]">
+                          <span className="text-[#374151]/80">{dateStr.split(' ')[1]}</span> — {zoneName.replace(/\s\(.*/, '')} rainfall: {log.precipitation_mm ?? 0} mm.
+                        </span>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="text-center text-[#EF4444] font-bold py-4">
+                    [FAIL] Telemetry gateway offline. No live logs synchronized.
+                  </div>
+                )}
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-[#60A5FA] font-black shrink-0 animate-pulse">[ &gt;&gt; ]</span>
+                  <span className="text-[#60A5FA] font-mono text-[9px]">Listening for next pull...</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Close Modal footer button */}
+            <div className="pt-3 border-t border-[#374151]/60 shrink-0 font-sans">
+              <button 
+                onClick={() => setShowTelemetryModal(false)}
+                className="w-full py-2.5 bg-[#60A5FA] hover:bg-[#60A5FA]/90 text-[#111827] font-black uppercase tracking-wider rounded-xl transition-all duration-150 shadow-md shadow-blue-500/10 cursor-pointer text-[10px]"
+              >
+                Got it, close console
               </button>
             </div>
 

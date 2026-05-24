@@ -271,3 +271,66 @@ export async function fetchWeatherLogs(limit = 20): Promise<ApiWeatherLog[]> {
     return [];
   }
 }
+
+// ─── Backend Zones CRUD Operations ──────────────────────────────────────────
+
+export async function fetchZones(): Promise<ApiZone[]> {
+  const res = await fetch(`${API_BASE}/zones`, {
+    next: { revalidate: 0 },
+    cache: 'no-store',
+  });
+  if (!res.ok) throw new Error(`Failed to fetch zones: ${res.status}`);
+  return await res.json();
+}
+
+export async function createZone(zoneData: {
+  name: string;
+  latitude: number;
+  longitude: number;
+  description?: string;
+}): Promise<any> {
+  const res = await fetch(`${API_BASE}/zones/`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(zoneData),
+  });
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Failed to create zone: ${errText || res.statusText}`);
+  }
+  return await res.json();
+}
+
+export async function updateZone(
+  zoneId: string,
+  zoneData: {
+    name?: string;
+    latitude?: number;
+    longitude?: number;
+    description?: string;
+    is_active?: boolean;
+    alert_level?: string;
+  }
+): Promise<any> {
+  const res = await fetch(`${API_BASE}/zones/${zoneId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(zoneData),
+  });
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Failed to update zone: ${errText || res.statusText}`);
+  }
+  return await res.json();
+}
+
+export async function deleteZone(zoneId: string): Promise<any> {
+  const res = await fetch(`${API_BASE}/zones/${zoneId}`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Failed to delete zone: ${errText || res.statusText}`);
+  }
+  return await res.json();
+}

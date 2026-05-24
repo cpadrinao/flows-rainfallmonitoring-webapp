@@ -17,9 +17,20 @@ import {
   ChevronRight,
   TrendingUp,
   Clock,
-  Home
+  Home,
+  Compass
 } from 'lucide-react';
-import { fetchSystemHealth, SystemHealth } from '../../lib/api';
+import { 
+  fetchSystemHealth, 
+  SystemHealth,
+  fetchZones,
+  fetchWeatherSummary,
+  createZone,
+  updateZone,
+  deleteZone,
+  ApiZone,
+  triggerPipeline
+} from '../../lib/api';
 
 interface ZoneItem {
   id: string;
@@ -28,15 +39,18 @@ interface ZoneItem {
   alertLevel: 'Red' | 'Orange' | 'Yellow' | 'Green';
   amount: number;
   status: string;
+  latitude: number;
+  longitude: number;
+  description: string;
 }
 
-const DEFAULT_ZONES: ZoneItem[] = [
-  { id: 'zone-1', name: 'Zone 1', purok: 'Purok Narra (Riverside Area)', alertLevel: 'Red', amount: 32.8, status: 'Heavy Rain' },
-  { id: 'zone-2', name: 'Zone 2', purok: 'Purok Mahogany (Upper Ridge)', alertLevel: 'Green', amount: 12.4, status: 'Moderate Rain' },
-  { id: 'zone-3', name: 'Zone 3', purok: 'Sitio Pag-asa (Lowland Plain)', alertLevel: 'Orange', amount: 22.1, status: 'Heavy Rain' },
-  { id: 'zone-4', name: 'Zone 4', purok: 'Purok Acacia (Slope & Foothills)', alertLevel: 'Yellow', amount: 8.5, status: 'Light Rain' },
-  { id: 'zone-5', name: 'Zone 5', purok: 'Purok Ilang-Ilang (Centro)', alertLevel: 'Green', amount: 3.2, status: 'Cloudy' },
-];
+const mapAlertLevel = (level: string): 'Red' | 'Orange' | 'Yellow' | 'Green' => {
+  const normalized = level?.toLowerCase();
+  if (normalized === 'red') return 'Red';
+  if (normalized === 'orange') return 'Orange';
+  if (normalized === 'yellow') return 'Yellow';
+  return 'Green';
+};
 
 export default function ZoneManagement() {
   const router = useRouter();
@@ -133,40 +147,94 @@ export default function ZoneManagement() {
   // Validation error
   const [validationError, setValidationError] = useState('');
 
-  // Authentication check & database load
+  // Extended form fields
+  const [latitudeVal, setLatitudeVal] = useState('13.56');
+  const [longitudeVal, setLongitudeVal] = useState('123.14');
+  const [zoneDescription, setZoneDescription] = useState('');
+  const [isLoadingZones, setIsLoadingZones] = useState(true);
+  
+  // Submission & Confirmation Feedback states
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successModalConfig, setSuccessModalConfig] = useState({ title: '', message: '' });
+
+  // Custom Delete confirmation states
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletingZone, setDeletingZone] = useState<ZoneItem | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Authentication check
   useEffect(() => {
     const isLoggedIn = sessionStorage.getItem('flows_admin_logged_in');
     if (isLoggedIn !== 'true') {
       router.push('/admin/login');
     } else {
       setAuthorized(true);
-      
-      // Load from local storage or initialize
-      const stored = localStorage.getItem('flows_zones_db');
-      if (stored) {
-        try {
-          setZones(JSON.parse(stored));
-        } catch (e) {
-          setZones(DEFAULT_ZONES);
-          localStorage.setItem('flows_zones_db', JSON.stringify(DEFAULT_ZONES));
-        }
-      } else {
-        setZones(DEFAULT_ZONES);
-        localStorage.setItem('flows_zones_db', JSON.stringify(DEFAULT_ZONES));
-      }
     }
   }, [router]);
 
-  const saveZonesToStorage = (updatedZones: ZoneItem[]) => {
-    setZones(updatedZones);
-    localStorage.setItem('flows_zones_db', JSON.stringify(updatedZones));
+  // Disable background scrolling when any modal is visible
+  useEffect(() => {
+    if (showModal || showSuccessModal || showDeleteModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [showModal, showSuccessModal, showDeleteModal]);
+
+  // Load zones & live weather summary directly from FastAPI Supabase layer
+  const loadZonesAndTelemetry = async () => {
+    try {
+      setIsLoadingZones(true);
+      const [zonesData, summaryData] = await Promise.all([
+        fetchZones(),
+        fetchWeatherSummary()
+      ]);
+      
+      const mapped: ZoneItem[] = zonesData.map(z => {
+        const telemetry = summaryData[z.id];
+        const parts = z.name.split(' - ');
+        const name = parts[0]?.trim() || z.name;
+        const purok = parts[1]?.trim() || 'General Territory';
+        
+        return {
+          id: z.id,
+          name,
+          purok,
+          alertLevel: mapAlertLevel(z.alert_level),
+          amount: telemetry ? telemetry.amount : 0.0,
+          status: telemetry ? telemetry.status : 'Pending API Sync',
+          latitude: z.latitude,
+          longitude: z.longitude,
+          description: z.description || ''
+        };
+      });
+      
+      setZones(mapped);
+      setIsLoadingZones(false);
+    } catch (err) {
+      console.error('[ZoneManagement] Error loading live database zones:', err);
+      setIsLoadingZones(false);
+    }
   };
+
+  useEffect(() => {
+    if (authorized) {
+      loadZonesAndTelemetry();
+    }
+  }, [authorized]);
 
   const openAddModal = () => {
     setModalTitle('Add Monitored Zone');
     setEditingId(null);
     setZoneName('');
     setPurokDesc('');
+    setLatitudeVal('13.56');
+    setLongitudeVal('123.14');
+    setZoneDescription('');
     setAlertLevel('Green');
     setRainAmount(0);
     setWeatherStatus('Clear');
@@ -179,6 +247,9 @@ export default function ZoneManagement() {
     setEditingId(zone.id);
     setZoneName(zone.name);
     setPurokDesc(zone.purok);
+    setLatitudeVal(zone.latitude.toString());
+    setLongitudeVal(zone.longitude.toString());
+    setZoneDescription(zone.description || '');
     setAlertLevel(zone.alertLevel);
     setRainAmount(zone.amount);
     setWeatherStatus(zone.status);
@@ -186,7 +257,7 @@ export default function ZoneManagement() {
     setShowModal(true);
   };
 
-  const handleFormSubmit = (e: React.FormEvent) => {
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setValidationError('');
 
@@ -196,40 +267,88 @@ export default function ZoneManagement() {
       return;
     }
 
-    if (editingId) {
-      // Edit mode: Preserve existing API telemetry metrics
-      const updated = zones.map(z => {
-        if (z.id === editingId) {
-          return {
-            ...z,
-            name: zoneName.trim(),
-            purok: purokDesc.trim() || 'General Territory'
-          };
-        }
-        return z;
-      });
-      saveZonesToStorage(updated);
-    } else {
-      // Add mode: Initialize zone with Green Alert and Pending API Sync status
-      const newId = `zone-${Date.now()}`;
-      const newZone: ZoneItem = {
-        id: newId,
-        name: zoneName.trim(),
-        purok: purokDesc.trim() || 'General Territory',
-        alertLevel: 'Green',
-        amount: 0.0,
-        status: 'Pending API Sync'
-      };
-      saveZonesToStorage([...zones, newZone]);
+    const parsedLat = parseFloat(latitudeVal);
+    const parsedLng = parseFloat(longitudeVal);
+
+    if (isNaN(parsedLat) || parsedLat < -90 || parsedLat > 90) {
+      setValidationError('Latitude must be a valid decimal number between -90 and 90.');
+      return;
     }
 
-    setShowModal(false);
+    if (isNaN(parsedLng) || parsedLng < -180 || parsedLng > 180) {
+      setValidationError('Longitude must be a valid decimal number between -180 and 180.');
+      return;
+    }
+
+    const payload = {
+      name: `${zoneName.trim()} - ${purokDesc.trim() || 'General Territory'}`,
+      latitude: parsedLat,
+      longitude: parsedLng,
+      description: zoneDescription.trim() || `Telemetry monitored purok in Barangay Rizal.`
+    };
+
+    try {
+      setIsSubmitting(true);
+      if (editingId) {
+        // Edit mode: Update existing zone in Supabase
+        await updateZone(editingId, payload);
+        
+        // Show success modal
+        setSuccessModalConfig({
+          title: 'Zone Telemetry Updated',
+          message: `Monitored Purok parameter adjustments for "${zoneName.trim()}" and coordinates ${parsedLat}, ${parsedLng} have been successfully saved in Supabase.`
+        });
+      } else {
+        // Add mode: Create new zone in Supabase
+        await createZone(payload);
+        
+        // Fire immediate background fetch for the new coordinates
+        try {
+          await triggerPipeline();
+        } catch (pipelineErr) {
+          console.error('[ZoneManagement] Background pipeline fetch trigger failed:', pipelineErr);
+        }
+
+        // Show success modal
+        setSuccessModalConfig({
+          title: 'Zone Registered Successfully',
+          message: `Monitored Purok "${zoneName.trim()}" and coordinates (${parsedLat}, ${parsedLng}) have been successfully saved to Supabase! The weather pipeline has been triggered in the background to fetch forecast logs immediately.`
+        });
+      }
+      
+      // Close modal and refresh zones
+      setShowModal(false);
+      setShowSuccessModal(true);
+      loadZonesAndTelemetry();
+    } catch (err: any) {
+      setValidationError(err.message || 'An error occurred while saving the zone to the database.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleRemoveZone = (id: string) => {
-    if (confirm('Are you sure you want to remove this zone from the telemetry array?')) {
-      const updated = zones.filter(z => z.id !== id);
-      saveZonesToStorage(updated);
+  const openDeleteModal = (zone: ZoneItem) => {
+    setDeletingZone(zone);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteZone = async () => {
+    if (!deletingZone) return;
+    try {
+      setIsDeleting(true);
+      await deleteZone(deletingZone.id);
+      setShowDeleteModal(false);
+      setSuccessModalConfig({
+        title: 'Zone Permanently Purged',
+        message: `Monitored Purok "${deletingZone.name}" and all associated historical telemetry rainfall logs have been permanently deleted from Supabase. Database storage has been successfully reclaimed.`
+      });
+      setDeletingZone(null);
+      setShowSuccessModal(true);
+      loadZonesAndTelemetry();
+    } catch (err: any) {
+      alert(err.message || 'Failed to delete zone from database.');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -262,8 +381,10 @@ export default function ZoneManagement() {
     );
   }
   return (
-    <div data-theme={theme} className="bg-[#0b0f19] min-h-screen w-full text-[#F9FAFB] font-sans flex flex-col justify-between relative overflow-x-hidden animate-fade-in transition-colors duration-500">
+    <div data-theme={theme} className="bg-[#0b0f19] min-h-screen w-full text-[#F9FAFB] font-sans flex flex-col justify-between relative overflow-x-hidden transition-colors duration-500">
       
+      {/* Visual Content Wrapper with premium fade-in animation (declared separately to keep fixed viewport modals accurate) */}
+      <div className="flex-1 flex flex-col animate-fade-in relative">
       {/* Background glow */}
       <div className="absolute w-[500px] h-[500px] rounded-full bg-[#60A5FA] blur-[150px] opacity-5 pointer-events-none -translate-y-20 left-10" />
 
@@ -428,7 +549,15 @@ export default function ZoneManagement() {
           </div>
 
           <div className="overflow-x-auto">
-            {zones.length === 0 ? (
+            {isLoadingZones ? (
+              <div className="p-12 text-center text-[#9CA3AF] space-y-4">
+                <div className="relative w-12 h-12 mx-auto flex items-center justify-center">
+                  <div className="absolute inset-0 rounded-full border-2 border-dashed border-[#60A5FA]/40 animate-spin" style={{ animationDuration: '3s' }} />
+                  <span className="w-6 h-6 border-2 border-[#60A5FA] border-t-transparent rounded-full animate-spin" />
+                </div>
+                <p className="text-xs font-bold uppercase tracking-wider animate-pulse">Syncing dynamic sensor territories...</p>
+              </div>
+            ) : zones.length === 0 ? (
               <div className="p-8 text-center text-[#9CA3AF] space-y-2">
                 <AlertCircle size={28} className="mx-auto text-[#EF4444]" />
                 <p className="text-xs font-bold uppercase">No Active Monitored Zones Found</p>
@@ -442,6 +571,7 @@ export default function ZoneManagement() {
                   <tr className="border-b border-[#374151] bg-[#111827]/40 text-[#9CA3AF] font-bold text-[10px] uppercase tracking-wider">
                     <th className="p-4 pl-6">Zone ID</th>
                     <th className="p-4">Area / Purok Name</th>
+                    <th className="p-4">Coordinates</th>
                     <th className="p-4">Alert Level</th>
                     <th className="p-4">Rainfall (mm)</th>
                     <th className="p-4">Status Class</th>
@@ -457,12 +587,22 @@ export default function ZoneManagement() {
                       className="hover:bg-[#111827]/20 transition-colors"
                     >
                       {/* ID */}
-                      <td className="p-4 pl-6 font-mono font-bold text-[#60A5FA]">{zone.id}</td>
+                      <td className="p-4 pl-6 font-mono font-bold text-[#60A5FA]" title={zone.id}>
+                        {zone.id.includes('-') ? zone.id.slice(0, 8).toUpperCase() : zone.id}
+                      </td>
                       
                       {/* Name & Subtext */}
                       <td className="p-4">
                         <span className="font-extrabold text-white block text-[13px]">{zone.name}</span>
                         <span className="text-[10px] text-[#9CA3AF]">{zone.purok}</span>
+                      </td>
+
+                      {/* Coordinates */}
+                      <td className="p-4 font-mono text-[#9CA3AF] text-[10px] whitespace-nowrap">
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-[#60A5FA] font-bold">Lat: {zone.latitude ? zone.latitude.toFixed(6) : '0.000000'}</span>
+                          <span>Lng: {zone.longitude ? zone.longitude.toFixed(6) : '0.000000'}</span>
+                        </div>
                       </td>
 
                       {/* Alert Level Badge */}
@@ -489,8 +629,8 @@ export default function ZoneManagement() {
                             <Edit size={14} />
                           </button>
                           <button
-                            onClick={() => handleRemoveZone(zone.id)}
-                            className="p-1.5 bg-[#EF4444]/10 hover:bg-[#EF4444]/20 border border-[#EF4444]/30 hover:border-[#EF4444] rounded-lg text-[#EF4444] transition-all duration-150"
+                            onClick={() => openDeleteModal(zone)}
+                            className="p-1.5 bg-[#EF4444]/10 hover:bg-[#EF4444]/20 border border-[#EF4444]/30 hover:border-[#EF4444] rounded-lg text-[#EF4444] transition-all duration-150 cursor-pointer"
                             title="Remove Zone"
                           >
                             <Trash2 size={14} />
@@ -514,7 +654,7 @@ export default function ZoneManagement() {
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           {/* Backdrop */}
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowModal(false)} />
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => !isSubmitting && setShowModal(false)} />
           
           {/* Modal Container */}
           <div className="bg-[#1F2937] border border-[#374151] w-full max-w-md rounded-2xl shadow-2xl p-6 relative z-10 animate-pulse-slow">
@@ -526,8 +666,9 @@ export default function ZoneManagement() {
                 {modalTitle}
               </h3>
               <button 
-                onClick={() => setShowModal(false)}
-                className="p-1 bg-[#111827] border border-[#374151] rounded text-[#9CA3AF] hover:text-white transition-colors"
+                onClick={() => !isSubmitting && setShowModal(false)}
+                disabled={isSubmitting}
+                className="p-1 bg-[#111827] border border-[#374151] rounded text-[#9CA3AF] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 <X size={14} />
               </button>
@@ -554,7 +695,8 @@ export default function ZoneManagement() {
                   placeholder="e.g. Zone 6" 
                   value={zoneName}
                   onChange={(e) => setZoneName(e.target.value)}
-                  className="w-full bg-[#111827] border border-[#374151] focus:border-[#60A5FA] rounded-xl p-2.5 text-white focus:outline-none transition-colors"
+                  disabled={isSubmitting}
+                  className="w-full bg-[#111827] border border-[#374151] focus:border-[#60A5FA] rounded-xl p-2.5 text-white focus:outline-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 />
               </div>
 
@@ -568,7 +710,58 @@ export default function ZoneManagement() {
                   placeholder="e.g. Purok Ilang-Ilang" 
                   value={purokDesc}
                   onChange={(e) => setPurokDesc(e.target.value)}
-                  className="w-full bg-[#111827] border border-[#374151] focus:border-[#60A5FA] rounded-xl p-2.5 text-white focus:outline-none transition-colors"
+                  disabled={isSubmitting}
+                  className="w-full bg-[#111827] border border-[#374151] focus:border-[#60A5FA] rounded-xl p-2.5 text-white focus:outline-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                />
+              </div>
+
+              {/* Coordinates Grid */}
+              <div className="grid grid-cols-2 gap-3.5">
+                
+                {/* Field: Latitude */}
+                <div>
+                  <label className="block text-[10px] font-bold text-[#9CA3AF] uppercase tracking-wider mb-1">
+                    Latitude <span className="text-[#EF4444] font-black">*</span>
+                  </label>
+                  <input 
+                    type="text" 
+                    placeholder="e.g. 13.56127" 
+                    value={latitudeVal}
+                    onChange={(e) => setLatitudeVal(e.target.value)}
+                    disabled={isSubmitting}
+                    className="w-full bg-[#111827] border border-[#374151] focus:border-[#60A5FA] rounded-xl p-2.5 text-white focus:outline-none transition-colors font-mono disabled:opacity-50 disabled:cursor-not-allowed"
+                  />
+                </div>
+
+                {/* Field: Longitude */}
+                <div>
+                  <label className="block text-[10px] font-bold text-[#9CA3AF] uppercase tracking-wider mb-1">
+                    Longitude <span className="text-[#EF4444] font-black">*</span>
+                  </label>
+                  <input 
+                    type="text" 
+                    placeholder="e.g. 123.14292" 
+                    value={longitudeVal}
+                    onChange={(e) => setLongitudeVal(e.target.value)}
+                    disabled={isSubmitting}
+                    className="w-full bg-[#111827] border border-[#374151] focus:border-[#60A5FA] rounded-xl p-2.5 text-white focus:outline-none transition-colors font-mono disabled:opacity-50 disabled:cursor-not-allowed"
+                  />
+                </div>
+
+              </div>
+
+              {/* Field: Zone Description */}
+              <div>
+                <label className="block text-[10px] font-bold text-[#9CA3AF] uppercase tracking-wider mb-1">
+                  Station Telemetry Description
+                </label>
+                <textarea 
+                  placeholder="e.g. Zone telemetry station located near slopes of Barangay Rizal." 
+                  value={zoneDescription}
+                  onChange={(e) => setZoneDescription(e.target.value)}
+                  rows={2}
+                  disabled={isSubmitting}
+                  className="w-full bg-[#111827] border border-[#374151] focus:border-[#60A5FA] rounded-xl p-2.5 text-white focus:outline-none transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                 />
               </div>
 
@@ -577,20 +770,130 @@ export default function ZoneManagement() {
                 <button 
                   type="button" 
                   onClick={() => setShowModal(false)}
-                  className="flex-1 py-2 bg-[#111827] hover:bg-[#111827]/70 border border-[#374151] rounded-xl font-bold uppercase tracking-wider transition-colors"
+                  disabled={isSubmitting}
+                  className="flex-1 py-2 bg-[#111827] hover:bg-[#111827]/70 border border-[#374151] rounded-xl font-bold uppercase tracking-wider transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button 
                   type="submit"
-                  className="flex-1 py-2 bg-[#60A5FA] hover:bg-[#60A5FA]/90 text-[#111827] font-black uppercase tracking-wider rounded-xl transition-all duration-150 shadow-md shadow-blue-500/10 flex items-center justify-center gap-1"
+                  disabled={isSubmitting}
+                  className="flex-1 py-2 bg-[#60A5FA] hover:bg-[#60A5FA]/90 text-[#111827] font-black uppercase tracking-wider rounded-xl transition-all duration-150 shadow-md shadow-blue-500/10 flex items-center justify-center gap-1.5 disabled:opacity-75 disabled:cursor-not-allowed cursor-pointer font-sans"
                 >
-                  <Check size={14} />
-                  <span>Save Changes</span>
+                  {isSubmitting ? (
+                    <>
+                      <span className="w-3.5 h-3.5 border-2 border-[#111827] border-t-transparent rounded-full animate-spin" />
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Check size={14} />
+                      <span>Save Changes</span>
+                    </>
+                  )}
                 </button>
               </div>
 
             </form>
+
+          </div>
+        </div>
+      )}
+
+      {/* SUCCESS CONFIRMATION MODAL */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in">
+          {/* Backdrop */}
+          <div className="fixed inset-0 bg-black/75 backdrop-blur-sm" onClick={() => setShowSuccessModal(false)} />
+          
+          {/* Modal Card */}
+          <div className="bg-[#1F2937] border border-[#374151] w-full max-w-sm rounded-3xl shadow-2xl p-6 relative z-10 text-center space-y-5 weather-glow-green animate-scale-in">
+            
+            {/* Success Checkmark Circle Icon */}
+            <div className="w-14 h-14 rounded-full bg-[#4ADE80]/10 border border-[#4ADE80]/20 flex items-center justify-center text-[#4ADE80] mx-auto animate-pulse">
+              <Check size={28} />
+            </div>
+
+            {/* Modal Heading & Text */}
+            <div className="space-y-2">
+              <h3 className="text-sm font-black text-white uppercase tracking-wider">
+                {successModalConfig.title || 'Action Completed'}
+              </h3>
+              <p className="text-[11px] text-[#9CA3AF] leading-relaxed">
+                {successModalConfig.message}
+              </p>
+            </div>
+
+            {/* Close Button */}
+            <div className="pt-2 border-t border-[#374151]/55">
+              <button 
+                onClick={() => setShowSuccessModal(false)}
+                className="w-full py-2.5 bg-[#4ADE80] hover:bg-[#4ADE80]/90 text-[#111827] font-black uppercase tracking-wider rounded-xl transition-all duration-150 shadow-md shadow-green-500/10 cursor-pointer text-xs font-sans"
+              >
+                Got it, close
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* CUSTOM DELETE CONFIRMATION MODAL (Matches Logout modal styling) */}
+      {showDeleteModal && deletingZone && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in">
+          {/* Backdrop */}
+          <div className="fixed inset-0 bg-black/75 backdrop-blur-sm" onClick={() => !isDeleting && setShowDeleteModal(false)} />
+          
+          {/* Modal Card */}
+          <div className="bg-[#1F2937] border border-[#374151] w-full max-w-sm rounded-3xl shadow-2xl p-6 relative z-10 text-center space-y-5 weather-glow-red animate-scale-in">
+            
+            {/* Warning Circle Icon */}
+            <div className="w-14 h-14 rounded-full bg-[#EF4444]/10 border border-[#EF4444]/20 flex items-center justify-center text-[#EF4444] mx-auto animate-pulse">
+              <Trash2 size={26} />
+            </div>
+
+            {/* Modal Heading & Text */}
+            <div className="space-y-1.5">
+              <h3 className="text-sm font-black text-white uppercase tracking-wider">
+                Confirm Monitored Zone Purge
+              </h3>
+              <div className="space-y-2">
+                <p className="text-[11px] text-[#9CA3AF] leading-relaxed">
+                  Are you absolutely sure you want to permanently purge <span className="font-extrabold text-white">"{deletingZone.name}"</span> and all associated historical telemetry rainfall logs from Supabase?
+                </p>
+                <div className="bg-[#EF4444]/10 border border-[#EF4444]/30 rounded-xl p-2.5 text-[10px] text-[#EF4444] font-bold uppercase tracking-wide">
+                  ⚠️ This action is irreversible and frees up database storage!
+                </div>
+              </div>
+            </div>
+
+            {/* Row of Action Buttons */}
+            <div className="flex gap-2.5 pt-2 border-t border-[#374151]/55">
+              <button 
+                onClick={() => setShowDeleteModal(false)}
+                disabled={isDeleting}
+                className="flex-1 py-2.5 bg-[#111827] hover:bg-[#111827]/70 border border-[#374151] hover:border-[#9CA3AF] text-[#9CA3AF] hover:text-white rounded-xl font-bold uppercase tracking-wider transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer text-xs font-sans"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={confirmDeleteZone}
+                disabled={isDeleting}
+                className="flex-1 py-2.5 bg-[#EF4444] hover:bg-[#EF4444]/90 text-white font-black uppercase tracking-wider rounded-xl transition-all duration-150 shadow-md shadow-red-500/10 disabled:opacity-75 disabled:cursor-not-allowed cursor-pointer text-xs font-sans flex items-center justify-center gap-1.5"
+              >
+                {isDeleting ? (
+                  <>
+                    <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>Purging...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 size={13} />
+                    <span>Purge Zone</span>
+                  </>
+                )}
+              </button>
+            </div>
 
           </div>
         </div>
@@ -602,6 +905,258 @@ export default function ZoneManagement() {
           © 2026 F.L.O.W.S. CONTROL CONSOLE • ZONE PARAMETER MANAGEMENT CORE
         </p>
       </footer>
+
+      {/* Closing Visual Content Wrapper */}
+      </div>
+
+      {/* FORM MODAL PANEL */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-scale-in">
+          {/* Backdrop */}
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => !isSubmitting && setShowModal(false)} />
+          
+          {/* Modal Container */}
+          <div className="bg-[#1F2937] border border-[#374151] w-full max-w-md rounded-2xl shadow-2xl p-6 relative z-10 animate-pulse-slow">
+            
+            {/* Modal Header */}
+            <div className="flex justify-between items-center pb-3 border-b border-[#374151] mb-4">
+              <h3 className="text-sm font-black text-white flex items-center gap-1.5">
+                <MapPin size={16} className="text-[#60A5FA]" />
+                {modalTitle}
+              </h3>
+              <button 
+                onClick={() => !isSubmitting && setShowModal(false)}
+                disabled={isSubmitting}
+                className="p-1 bg-[#111827] border border-[#374151] rounded text-[#9CA3AF] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              >
+                <X size={14} />
+              </button>
+            </div>
+
+            {/* Validation Error Alert */}
+            {validationError && (
+              <div className="bg-[#EF4444]/10 border border-[#EF4444]/30 rounded-xl p-3 flex items-start gap-2 text-xs text-[#EF4444] mb-4">
+                <AlertCircle size={16} className="shrink-0 mt-0.5" />
+                <span>{validationError}</span>
+              </div>
+            )}
+
+            {/* Modal Form */}
+            <form onSubmit={handleFormSubmit} className="space-y-4 text-xs">
+              
+              {/* Field: Zone Name (VALIDATION APPLIED) */}
+              <div>
+                <label className="block text-[10px] font-bold text-[#9CA3AF] uppercase tracking-wider mb-1">
+                  Zone Name <span className="text-[#EF4444] font-black">*</span>
+                </label>
+                <input 
+                  type="text" 
+                  placeholder="e.g. Zone 6" 
+                  value={zoneName}
+                  onChange={(e) => setZoneName(e.target.value)}
+                  disabled={isSubmitting}
+                  className="w-full bg-[#111827] border border-[#374151] focus:border-[#60A5FA] rounded-xl p-2.5 text-white focus:outline-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                />
+              </div>
+
+              {/* Field: Purok / Area */}
+              <div>
+                <label className="block text-[10px] font-bold text-[#9CA3AF] uppercase tracking-wider mb-1">
+                  Purok / Area Description
+                </label>
+                <input 
+                  type="text" 
+                  placeholder="e.g. Purok Ilang-Ilang" 
+                  value={purokDesc}
+                  onChange={(e) => setPurokDesc(e.target.value)}
+                  disabled={isSubmitting}
+                  className="w-full bg-[#111827] border border-[#374151] focus:border-[#60A5FA] rounded-xl p-2.5 text-white focus:outline-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                />
+              </div>
+
+              {/* Coordinates Grid */}
+              <div className="grid grid-cols-2 gap-3.5">
+                
+                {/* Field: Latitude */}
+                <div>
+                  <label className="block text-[10px] font-bold text-[#9CA3AF] uppercase tracking-wider mb-1">
+                    Latitude <span className="text-[#EF4444] font-black">*</span>
+                  </label>
+                  <input 
+                    type="text" 
+                    placeholder="e.g. 13.56127" 
+                    value={latitudeVal}
+                    onChange={(e) => setLatitudeVal(e.target.value)}
+                    disabled={isSubmitting}
+                    className="w-full bg-[#111827] border border-[#374151] focus:border-[#60A5FA] rounded-xl p-2.5 text-white focus:outline-none transition-colors font-mono disabled:opacity-50 disabled:cursor-not-allowed"
+                  />
+                </div>
+
+                {/* Field: Longitude */}
+                <div>
+                  <label className="block text-[10px] font-bold text-[#9CA3AF] uppercase tracking-wider mb-1">
+                    Longitude <span className="text-[#EF4444] font-black">*</span>
+                  </label>
+                  <input 
+                    type="text" 
+                    placeholder="e.g. 123.14292" 
+                    value={longitudeVal}
+                    onChange={(e) => setLongitudeVal(e.target.value)}
+                    disabled={isSubmitting}
+                    className="w-full bg-[#111827] border border-[#374151] focus:border-[#60A5FA] rounded-xl p-2.5 text-white focus:outline-none transition-colors font-mono disabled:opacity-50 disabled:cursor-not-allowed"
+                  />
+                </div>
+
+              </div>
+
+              {/* Field: Zone Description */}
+              <div>
+                <label className="block text-[10px] font-bold text-[#9CA3AF] uppercase tracking-wider mb-1">
+                  Station Telemetry Description
+                </label>
+                <textarea 
+                  placeholder="e.g. Zone telemetry station located near slopes of Barangay Rizal." 
+                  value={zoneDescription}
+                  onChange={(e) => setZoneDescription(e.target.value)}
+                  rows={2}
+                  disabled={isSubmitting}
+                  className="w-full bg-[#111827] border border-[#374151] focus:border-[#60A5FA] rounded-xl p-2.5 text-white focus:outline-none transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                />
+              </div>
+
+              {/* Form Buttons */}
+              <div className="flex gap-2.5 pt-2 border-t border-[#374151]">
+                <button 
+                  type="button" 
+                  onClick={() => setShowModal(false)}
+                  disabled={isSubmitting}
+                  className="flex-1 py-2 bg-[#111827] hover:bg-[#111827]/70 border border-[#374151] rounded-xl font-bold uppercase tracking-wider transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="flex-1 py-2 bg-[#60A5FA] hover:bg-[#60A5FA]/90 text-[#111827] font-black uppercase tracking-wider rounded-xl transition-all duration-150 shadow-md shadow-blue-500/10 flex items-center justify-center gap-1.5 disabled:opacity-75 disabled:cursor-not-allowed cursor-pointer font-sans"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <span className="w-3.5 h-3.5 border-2 border-[#111827] border-t-transparent rounded-full animate-spin" />
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Check size={14} />
+                      <span>Save Changes</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+            </form>
+
+          </div>
+        </div>
+      )}
+
+      {/* SUCCESS CONFIRMATION MODAL */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in">
+          {/* Backdrop */}
+          <div className="fixed inset-0 bg-black/75 backdrop-blur-sm" onClick={() => setShowSuccessModal(false)} />
+          
+          {/* Modal Card */}
+          <div className="bg-[#1F2937] border border-[#374151] w-full max-w-sm rounded-3xl shadow-2xl p-6 relative z-10 text-center space-y-5 weather-glow-green animate-scale-in">
+            
+            {/* Success Checkmark Circle Icon */}
+            <div className="w-14 h-14 rounded-full bg-[#4ADE80]/10 border border-[#4ADE80]/20 flex items-center justify-center text-[#4ADE80] mx-auto animate-pulse">
+              <Check size={28} />
+            </div>
+
+            {/* Modal Heading & Text */}
+            <div className="space-y-2">
+              <h3 className="text-sm font-black text-white uppercase tracking-wider">
+                {successModalConfig.title || 'Action Completed'}
+              </h3>
+              <p className="text-[11px] text-[#9CA3AF] leading-relaxed">
+                {successModalConfig.message}
+              </p>
+            </div>
+
+            {/* Close Button */}
+            <div className="pt-2 border-t border-[#374151]/55">
+              <button 
+                onClick={() => setShowSuccessModal(false)}
+                className="w-full py-2.5 bg-[#4ADE80] hover:bg-[#4ADE80]/90 text-[#111827] font-black uppercase tracking-wider rounded-xl transition-all duration-150 shadow-md shadow-green-500/10 cursor-pointer text-xs font-sans"
+              >
+                Got it, close
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* CUSTOM DELETE CONFIRMATION MODAL (Matches Logout modal styling) */}
+      {showDeleteModal && deletingZone && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in">
+          {/* Backdrop */}
+          <div className="fixed inset-0 bg-black/75 backdrop-blur-sm" onClick={() => !isDeleting && setShowDeleteModal(false)} />
+          
+          {/* Modal Card */}
+          <div className="bg-[#1F2937] border border-[#374151] w-full max-w-sm rounded-3xl shadow-2xl p-6 relative z-10 text-center space-y-5 weather-glow-red animate-scale-in">
+            
+            {/* Warning Circle Icon */}
+            <div className="w-14 h-14 rounded-full bg-[#EF4444]/10 border border-[#EF4444]/20 flex items-center justify-center text-[#EF4444] mx-auto animate-pulse">
+              <Trash2 size={26} />
+            </div>
+
+            {/* Modal Heading & Text */}
+            <div className="space-y-1.5">
+              <h3 className="text-sm font-black text-white uppercase tracking-wider">
+                Confirm Monitored Zone Purge
+              </h3>
+              <div className="space-y-2">
+                <p className="text-[11px] text-[#9CA3AF] leading-relaxed">
+                  Are you absolutely sure you want to permanently purge <span className="font-extrabold text-white">"{deletingZone.name}"</span> and all associated historical telemetry rainfall logs from Supabase?
+                </p>
+                <div className="bg-[#EF4444]/10 border border-[#EF4444]/30 rounded-xl p-2.5 text-[10px] text-[#EF4444] font-bold uppercase tracking-wide">
+                  ⚠️ This action is irreversible and frees up database storage!
+                </div>
+              </div>
+            </div>
+
+            {/* Row of Action Buttons */}
+            <div className="flex gap-2.5 pt-2 border-t border-[#374151]/55">
+              <button 
+                onClick={() => setShowDeleteModal(false)}
+                disabled={isDeleting}
+                className="flex-1 py-2.5 bg-[#111827] hover:bg-[#111827]/70 border border-[#374151] hover:border-[#9CA3AF] text-[#9CA3AF] hover:text-white rounded-xl font-bold uppercase tracking-wider transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer text-xs font-sans"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={confirmDeleteZone}
+                disabled={isDeleting}
+                className="flex-1 py-2.5 bg-[#EF4444] hover:bg-[#EF4444]/90 text-white font-black uppercase tracking-wider rounded-xl transition-all duration-150 shadow-md shadow-red-500/10 disabled:opacity-75 disabled:cursor-not-allowed cursor-pointer text-xs font-sans flex items-center justify-center gap-1.5"
+              >
+                {isDeleting ? (
+                  <>
+                    <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>Purging...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 size={13} />
+                    <span>Purge Zone</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
 
     </div>
   );
