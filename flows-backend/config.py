@@ -15,6 +15,20 @@ class Settings(BaseSettings):
     OPEN_METEO_LON: float = 121.1000
     TIMEZONE: str = "Asia/Manila"
     FETCH_INTERVAL_MINUTES: int = 60
+    CORS_ORIGINS: str = (
+        "http://localhost:3000,"
+        "http://localhost:3001,"
+        "http://localhost:3002,"
+        "http://localhost:3003,"
+        "http://localhost:3004,"
+        "http://localhost:3005,"
+        "http://127.0.0.1:3000,"
+        "http://127.0.0.1:3001,"
+        "http://127.0.0.1:3002,"
+        "http://127.0.0.1:3003,"
+        "http://127.0.0.1:3004,"
+        "http://127.0.0.1:3005"
+    )
 
     model_config = {"env_file": ".env"}
 
